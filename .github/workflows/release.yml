@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -11,17 +16,57 @@ permissions:
   id-token: write
 
 jobs:
-  release:
+  release-pr:
+    if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
 
     steps:
+      - name: Validate Changesets GitHub token configuration
+        env:
+          CHANGESETS_GITHUB_TOKEN: ${{ secrets.CHANGESETS_GITHUB_TOKEN }}
+        run: |
+          if [ -z "$CHANGESETS_GITHUB_TOKEN" ]; then
+            echo "CHANGESETS_GITHUB_TOKEN is required to create or update the release PR." >&2
+            exit 1
+          fi
+
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm install
+      - run: npm --version
+      - run: npm run ci
+
+      - name: Create or update release PR
+        uses: changesets/action@v1
+        with:
+          # A custom token is required so release PR updates can trigger PR workflows.
+          github-token: ${{ secrets.CHANGESETS_GITHUB_TOKEN }}
+          version: npm run version-packages
+
+  publish:
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'changeset-release/') && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: Attach checkout to main branch
+        run: git checkout -B "${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.merge_commit_sha }}"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
           cache: npm
           registry-url: https://registry.npmjs.org
 
@@ -40,21 +85,17 @@ jobs:
           fi
 
       - name: Publish with trusted publishing
-        uses: changesets/action@v1
         if: ${{ vars.NPM_PUBLISH_AUTH != 'token' }}
+        uses: changesets/action@v1
         with:
-          # A custom token is required so release PR updates can trigger PR workflows.
-          github-token: ${{ secrets.CHANGESETS_GITHUB_TOKEN }}
-          version: npm run version-packages
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           publish: npm run release
 
       - name: Publish with npm token bootstrap
-        uses: changesets/action@v1
         if: ${{ vars.NPM_PUBLISH_AUTH == 'token' }}
+        uses: changesets/action@v1
         with:
-          # A custom token is required so release PR updates can trigger PR workflows.
-          github-token: ${{ secrets.CHANGESETS_GITHUB_TOKEN }}
-          version: npm run version-packages
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           publish: npm run release
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
