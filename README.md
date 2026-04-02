@@ -156,3 +156,9 @@ Configure npm trusted publishing for each publishable package using:
 - Workflow filename: `release.yml`
 
 The release workflow is configured for OIDC-based publishing and does not require an `NPM_TOKEN`.
+
+For the GitHub side of Changesets:
+
+- `CHANGESETS_GITHUB_TOKEN` is required.
+- It should be a PAT or GitHub App token with permission to create and update pull requests in this repo.
+- The built-in `GITHUB_TOKEN` is not sufficient for this repo because release PR updates need to trigger other `pull_request` workflows.
