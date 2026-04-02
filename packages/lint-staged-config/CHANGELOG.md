@@ -1,5 +1,11 @@
 # @thetigeregg/lint-staged-config
 
+## 0.2.2
+
+### Patch Changes
+
+- 4ee614e: bump
+
 ## 0.2.1
 
 ### Patch Changes

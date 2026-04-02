@@ -1,5 +1,11 @@
 # @thetigeregg/prettier-config
 
+## 0.3.2
+
+### Patch Changes
+
+- 4ee614e: bump
+
 ## 0.3.1
 
 ### Patch Changes
