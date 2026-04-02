@@ -41,6 +41,18 @@ function configState(value) {
   return value ? '[configured]' : '(not set)';
 }
 
+export class WorktreeCommandError extends Error {
+  constructor(message, { command, args = [], status = 1, stdout = '', stderr = '' } = {}) {
+    super(message);
+    this.name = 'WorktreeCommandError';
+    this.command = command;
+    this.args = args;
+    this.status = status;
+    this.stdout = stdout;
+    this.stderr = stderr;
+  }
+}
+
 export function packageHasDependencies(packageDir) {
   const packageJsonPath = path.resolve(packageDir, 'package.json');
   if (!existsSync(packageJsonPath)) {
@@ -208,7 +220,11 @@ export async function createWorktreeContext({
       throw result.error;
     }
     if (typeof result.status === 'number' && result.status !== 0) {
-      process.exit(result.status);
+      throw new WorktreeCommandError(`${command} exited with code ${String(result.status)}`, {
+        command,
+        args: commandArgs,
+        status: result.status,
+      });
     }
   }
 
@@ -231,7 +247,13 @@ export async function createWorktreeContext({
       if (result.stderr) {
         process.stderr.write(result.stderr);
       }
-      process.exit(result.status);
+      throw new WorktreeCommandError(`${command} exited with code ${String(result.status)}`, {
+        command,
+        args: commandArgs,
+        status: result.status,
+        stdout: result.stdout ?? '',
+        stderr: result.stderr ?? '',
+      });
     }
 
     return result.stdout ?? '';
@@ -365,7 +387,7 @@ export function ensureDependenciesInstalled(context, forceInstall = false) {
     }
   }
 
-  const installScript = context.config.worktree.bootstrap?.installScript ?? 'ci:all';
+  const installScript = context.config.worktree.bootstrap?.installScript ?? 'deps:ci-all';
   console.log(`Installing workspace dependencies via: npm run ${installScript}`);
   context.runNvmAwareShell(
     buildNvmAwareInstallCommand(installScript),
@@ -878,5 +900,5 @@ export function runWorktreeBootstrap(context, { force = false, printInfo = true 
   if (printInfo) {
     printWorktreeInfo(context);
   }
-  ensureDependenciesInstalled(context, false);
+  ensureDependenciesInstalled(context, force);
 }

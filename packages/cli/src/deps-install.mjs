@@ -28,7 +28,22 @@ function hasWorkspaceConfig(repoRoot) {
 
   try {
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-    return Array.isArray(packageJson.workspaces) && packageJson.workspaces.length > 0;
+    const workspaces = packageJson.workspaces;
+
+    if (Array.isArray(workspaces) && workspaces.length > 0) {
+      return true;
+    }
+
+    if (
+      workspaces &&
+      typeof workspaces === 'object' &&
+      Array.isArray(workspaces.packages) &&
+      workspaces.packages.length > 0
+    ) {
+      return true;
+    }
+
+    return false;
   } catch {
     return false;
   }

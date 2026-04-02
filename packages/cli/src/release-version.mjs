@@ -80,7 +80,7 @@ function isReleaseTag(tag, tagPrefix) {
 }
 
 function getLatestTag({ cwd, tagPrefix }) {
-  const tags = execFileSync('git', ['tag', '--list', '--sort=-v:refname'], {
+  const tags = execFileSync('git', ['tag', '--merged', 'HEAD', '--list', '--sort=-v:refname'], {
     cwd,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],

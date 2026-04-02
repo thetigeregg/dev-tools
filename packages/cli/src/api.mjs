@@ -21,6 +21,7 @@ export {
   runPwaCommand,
   runPwaServe,
   runWorktreeBootstrap,
+  WorktreeCommandError,
 } from './worktree-engine.mjs';
 export {
   buildWorktreeRuntime,

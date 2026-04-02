@@ -61,7 +61,7 @@ export default {
   worktree: {
     adapterModule: 'scripts/worktree-dev.mjs',
     bootstrap: {
-      installScript: 'ci:all',
+      installScript: 'deps:ci-all',
     },
     runtime: {
       projectSlugPrefix: 'myapp',

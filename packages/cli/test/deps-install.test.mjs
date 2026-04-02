@@ -97,3 +97,35 @@ test('runInstallAll uses workspace ci when a root lockfile manages workspaces', 
     },
   ]);
 });
+
+test('runInstallAll also detects npm workspace object config', () => {
+  const repoRoot = makeTempRepo();
+  fs.writeFileSync(
+    path.join(repoRoot, 'package.json'),
+    JSON.stringify({ workspaces: { packages: ['packages/*'] } }, null, 2),
+    'utf8'
+  );
+  fs.writeFileSync(path.join(repoRoot, 'package-lock.json'), '{}\n', 'utf8');
+
+  const calls = [];
+  const result = runInstallAll({
+    projects: [{ name: 'root', path: '.', absolutePath: repoRoot }],
+    repoRoot,
+    mode: 'ci',
+    spawn(command, args, options) {
+      calls.push({ command, args, options });
+      return { status: 0 };
+    },
+    log() {},
+    errorLog() {},
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.deepEqual(calls, [
+    {
+      command: process.platform === 'win32' ? 'npm.cmd' : 'npm',
+      args: ['ci', '--workspaces', '--include-workspace-root'],
+      options: { cwd: repoRoot, stdio: 'inherit' },
+    },
+  ]);
+});

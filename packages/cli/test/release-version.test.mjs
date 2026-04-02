@@ -197,3 +197,23 @@ test('runReleaseVersionCli throws when package.json drifts from the latest tag w
     /Current package\.json version \(1\.2\.4\) does not match latest tag version \(1\.2\.3\)/
   );
 });
+
+test('runReleaseVersionCli ignores newer release tags that are not reachable from HEAD', async () => {
+  const repoRoot = createFixtureRepo();
+  const initialBranch = run('git branch --show-current', repoRoot);
+
+  run('git checkout -b release/next', repoRoot);
+  writeFileSync(path.join(repoRoot, 'major.txt'), 'major release prep\n');
+  run('git add major.txt', repoRoot);
+  run('git commit -m "feat(cli): prepare unrelated release branch"', repoRoot);
+  run('git tag v9.0.0', repoRoot);
+  run(`git checkout ${initialBranch}`, repoRoot);
+
+  writeFileSync(path.join(repoRoot, 'fix.txt'), 'bug fix\n');
+  run('git add fix.txt', repoRoot);
+  run('git commit -m "fix(cli): stay on reachable tags only"', repoRoot);
+
+  const result = await runReleaseVersionCli({ cwd: repoRoot, argv: ['--dry-run'] });
+
+  assert.equal(result.version, '1.2.4');
+});

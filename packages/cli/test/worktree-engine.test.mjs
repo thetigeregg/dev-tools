@@ -10,6 +10,8 @@ import {
   resolveShellInvocation,
   runFrontendDev,
   runPwaCommand,
+  runWorktreeBootstrap,
+  WorktreeCommandError,
 } from '../src/api.mjs';
 
 const config = {
@@ -123,8 +125,8 @@ test('createWorktreeContext expands home-relative shared env paths from top-leve
 });
 
 test('buildNvmAwareInstallCommand wraps npm scripts with nvm activation', () => {
-  assert.match(buildNvmAwareInstallCommand('ci:all'), /nvm use/);
-  assert.match(buildNvmAwareInstallCommand('ci:all'), /npm run ci:all/);
+  assert.match(buildNvmAwareInstallCommand('deps:ci-all'), /nvm use/);
+  assert.match(buildNvmAwareInstallCommand('deps:ci-all'), /npm run deps:ci-all/);
 });
 
 test('resolveShellInvocation falls back to cmd.exe on Windows', () => {
@@ -265,4 +267,60 @@ test('runPwaCommand exits with a clear error when no reachability port is config
 
   assert.equal(errors.length, 1);
   assert.match(errors[0], /requiredReachabilityPort or runtime\.ports\.EDGE_HOST_PORT/);
+});
+
+test('createWorktreeContext run helpers throw typed errors instead of exiting the host process', async () => {
+  const repoRoot = process.cwd();
+  const context = await createWorktreeContext({
+    cwd: repoRoot,
+    processEnv: { PATH: process.env.PATH ?? '' },
+    config: {
+      ...config,
+      repoRoot,
+    },
+  });
+
+  assert.throws(
+    () => context.run('node', ['-e', 'process.exit(7)']),
+    (error) =>
+      error instanceof WorktreeCommandError &&
+      error.command === 'node' &&
+      error.status === 7 &&
+      Array.isArray(error.args)
+  );
+
+  assert.throws(
+    () => context.runCapture('node', ['-e', 'process.stdout.write("ok"); process.exit(9)']),
+    (error) =>
+      error instanceof WorktreeCommandError &&
+      error.command === 'node' &&
+      error.status === 9 &&
+      error.stdout === 'ok'
+  );
+});
+
+test('runWorktreeBootstrap passes force through to dependency installation', () => {
+  const repoRoot = process.cwd();
+  const localEnvPath = path.join(os.tmpdir(), `devx-bootstrap-${process.pid}.env`);
+  const calls = [];
+  const context = {
+    localEnvPath,
+    sharedEnvFilePath: path.join(repoRoot, 'package.json'),
+    config: {
+      packageDirPaths: [],
+      worktree: {},
+    },
+    createSharedEnv() {
+      return {};
+    },
+    runNvmAwareShell(command, fallbackCommand, env) {
+      calls.push({ command, fallbackCommand, env });
+    },
+  };
+
+  runWorktreeBootstrap(context, { force: true, printInfo: false });
+
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].command, /npm run deps:ci-all/);
+  assert.equal(calls[0].fallbackCommand, 'npm run deps:ci-all');
 });
