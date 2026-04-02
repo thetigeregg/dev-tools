@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { execSync } from 'node:child_process';
+import { execSync, spawnSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -204,7 +204,19 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
     }
 
     console.log(`\nCreating worktree for branch: ${branch}\n`);
-    run(`git worktree add ${worktreePath} -b ${branch} ${config.baseBranch}`);
+    {
+      const result = spawnSync('git', ['worktree', 'add', worktreePath, '-b', branch, config.baseBranch], {
+        stdio: 'inherit',
+      });
+      if (result.status !== 0) {
+        const error = new Error(`git worktree add failed with exit code ${result.status}`);
+        // Align with execSync behavior where a non-zero exit code throws.
+        // Consumers already handle errors thrown from run/execSync.
+        // @ts-ignore status is added to resemble child_process errors
+        error.status = result.status;
+        throw error;
+      }
+    }
 
     console.log('\nBootstrapping worktree environment...\n');
 
