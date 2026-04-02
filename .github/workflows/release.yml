@@ -35,6 +35,15 @@ jobs:
       - run: npm --version
       - run: npm run ci
 
+      - name: Validate Changesets GitHub token configuration
+        env:
+          CHANGESETS_GITHUB_TOKEN: ${{ secrets.CHANGESETS_GITHUB_TOKEN }}
+        run: |
+          if [ -z "$CHANGESETS_GITHUB_TOKEN" ]; then
+            echo "CHANGESETS_GITHUB_TOKEN is required to create or update the release PR." >&2
+            exit 1
+          fi
+
       - name: Create or update release PR
         uses: changesets/action@v1
         with:
