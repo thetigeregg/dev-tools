@@ -19,9 +19,12 @@ export {
   runComposeCommand,
   runFrontendDev,
   runPwaCommand,
+  servePwaRootCertificate,
   runPwaServe,
   runWorktreeBootstrap,
   WorktreeCommandError,
+  WorktreePwaCertificateError,
+  WorktreePwaServeError,
 } from './worktree-engine.mjs';
 export {
   buildWorktreeRuntime,

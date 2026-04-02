@@ -54,6 +54,22 @@ export class WorktreeCommandError extends Error {
   }
 }
 
+export class WorktreePwaCertificateError extends Error {
+  constructor(
+    message = 'mkcert root CA is not available. Run `npm run dev:pwa:certs:setup` first.'
+  ) {
+    super(message);
+    this.name = 'WorktreePwaCertificateError';
+  }
+}
+
+export class WorktreePwaServeError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'WorktreePwaServeError';
+  }
+}
+
 export function packageHasDependencies(packageDir) {
   const packageJsonPath = path.resolve(packageDir, 'package.json');
   if (!existsSync(packageJsonPath)) {
@@ -543,9 +559,12 @@ export function printWorktreeInfo(context) {
   );
 
   if (context.secretsHostDir) {
-    console.log(`Secrets dir: ${configState(context.secretsHostDir)}`);
+    const resolvedSecretsDir = expandUserPath(context.secretsHostDir);
+    console.log(`Secrets dir: ${resolvedSecretsDir} ${configState(context.secretsHostDir)}`);
   } else {
-    console.log('Secrets dir: ./nas-secrets (worktree-local default)');
+    console.log(
+      `Secrets dir: ${path.resolve(context.cwd, 'nas-secrets')} (worktree-local default)`
+    );
   }
 
   if (existsSync(context.localEnvPath)) {
@@ -701,12 +720,15 @@ export function printMissingCertificateInstructions(context, logger = console) {
   );
 }
 
-export function servePwaRootCertificate(context) {
-  const certStatus = getSimulatorCertificateStatus(context);
+export function servePwaRootCertificate(
+  context,
+  { getSimulatorCertificateStatusFn = getSimulatorCertificateStatus } = {}
+) {
+  const certStatus = getSimulatorCertificateStatusFn(context);
   if (!certStatus.mkcertAvailable || !certStatus.hasRootCa || !certStatus.rootCaPath) {
-    console.error('mkcert root CA is not available.');
-    console.error('Run `npm run dev:pwa:certs:setup` first.');
-    process.exit(1);
+    throw new WorktreePwaCertificateError(
+      'mkcert root CA is not available. Run `npm run dev:pwa:certs:setup` first.'
+    );
   }
 
   const serverScript = context.config.worktree.pwa?.rootCaServerScript;
@@ -734,18 +756,27 @@ export function servePwaRootCertificate(context) {
   ]);
 }
 
-export function runPwaServe(context) {
-  const certStatus = getSimulatorCertificateStatus(context);
+export function runPwaServe(
+  context,
+  {
+    getSimulatorCertificateStatusFn = getSimulatorCertificateStatus,
+    printMissingCertificateInstructionsFn = printMissingCertificateInstructions,
+    existsSyncFn = existsSync,
+  } = {}
+) {
+  const certStatus = getSimulatorCertificateStatusFn(context);
   if (!certStatus.isConfigured) {
-    printMissingCertificateInstructions(context);
-    process.exit(1);
+    printMissingCertificateInstructionsFn(context);
+    throw new WorktreePwaCertificateError(
+      'PWA HTTPS certificates are not configured. Run `npm run dev:pwa:certs:setup` first.'
+    );
   }
 
   const indexPath = path.join(context.buildRoot, 'index.html');
-  if (!existsSync(indexPath)) {
-    console.error(`Built frontend not found at ${indexPath}`);
-    console.error('Run `npm run dev:pwa:build` first or use `npm run dev:pwa:simulator`.');
-    process.exit(1);
+  if (!existsSyncFn(indexPath)) {
+    throw new WorktreePwaServeError(
+      `Built frontend not found at ${indexPath}. Run \`npm run dev:pwa:build\` first or use \`npm run dev:pwa:simulator\`.`
+    );
   }
 
   const serverScript = context.config.worktree.pwa?.httpsServerScript;

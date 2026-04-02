@@ -14,8 +14,12 @@ import {
   resolveShellInvocation,
   runFrontendDev,
   runPwaCommand,
+  runPwaServe,
   runWorktreeBootstrap,
   WorktreeCommandError,
+  WorktreePwaCertificateError,
+  WorktreePwaServeError,
+  servePwaRootCertificate,
 } from '../src/api.mjs';
 
 const config = {
@@ -455,5 +459,156 @@ test('printWorktreeInfo reports DB seed file status and path', () => {
         `DB seed file: [missing] (${path.join(os.tmpdir(), `devx-missing-seed-${process.pid}`)})`
       )
     )
+  );
+});
+
+test('printWorktreeInfo reports the resolved secrets directory path', () => {
+  const logs = [];
+  const previousLog = console.log;
+
+  console.log = (message) => {
+    logs.push(message);
+  };
+
+  try {
+    printWorktreeInfo({
+      cwd: '/repo/worktrees/feat/example',
+      runtime: {
+        projectName: 'gameshelf-feat-example',
+        portOffset: 0,
+        ports: {},
+      },
+      simulatorCertFile: '/tmp/localhost.pem',
+      simulatorKeyFile: '/tmp/localhost-key.pem',
+      secretsHostDir: '~/shared/game-shelf/nas-secrets',
+      localEnvPath: path.join(os.tmpdir(), `devx-missing-env-secrets-${process.pid}`),
+      sharedEnvFilePath: undefined,
+      createSharedEnv() {
+        return {};
+      },
+      defaultSeedPath() {
+        return path.join(os.tmpdir(), `devx-missing-seed-secrets-${process.pid}`);
+      },
+    });
+  } finally {
+    console.log = previousLog;
+  }
+
+  assert.ok(
+    logs.some((message) =>
+      message.includes(
+        `Secrets dir: ${path.join(os.homedir(), 'shared', 'game-shelf', 'nas-secrets')} [configured]`
+      )
+    )
+  );
+});
+
+test('servePwaRootCertificate throws a typed error when the mkcert root CA is unavailable', () => {
+  assert.throws(
+    () =>
+      servePwaRootCertificate(
+        {
+          config: { worktree: { pwa: { rootCaServerScript: 'scripts/pwa-root-ca-server.mjs' } } },
+          cwd: '/repo/worktrees/feat/example',
+          runtime: { ports: { PWA_ROOT_CA_PORT: 8300 } },
+          run() {
+            throw new Error('context.run should not be called when the root CA is unavailable');
+          },
+        },
+        {
+          getSimulatorCertificateStatusFn() {
+            return {
+              mkcertAvailable: false,
+              hasRootCa: false,
+              rootCaPath: '',
+            };
+          },
+        }
+      ),
+    (error) =>
+      error instanceof WorktreePwaCertificateError &&
+      error.message === 'mkcert root CA is not available. Run `npm run dev:pwa:certs:setup` first.'
+  );
+});
+
+test('runPwaServe throws a typed certificate error instead of exiting', () => {
+  let instructionsPrinted = 0;
+
+  assert.throws(
+    () =>
+      runPwaServe(
+        {
+          buildRoot: '/repo/worktrees/feat/example/www/browser',
+          config: { worktree: { pwa: { httpsServerScript: 'scripts/pwa-https-server.mjs' } } },
+          cwd: '/repo/worktrees/feat/example',
+          runtime: { ports: { EDGE_HOST_PORT: 8080, PWA_HOST_PORT: 8200 } },
+          run() {
+            throw new Error('context.run should not be called when certificates are missing');
+          },
+        },
+        {
+          getSimulatorCertificateStatusFn() {
+            return {
+              isConfigured: false,
+              mkcertAvailable: true,
+              hasRootCa: true,
+              rootCaPath: '/tmp/rootCA.pem',
+              certPath: '/tmp/localhost.pem',
+              keyPath: '/tmp/localhost-key.pem',
+            };
+          },
+          printMissingCertificateInstructionsFn() {
+            instructionsPrinted += 1;
+          },
+        }
+      ),
+    (error) =>
+      error instanceof WorktreePwaCertificateError &&
+      error.message ===
+        'PWA HTTPS certificates are not configured. Run `npm run dev:pwa:certs:setup` first.'
+  );
+
+  assert.equal(instructionsPrinted, 1);
+});
+
+test('runPwaServe throws a typed error when the production build output is missing', () => {
+  assert.throws(
+    () =>
+      runPwaServe(
+        {
+          buildRoot: '/repo/worktrees/feat/example/www/browser',
+          config: { worktree: { pwa: { httpsServerScript: 'scripts/pwa-https-server.mjs' } } },
+          cwd: '/repo/worktrees/feat/example',
+          runtime: { ports: { EDGE_HOST_PORT: 8080, PWA_HOST_PORT: 8200 } },
+          run() {
+            throw new Error('context.run should not be called when the build output is missing');
+          },
+        },
+        {
+          getSimulatorCertificateStatusFn() {
+            return {
+              isConfigured: true,
+              mkcertAvailable: true,
+              hasRootCa: true,
+              rootCaPath: '/tmp/rootCA.pem',
+              certPath: '/tmp/localhost.pem',
+              keyPath: '/tmp/localhost-key.pem',
+            };
+          },
+          printMissingCertificateInstructionsFn() {
+            throw new Error(
+              'printMissingCertificateInstructionsFn should not be called when certificates exist'
+            );
+          },
+          existsSyncFn() {
+            return false;
+          },
+        }
+      ),
+    (error) =>
+      error instanceof WorktreePwaServeError &&
+      error.message.includes(
+        'Built frontend not found at /repo/worktrees/feat/example/www/browser/index.html.'
+      )
   );
 });
