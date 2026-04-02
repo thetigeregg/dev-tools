@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -11,13 +16,41 @@ permissions:
   id-token: write
 
 jobs:
-  release:
+  release-pr:
+    if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm install
+      - run: npm --version
+      - run: npm run ci
+
+      - name: Create or update release PR
+        uses: changesets/action@v1
+        with:
+          # A custom token is required so release PR updates can trigger PR workflows.
+          github-token: ${{ secrets.CHANGESETS_GITHUB_TOKEN }}
+          version: npm run version-packages
+
+  publish:
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'changeset-release/') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
 
       - uses: actions/setup-node@v6
         with:
@@ -40,21 +73,19 @@ jobs:
           fi
 
       - name: Publish with trusted publishing
-        uses: changesets/action@v1
         if: ${{ vars.NPM_PUBLISH_AUTH != 'token' }}
+        uses: changesets/action@v1
         with:
           # A custom token is required so release PR updates can trigger PR workflows.
           github-token: ${{ secrets.CHANGESETS_GITHUB_TOKEN }}
-          version: npm run version-packages
           publish: npm run release
 
       - name: Publish with npm token bootstrap
-        uses: changesets/action@v1
         if: ${{ vars.NPM_PUBLISH_AUTH == 'token' }}
+        uses: changesets/action@v1
         with:
           # A custom token is required so release PR updates can trigger PR workflows.
           github-token: ${{ secrets.CHANGESETS_GITHUB_TOKEN }}
-          version: npm run version-packages
           publish: npm run release
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
