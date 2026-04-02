@@ -21,20 +21,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: npm
-          registry-url: https://registry.npmjs.org
-
-      - run: npm install
-      - run: npm --version
-      - run: npm run ci
-
       - name: Validate Changesets GitHub token configuration
         env:
           CHANGESETS_GITHUB_TOKEN: ${{ secrets.CHANGESETS_GITHUB_TOKEN }}
@@ -43,6 +29,20 @@ jobs:
             echo "CHANGESETS_GITHUB_TOKEN is required to create or update the release PR." >&2
             exit 1
           fi
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm install
+      - run: npm --version
+      - run: npm run ci
 
       - name: Create or update release PR
         uses: changesets/action@v1
@@ -63,7 +63,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 22
           cache: npm
           registry-url: https://registry.npmjs.org
 
