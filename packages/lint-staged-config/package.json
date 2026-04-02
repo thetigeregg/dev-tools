@@ -20,6 +20,9 @@
     "url": "https://github.com/thetigeregg/dev-tools.git",
     "directory": "packages/lint-staged-config"
   },
+  "peerDependencies": {
+    "prettier": "^3.0.0"
+  },
   "engines": {
     "node": ">=18"
   }

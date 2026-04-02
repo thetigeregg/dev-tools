@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildTemplateSyncPlan, syncTemplates } from '../src/repo-sync-templates.mjs';
+import {
+  assertTemplateRootsExist,
+  buildTemplateSyncPlan,
+  syncTemplates,
+} from '../src/repo-sync-templates.mjs';
 
 test('buildTemplateSyncPlan maps shared github templates into repo .github paths for sync', () => {
   const plan = buildTemplateSyncPlan({
@@ -130,4 +134,43 @@ test('syncTemplates copies planned files, supports dry-run, and can skip existin
       targetPath: '/repo/AGENTS.md',
     },
   ]);
+});
+
+test('syncTemplates reports wroteFiles false when every file is skipped', () => {
+  const result = syncTemplates({
+    plan: [
+      {
+        sourcePath: '/templates/root/AGENTS.md',
+        targetPath: '/repo/AGENTS.md',
+        relativeTargetPath: 'AGENTS.md',
+      },
+    ],
+    skipExisting: true,
+    log() {},
+    exists() {
+      return true;
+    },
+  });
+
+  assert.deepEqual(result, { fileCount: 1, wroteFiles: false, skippedCount: 1 });
+});
+
+test('assertTemplateRootsExist throws a clear error before plan building when a source root is missing', () => {
+  assert.throws(
+    () =>
+      assertTemplateRootsExist({
+        mode: 'sync',
+        groups: [
+          {
+            name: 'github',
+            sourceRoot: '/missing/templates/github',
+            modes: ['sync'],
+          },
+        ],
+        exists() {
+          return false;
+        },
+      }),
+    /Shared template root not found: \/missing\/templates\/github/
+  );
 });

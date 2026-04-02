@@ -2,6 +2,8 @@
 
 Shared `lint-staged` configuration for thetigeregg repositories.
 
+Install `prettier` in the consumer repo alongside this package because the shared staged-file command runs `prettier --write`.
+
 Consumer repos can use a thin root config file:
 
 ```js

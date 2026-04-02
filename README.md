@@ -17,8 +17,10 @@ This repository is a private monorepo for publishable internal packages. It cent
 Install the shared packages from your private registry:
 
 ```sh
-npm install -D @thetigeregg/dev-cli @thetigeregg/prettier-config @thetigeregg/commitlint-config @thetigeregg/lint-staged-config @thetigeregg/ncu-config husky lint-staged
+npm install -D @thetigeregg/dev-cli @thetigeregg/prettier-config @thetigeregg/commitlint-config @thetigeregg/lint-staged-config @thetigeregg/ncu-config husky lint-staged @commitlint/cli prettier npm-check-updates
 ```
+
+The local toolchain packages are required because the shared Husky hooks and `devx` dependency commands call their binaries directly.
 
 Create a `devx.config.mjs` at the consumer repo root. The shared repo owns the generic mechanics; the consumer repo owns project topology and optional adapter hooks.
 
@@ -109,7 +111,7 @@ The bootstrap flow below assumes a modern Node release. If you install the lates
 1. Install the shared packages:
 
 ```sh
-npm install -D @thetigeregg/dev-cli @thetigeregg/prettier-config @thetigeregg/commitlint-config @thetigeregg/lint-staged-config @thetigeregg/ncu-config husky lint-staged
+npm install -D @thetigeregg/dev-cli @thetigeregg/prettier-config @thetigeregg/commitlint-config @thetigeregg/lint-staged-config @thetigeregg/ncu-config husky lint-staged @commitlint/cli prettier npm-check-updates
 ```
 
 2. Add a minimal `devx.config.mjs` for the repo topology you want `devx` to understand.

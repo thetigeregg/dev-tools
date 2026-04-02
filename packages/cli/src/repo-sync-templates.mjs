@@ -60,6 +60,24 @@ function normalizeTemplateRoot(templateRoot) {
   return templateRoot instanceof URL ? fileURLToPath(templateRoot) : templateRoot;
 }
 
+export function assertTemplateRootsExist({
+  groups = TEMPLATE_GROUPS,
+  mode = 'sync',
+  exists = existsSync,
+} = {}) {
+  for (const group of groups) {
+    if (!group.modes.includes(mode)) {
+      continue;
+    }
+
+    const sourceRoot = normalizeTemplateRoot(group.sourceRoot);
+
+    if (!exists(sourceRoot)) {
+      throw new Error(`Shared template root not found: ${sourceRoot}`);
+    }
+  }
+}
+
 export function buildTemplateSyncPlan({ repoRoot, mode = 'sync', groups = TEMPLATE_GROUPS } = {}) {
   const plan = [];
 
@@ -133,7 +151,7 @@ export function syncTemplates({
 
   return {
     fileCount: plan.length,
-    wroteFiles: !dryRun,
+    wroteFiles: !dryRun && skippedCount < plan.length,
     skippedCount,
   };
 }
@@ -142,16 +160,12 @@ async function runRepoTemplateCommand({
   cwd = process.cwd(),
   argv = process.argv.slice(2),
   mode = 'sync',
+  groups = TEMPLATE_GROUPS,
 } = {}) {
   const config = await loadDevxConfig({ cwd });
   const dryRun = argv.includes('--dry-run');
-  const plan = buildTemplateSyncPlan({ repoRoot: config.repoRoot, mode });
-
-  for (const group of TEMPLATE_GROUPS) {
-    if (group.modes.includes(mode) && !existsSync(group.sourceRoot)) {
-      throw new Error(`Shared template root not found: ${group.sourceRoot}`);
-    }
-  }
+  assertTemplateRootsExist({ groups, mode });
+  const plan = buildTemplateSyncPlan({ repoRoot: config.repoRoot, mode, groups });
 
   const result = syncTemplates({
     plan,
