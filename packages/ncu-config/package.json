@@ -21,7 +21,7 @@
     "directory": "packages/ncu-config"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.17"
   },
   "scripts": {
     "test": "node --test test/*.test.cjs"

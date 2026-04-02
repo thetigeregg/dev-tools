@@ -1,0 +1,17 @@
+name: Feature
+description: Request a feature
+labels: ["feat"]
+
+body:
+  - type: textarea
+    attributes:
+      label: Description
+
+  - type: textarea
+    attributes:
+      label: Use case
+
+  - type: input
+    attributes:
+      label: Suggested commit type
+      description: Usually "feat"

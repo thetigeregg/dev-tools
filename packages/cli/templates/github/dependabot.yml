@@ -1,0 +1,130 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:00"
+      timezone: "Europe/Zurich"
+    labels:
+      - "dependencies"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+    ignore:
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
+
+  - package-ecosystem: "npm"
+    directory: "/server"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:10"
+      timezone: "Europe/Zurich"
+    labels:
+      - "dependencies"
+      - "backend"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "npm"
+    directory: "/worker"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:20"
+      timezone: "Europe/Zurich"
+    labels:
+      - "dependencies"
+      - "backend"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "npm"
+    directory: "/hltb-scraper"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:30"
+      timezone: "Europe/Zurich"
+    labels:
+      - "dependencies"
+      - "scraper"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:40"
+      timezone: "Europe/Zurich"
+    labels:
+      - "dependencies"
+      - "ci"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(ci)"
+
+  - package-ecosystem: "docker"
+    directory: "/edge"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:50"
+      timezone: "Europe/Zurich"
+    labels:
+      - "dependencies"
+      - "docker"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(docker)"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+
+  - package-ecosystem: "docker"
+    directory: "/server"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Zurich"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "backend"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(docker)"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+
+  - package-ecosystem: "docker"
+    directory: "/hltb-scraper"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:10"
+      timezone: "Europe/Zurich"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "scraper"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(docker)"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"

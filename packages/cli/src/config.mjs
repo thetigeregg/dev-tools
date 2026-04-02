@@ -27,6 +27,10 @@ function resolveConfigPath(repoRoot, value) {
   return path.isAbsolute(value) ? value : path.resolve(repoRoot, value);
 }
 
+function normalizeObjectSection(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
+
 export async function loadDevxConfig({
   cwd = process.cwd(),
   configFileName = 'devx.config.mjs',
@@ -51,9 +55,16 @@ export async function loadDevxConfig({
     worktreeRoot: 'worktrees',
     packageDirs: ['.'],
     env: {},
+    pr: {},
+    release: {},
     worktree: {},
     ...rawConfig,
   };
+
+  config.env = normalizeObjectSection(config.env);
+  config.pr = normalizeObjectSection(config.pr);
+  config.release = normalizeObjectSection(config.release);
+  config.worktree = normalizeObjectSection(config.worktree);
 
   config.repoRoot = repoRoot;
   config.configPath = configPath;
@@ -76,6 +87,26 @@ export async function loadDevxConfig({
   }
   if (config.env.localFile) {
     config.env.localFileAbsolute = resolveConfigPath(repoRoot, config.env.localFile);
+  }
+
+  if (config.pr.summaryOutputFile) {
+    config.pr.summaryOutputFileAbsolute = resolveConfigPath(repoRoot, config.pr.summaryOutputFile);
+  }
+  if (config.pr.agentOutputFile) {
+    config.pr.agentOutputFileAbsolute = resolveConfigPath(repoRoot, config.pr.agentOutputFile);
+  }
+
+  if (config.release.packageJsonFile) {
+    config.release.packageJsonFileAbsolute = resolveConfigPath(
+      repoRoot,
+      config.release.packageJsonFile
+    );
+  }
+  if (config.release.changelogFile) {
+    config.release.changelogFileAbsolute = resolveConfigPath(
+      repoRoot,
+      config.release.changelogFile
+    );
   }
 
   return config;

@@ -48,13 +48,49 @@ test('loadDevxConfig finds config from nested directories and resolves paths', a
 
 test('loadDevxConfig defaults projectName to the repo directory name', async () => {
   const repoRoot = makeTempRepo();
+  fs.writeFileSync(path.join(repoRoot, 'devx.config.mjs'), 'export default {};\n', 'utf8');
+
+  const config = await loadDevxConfig({ cwd: repoRoot });
+
+  assert.equal(config.projectName, path.basename(repoRoot));
+});
+
+test('loadDevxConfig normalizes nullable pr and release sections', async () => {
+  const repoRoot = makeTempRepo();
   fs.writeFileSync(
     path.join(repoRoot, 'devx.config.mjs'),
-    'export default {};\n',
+    `export default {
+      pr: null,
+      release: null
+    };
+    `,
     'utf8'
   );
 
   const config = await loadDevxConfig({ cwd: repoRoot });
 
-  assert.equal(config.projectName, path.basename(repoRoot));
+  assert.deepEqual(config.pr, {});
+  assert.deepEqual(config.release, {});
+});
+
+test('loadDevxConfig normalizes array config sections to plain objects', async () => {
+  const repoRoot = makeTempRepo();
+  fs.writeFileSync(
+    path.join(repoRoot, 'devx.config.mjs'),
+    `export default {
+      env: [],
+      pr: [],
+      release: [],
+      worktree: []
+    };
+    `,
+    'utf8'
+  );
+
+  const config = await loadDevxConfig({ cwd: repoRoot });
+
+  assert.deepEqual(config.env, {});
+  assert.deepEqual(config.pr, {});
+  assert.deepEqual(config.release, {});
+  assert.deepEqual(config.worktree, {});
 });

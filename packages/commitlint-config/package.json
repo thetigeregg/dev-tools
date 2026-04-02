@@ -21,7 +21,7 @@
     "directory": "packages/commitlint-config"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.17"
   },
   "dependencies": {
     "@commitlint/config-conventional": "^20.5.0"

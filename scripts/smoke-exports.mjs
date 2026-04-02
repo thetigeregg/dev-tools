@@ -10,6 +10,10 @@ assert.equal(typeof prettierConfig.default.printWidth, 'number');
 assert.deepEqual(commitlintConfig.default.extends, ['@commitlint/config-conventional']);
 assert.equal(typeof ncuConfig.default.target, 'function');
 assert.equal(typeof devCli.runTaskStartCli, 'function');
+assert.equal(typeof devCli.createWorktreeContext, 'function');
+assert.equal(typeof devCli.buildWorktreeRuntime, 'function');
+assert.equal(typeof devCli.runWorktreeBootstrap, 'function');
+assert.equal(typeof devCli.runReleaseVersionCli, 'function');
 
 const result = spawnSync('node', ['./packages/cli/src/index.mjs', '--help'], {
   cwd: process.cwd(),

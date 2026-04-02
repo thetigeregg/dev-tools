@@ -3,3 +3,7 @@ node_modules/
 .npm-cache/
 coverage/
 *.log
+.tmp/
+**/.tmp/
+.pr-summary-prompt.md
+.pr-agent-prompt.md

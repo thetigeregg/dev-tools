@@ -4,12 +4,43 @@ import os from 'node:os';
 import path from 'node:path';
 
 export function sanitize(value, maxLength = 63) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '')
-    .slice(0, maxLength);
+  if (value === null || value === undefined) return '';
+
+  const limit = Math.max(0, maxLength);
+  const chars = [];
+  let prevWasDash = false;
+  const lower = String(value).toLowerCase();
+
+  for (let i = 0; i < lower.length; i++) {
+    const char = lower[i];
+
+    const isValid = (char >= 'a' && char <= 'z') || (char >= '0' && char <= '9') || char === '-';
+
+    if (isValid) {
+      if (char === '-') {
+        if (!prevWasDash && chars.length > 0 && chars.length < limit) {
+          chars.push('-');
+          prevWasDash = true;
+        }
+      } else {
+        if (chars.length >= limit) {
+          break;
+        }
+
+        chars.push(char);
+        prevWasDash = false;
+      }
+    } else if (!prevWasDash && chars.length > 0 && chars.length < limit) {
+      chars.push('-');
+      prevWasDash = true;
+    }
+  }
+
+  while (chars.length > 0 && chars[chars.length - 1] === '-') {
+    chars.pop();
+  }
+
+  return chars.join('');
 }
 
 export function detectWorktreeHint(repoPath) {
@@ -75,7 +106,8 @@ export function buildWorktreeRuntime({
   const portOffset = computeOffset(cwd, processEnv, maxPortOffset);
   const projectHash = createHash('sha256').update(cwd).digest('hex').slice(0, 6);
   const projectName =
-    sanitize(`${projectSlugPrefix}-${worktreeHint}-${projectHash}`) || `${projectSlugPrefix}-default`;
+    sanitize(`${projectSlugPrefix}-${worktreeHint}-${projectHash}`) ||
+    `${projectSlugPrefix}-default`;
   const ports = Object.fromEntries(
     Object.entries(basePorts).map(([name, basePort]) => [name, basePort + portOffset])
   );

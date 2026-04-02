@@ -9,6 +9,7 @@ This repository is a private monorepo for publishable internal packages. It cent
 - `@thetigeregg/dev-cli`: the `devx` CLI for shared workflows such as task/worktree lifecycle, env reconciliation, and multi-package dependency maintenance
 - `@thetigeregg/prettier-config`: shared Prettier defaults
 - `@thetigeregg/commitlint-config`: shared commitlint defaults
+- `@thetigeregg/lint-staged-config`: shared `lint-staged` defaults
 - `@thetigeregg/ncu-config`: shared npm-check-updates policy
 
 ## Consumer Setup
@@ -16,7 +17,15 @@ This repository is a private monorepo for publishable internal packages. It cent
 Install the shared packages from your private registry:
 
 ```sh
-npm install -D @thetigeregg/dev-cli @thetigeregg/prettier-config @thetigeregg/commitlint-config @thetigeregg/ncu-config
+npm install -D @thetigeregg/dev-cli @thetigeregg/prettier-config @thetigeregg/commitlint-config @thetigeregg/lint-staged-config @thetigeregg/ncu-config husky lint-staged @commitlint/cli prettier npm-check-updates
+```
+
+The local toolchain packages are required because the shared Husky hooks and `devx` dependency commands call their binaries directly.
+
+Enable Husky after installing dependencies:
+
+```sh
+npm run prepare
 ```
 
 Create a `devx.config.mjs` at the consumer repo root. The shared repo owns the generic mechanics; the consumer repo owns project topology and optional adapter hooks.
@@ -31,11 +40,11 @@ export default {
   env: {
     exampleFile: '.env.example',
     localFile: '.env.local',
-    sharedTemplateFile: '~/.config/game-shelf/worktree.env'
+    sharedTemplateFile: '~/.config/game-shelf/worktree.env',
   },
   worktree: {
-    adapterModule: './tools/devx/worktree-adapter.mjs'
-  }
+    adapterModule: './tools/devx/worktree-adapter.mjs',
+  },
 };
 ```
 
@@ -71,13 +80,18 @@ module.exports = require('@thetigeregg/prettier-config');
 ```js
 // commitlint.config.cjs
 module.exports = {
-  extends: ['@thetigeregg/commitlint-config']
+  extends: ['@thetigeregg/commitlint-config'],
 };
 ```
 
 ```js
 // .ncurc.cjs
 module.exports = require('@thetigeregg/ncu-config');
+```
+
+```js
+// lint-staged.config.cjs
+module.exports = require('@thetigeregg/lint-staged-config');
 ```
 
 Example scripts:
@@ -93,6 +107,109 @@ Example scripts:
   }
 }
 ```
+
+## Setting Up A New Repo
+
+Use this flow when you are adopting `dev-tools` in a brand-new repository.
+
+The bootstrap flow below assumes a modern Node release. If you install the latest `lint-staged`, use Node `>=20.17` so local installs and Husky hooks match `lint-staged`'s supported engine range.
+
+1. Install the shared packages:
+
+```sh
+npm install -D @thetigeregg/dev-cli @thetigeregg/prettier-config @thetigeregg/commitlint-config @thetigeregg/lint-staged-config @thetigeregg/ncu-config husky lint-staged @commitlint/cli prettier npm-check-updates
+```
+
+2. Enable the shared Husky hooks:
+
+```sh
+npm run prepare
+```
+
+3. Run the bootstrap command from the repo root:
+
+```sh
+npx devx repo bootstrap
+```
+
+This seeds missing shared defaults without overwriting files that already exist. It is intended for first-time setup.
+If `devx.config.mjs` does not exist yet, bootstrap falls back to the current working directory as the repo root. You can also point at another repo with `--repo-root <path>` or an explicit config file with `--config <path>`.
+
+Bootstrap currently seeds:
+
+- root config stubs and shared defaults such as `.prettierrc.cjs`, `.prettierignore`, `.ncurc.cjs`, `.editorconfig`, `.gitleaks.toml`, `commitlint.config.cjs`, `lint-staged.config.cjs`, and `devx.config.mjs`
+- `AGENTS.md`
+- shared Husky hooks such as `.husky/pre-commit` and `.husky/commit-msg`
+- shared GitHub templates such as PR, issue, commit, Dependabot, and release templates
+- `.github/copilot-instructions.md`
+
+4. Review the generated files and replace placeholder values in `devx.config.mjs` with real repo settings.
+
+5. Keep project-specific logic local:
+
+- `worktree.adapterModule`
+- app-specific generation scripts
+- app-specific database flows
+- repo-specific CI workflows
+
+6. Run a verification pass:
+
+```sh
+npm run lint
+npm test
+```
+
+If the repo uses TypeScript, Angular, or another framework, also run the repo’s normal build command.
+
+## Updating An Existing Repo
+
+Use this flow when a repo already uses `dev-tools` and you want to pick up shared changes.
+
+1. Update packages:
+
+```sh
+npm install
+```
+
+Or bump the relevant `@thetigeregg/*` packages explicitly if you pin versions.
+
+2. Preview shared file updates:
+
+```sh
+npx devx repo sync --dry-run
+```
+
+3. Apply the shared updates:
+
+```sh
+npx devx repo sync
+```
+
+`repo sync` is for ongoing maintenance. It updates the shared surface without touching repo-specific files such as:
+
+- `AGENTS.md`
+- `devx.config.mjs`
+- `lint-staged.config.cjs`
+- `.github/copilot-instructions.md`
+- repo-specific Husky hooks like `.husky/post-checkout`
+
+Some files are intentionally available only as optional starter templates in `packages/cli/templates/root-optional`, such as `.nvmrc`, `.dockerignore`, and `codecov.yml`. These are not applied automatically because they tend to vary more across repos.
+If a repo has not created `devx.config.mjs` yet, you can still target it with `npx devx repo sync --repo-root <path>` or `npx devx repo sync --config <path>`.
+
+4. Re-run the repo’s normal verification:
+
+```sh
+npm run lint
+npm test
+```
+
+Also run the repo build if applicable.
+
+## When To Use Bootstrap Vs Sync
+
+- Use `repo bootstrap` when setting up a repo for the first time or when filling in missing shared files.
+- Use `repo sync` when the repo already exists and you want to update the shared templates and shared hook/config surface.
+- Use `repo sync --dry-run` before sync if you want to preview changes first.
 
 ## Local Development
 

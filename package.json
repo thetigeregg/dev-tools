@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "npm@11.12.1",
   "engines": {
-    "node": ">=20"
+    "node": ">=20.17"
   },
   "workspaces": [
     "packages/*"
@@ -13,8 +13,16 @@
     "smoke": "node ./scripts/smoke-exports.mjs",
     "ci": "npm run test && npm run smoke",
     "format": "prettier . --check",
-    "deps:audit": "npm audit --workspaces --include-workspace-root",
+    "prepare": "husky",
+    "deps:install-all": "devx deps install-all",
+    "deps:ci-all": "devx deps ci-all",
+    "deps:audit": "devx deps audit-all",
     "deps:ncu": "devx deps ncu-all",
+    "repo:bootstrap": "devx repo bootstrap",
+    "repo:sync": "devx repo sync",
+    "repo:sync-templates": "devx repo sync-templates",
+    "pr:summary": "devx pr summary",
+    "pr:agent": "devx pr agent",
     "commitlint": "commitlint --from=HEAD~1 --to=HEAD --verbose",
     "changeset": "changeset",
     "version-packages": "changeset version",
@@ -25,8 +33,11 @@
     "@commitlint/cli": "^20.5.0",
     "@thetigeregg/commitlint-config": "workspace:*",
     "@thetigeregg/dev-cli": "workspace:*",
+    "@thetigeregg/lint-staged-config": "workspace:*",
     "@thetigeregg/ncu-config": "workspace:*",
     "@thetigeregg/prettier-config": "workspace:*",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "npm-check-updates": "^20.0.0",
     "prettier": "^3.8.1"
   }
