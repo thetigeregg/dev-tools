@@ -24,7 +24,7 @@
     "@thetigeregg/dev-cli": "workspace:*",
     "@thetigeregg/ncu-config": "workspace:*",
     "@thetigeregg/prettier-config": "workspace:*",
-    "npm-check-updates": "^17.1.16",
+    "npm-check-updates": "^20.0.0",
     "prettier": "^3.8.1"
   }
 }
