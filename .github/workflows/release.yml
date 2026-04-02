@@ -75,25 +75,26 @@ jobs:
       - run: npm --version
       - run: npm run ci
 
-      - name: Validate npm token bootstrap configuration
-        if: ${{ vars.NPM_PUBLISH_AUTH == 'token' }}
+      - name: Select npm publish authentication mode
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          if [ -z "$NPM_TOKEN" ]; then
-            echo "NPM_PUBLISH_AUTH is set to token, but the NPM_TOKEN secret is not configured." >&2
-            exit 1
+          if [ -n "$NPM_TOKEN" ]; then
+            echo "mode=token" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=trusted" >> "$GITHUB_OUTPUT"
           fi
+        id: npm-auth
 
       - name: Publish with trusted publishing
-        if: ${{ vars.NPM_PUBLISH_AUTH != 'token' }}
+        if: ${{ steps.npm-auth.outputs.mode == 'trusted' }}
         uses: changesets/action@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           publish: npm run release
 
       - name: Publish with npm token bootstrap
-        if: ${{ vars.NPM_PUBLISH_AUTH == 'token' }}
+        if: ${{ steps.npm-auth.outputs.mode == 'token' }}
         uses: changesets/action@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
