@@ -1,5 +1,11 @@
 # @thetigeregg/prettier-config
 
+## 0.1.2
+
+### Patch Changes
+
+- 5f92442: Prepare additional workspace packages for first public npm release with MIT licensing and public publish access.
+
 ## 0.1.1
 
 ### Patch Changes
