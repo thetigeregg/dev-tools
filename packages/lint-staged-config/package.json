@@ -1,0 +1,26 @@
+{
+  "name": "@thetigeregg/lint-staged-config",
+  "version": "0.1.0",
+  "description": "Shared lint-staged configuration for thetigeregg projects.",
+  "main": "index.cjs",
+  "exports": {
+    ".": "./index.cjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.cjs",
+    "README.md"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thetigeregg/dev-tools.git",
+    "directory": "packages/lint-staged-config"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

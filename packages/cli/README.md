@@ -139,6 +139,7 @@ Keep repo-specific orchestration in `worktree.adapterModule`, including:
 Shared templates live under:
 
 - `packages/cli/templates/root`
+- `packages/cli/templates/root-shared`
 - `packages/cli/templates/github`
 
 Bootstrap a new consumer repo with missing defaults and config stubs:
@@ -164,11 +165,17 @@ Bootstrap includes:
 - `.ncurc.cjs`
 - `commitlint.config.cjs`
 - `devx.config.mjs`
+- `lint-staged.config.cjs`
+- `.husky/pre-commit`
+- `.husky/commit-msg`
 - `.github/copilot-instructions.md`
 - shared `.github` templates
 
 Sync updates the shared `.github` surface, including:
 
+- shared Husky hooks such as `.husky/pre-commit` and `.husky/commit-msg`
 - PR and issue templates
 - commit template
 - Dependabot and release config
+
+`lint-staged.config.cjs` is bootstrap-only so consumer repos can customize it without later syncs overwriting local changes.

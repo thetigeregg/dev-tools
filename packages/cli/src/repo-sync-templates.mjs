@@ -5,7 +5,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { loadDevxConfig } from './config.mjs';
 
-const TEMPLATES_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'templates');
+const TEMPLATES_ROOT = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..',
+  'templates'
+);
 
 const TEMPLATE_GROUPS = [
   {
@@ -13,6 +17,13 @@ const TEMPLATE_GROUPS = [
     sourceRoot: path.join(TEMPLATES_ROOT, 'root'),
     targetRoot: (repoRoot) => repoRoot,
     modes: ['bootstrap'],
+  },
+  {
+    name: 'root-shared',
+    sourceRoot: path.join(TEMPLATES_ROOT, 'root-shared'),
+    targetRoot: (repoRoot) => repoRoot,
+    modes: ['bootstrap', 'sync'],
+    syncExcludes: new Set(['lint-staged.config.cjs']),
   },
   {
     name: 'github',
@@ -49,11 +60,7 @@ function normalizeTemplateRoot(templateRoot) {
   return templateRoot instanceof URL ? fileURLToPath(templateRoot) : templateRoot;
 }
 
-export function buildTemplateSyncPlan({
-  repoRoot,
-  mode = 'sync',
-  groups = TEMPLATE_GROUPS,
-} = {}) {
+export function buildTemplateSyncPlan({ repoRoot, mode = 'sync', groups = TEMPLATE_GROUPS } = {}) {
   const plan = [];
 
   for (const group of groups) {

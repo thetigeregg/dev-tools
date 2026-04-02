@@ -9,6 +9,13 @@ test('buildTemplateSyncPlan maps shared github templates into repo .github paths
     mode: 'sync',
     groups: [
       {
+        name: 'root-shared',
+        sourceRoot: new URL('../templates/root-shared', import.meta.url),
+        targetRoot: (repoRoot) => repoRoot,
+        modes: ['bootstrap', 'sync'],
+        syncExcludes: new Set(['lint-staged.config.cjs']),
+      },
+      {
         name: 'github',
         sourceRoot: new URL('../templates/github', import.meta.url),
         targetRoot: (repoRoot) => `${repoRoot}/.github`,
@@ -18,9 +25,11 @@ test('buildTemplateSyncPlan maps shared github templates into repo .github paths
     ],
   });
 
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.husky/pre-commit'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/pull_request_template.md'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/ISSUE_TEMPLATE/bug.yml'));
   assert.ok(!plan.some((item) => item.relativeTargetPath === '.github/copilot-instructions.md'));
+  assert.ok(!plan.some((item) => item.relativeTargetPath === 'lint-staged.config.cjs'));
 });
 
 test('buildTemplateSyncPlan includes root stubs and defaults during bootstrap', () => {
@@ -35,6 +44,13 @@ test('buildTemplateSyncPlan includes root stubs and defaults during bootstrap', 
         modes: ['bootstrap'],
       },
       {
+        name: 'root-shared',
+        sourceRoot: new URL('../templates/root-shared', import.meta.url),
+        targetRoot: (repoRoot) => repoRoot,
+        modes: ['bootstrap', 'sync'],
+        syncExcludes: new Set(['lint-staged.config.cjs']),
+      },
+      {
         name: 'github',
         sourceRoot: new URL('../templates/github', import.meta.url),
         targetRoot: (repoRoot) => `${repoRoot}/.github`,
@@ -47,6 +63,8 @@ test('buildTemplateSyncPlan includes root stubs and defaults during bootstrap', 
   assert.ok(plan.some((item) => item.relativeTargetPath === 'AGENTS.md'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.prettierrc.cjs'));
   assert.ok(plan.some((item) => item.relativeTargetPath === 'devx.config.mjs'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === 'lint-staged.config.cjs'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.husky/commit-msg'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/copilot-instructions.md'));
 });
 
@@ -99,9 +117,7 @@ test('syncTemplates copies planned files, supports dry-run, and can skip existin
   });
 
   assert.deepEqual(result, { fileCount: 2, wroteFiles: true, skippedCount: 1 });
-  assert.deepEqual(mkdirs, [
-    { directoryPath: '/repo', options: { recursive: true } },
-  ]);
+  assert.deepEqual(mkdirs, [{ directoryPath: '/repo', options: { recursive: true } }]);
   assert.deepEqual(writes, [
     {
       sourcePath: '/templates/root/AGENTS.md',

@@ -13,6 +13,7 @@
     "smoke": "node ./scripts/smoke-exports.mjs",
     "ci": "npm run test && npm run smoke",
     "format": "prettier . --check",
+    "prepare": "husky",
     "deps:install-all": "devx deps install-all",
     "deps:ci-all": "devx deps ci-all",
     "deps:audit": "devx deps audit-all",
@@ -32,8 +33,11 @@
     "@commitlint/cli": "^20.5.0",
     "@thetigeregg/commitlint-config": "workspace:*",
     "@thetigeregg/dev-cli": "workspace:*",
+    "@thetigeregg/lint-staged-config": "workspace:*",
     "@thetigeregg/ncu-config": "workspace:*",
     "@thetigeregg/prettier-config": "workspace:*",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "npm-check-updates": "^20.0.0",
     "prettier": "^3.8.1"
   }
