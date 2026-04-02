@@ -184,3 +184,16 @@ test('runReleaseVersionCli no-ops when HEAD already matches the latest release t
   assert.equal(readFileSync(path.join(repoRoot, 'package.json'), 'utf8'), beforePackage);
   assert.equal(readFileSync(path.join(repoRoot, 'CHANGELOG.md'), 'utf8'), beforeChangelog);
 });
+
+test('runReleaseVersionCli throws when package.json drifts from the latest tag with no new commits', async () => {
+  const repoRoot = createFixtureRepo();
+  writeFileSync(
+    path.join(repoRoot, 'package.json'),
+    JSON.stringify({ name: 'fixture-app', version: '1.2.4', private: true }, null, 2) + '\n'
+  );
+
+  await assert.rejects(
+    runReleaseVersionCli({ cwd: repoRoot, argv: ['--dry-run'] }),
+    /Current package\.json version \(1\.2\.4\) does not match latest tag version \(1\.2\.3\)/
+  );
+});

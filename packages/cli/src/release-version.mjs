@@ -204,6 +204,14 @@ export async function runReleaseVersionCli({
   const range = latestTag ? `${latestTag}..HEAD` : 'HEAD';
   const commits = getCommitMessages(range, { cwd: config.repoRoot });
   if (latestTag && commits.length === 0) {
+    if (latestTagVersion && latestTagVersion !== currentVersion) {
+      throw new Error(
+        `Current package.json version (${currentVersion}) does not match latest tag version (${latestTagVersion}). ` +
+          `There are no commits after the latest tag (${latestTag}). Ensure package.json is in sync with the latest ` +
+          `release tag or create a new commit before running the release script.`
+      );
+    }
+
     const parsedCurrentVersion = parseSemver(currentVersion);
 
     setOutput('version', currentVersion);
