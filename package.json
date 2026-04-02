@@ -1,5 +1,5 @@
 {
-  "name": "@sixtopia/dev-tools",
+  "name": "@thetigeregg/dev-tools",
   "private": true,
   "packageManager": "npm@10.9.4",
   "workspaces": [

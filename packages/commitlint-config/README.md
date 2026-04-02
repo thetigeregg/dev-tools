@@ -1,11 +1,11 @@
-# `@sixtopia/commitlint-config`
+# `@thetigeregg/commitlint-config`
 
-Shared commitlint defaults for Sixtopia projects.
+Shared commitlint defaults for TheTigerEgg projects.
 
 Use it from a consumer repo:
 
 ```js
 module.exports = {
-  extends: ['@sixtopia/commitlint-config']
+  extends: ['@thetigeregg/commitlint-config']
 };
 ```

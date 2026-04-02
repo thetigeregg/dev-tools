@@ -1,22 +1,22 @@
-# `@sixtopia/dev-tools`
+# `@thetigeregg/dev-tools`
 
-Shared development tooling for Sixtopia projects.
+Shared development tooling for TheTigerEgg projects.
 
 This repository is a private monorepo for publishable internal packages. It centralizes reusable developer infrastructure so consumer repos can stay thin and project-specific.
 
 ## Packages
 
-- `@sixtopia/dev-cli`: the `devx` CLI for shared workflows such as task/worktree lifecycle, env reconciliation, and multi-package dependency maintenance
-- `@sixtopia/prettier-config`: shared Prettier defaults
-- `@sixtopia/commitlint-config`: shared commitlint defaults
-- `@sixtopia/ncu-config`: shared npm-check-updates policy
+- `@thetigeregg/dev-cli`: the `devx` CLI for shared workflows such as task/worktree lifecycle, env reconciliation, and multi-package dependency maintenance
+- `@thetigeregg/prettier-config`: shared Prettier defaults
+- `@thetigeregg/commitlint-config`: shared commitlint defaults
+- `@thetigeregg/ncu-config`: shared npm-check-updates policy
 
 ## Consumer Setup
 
 Install the shared packages from your private registry:
 
 ```sh
-npm install -D @sixtopia/dev-cli @sixtopia/prettier-config @sixtopia/commitlint-config @sixtopia/ncu-config
+npm install -D @thetigeregg/dev-cli @thetigeregg/prettier-config @thetigeregg/commitlint-config @thetigeregg/ncu-config
 ```
 
 Create a `devx.config.mjs` at the consumer repo root. The shared repo owns the generic mechanics; the consumer repo owns project topology and optional adapter hooks.
@@ -48,7 +48,7 @@ export default {
 - `devx worktree ...` commands delegate to `runWorktreeDev(argv, options?)` from the adapter module.
 - `devx task start ...` will call `bootstrapWorktree(context)` from the adapter when present. If no adapter is configured, the shared CLI skips project bootstrap cleanly.
 
-Keep app-specific service names, Docker behavior, runtime config generation, and one-off repo assumptions in the consumer adapter, not in `@sixtopia/dev-cli`.
+Keep app-specific service names, Docker behavior, runtime config generation, and one-off repo assumptions in the consumer adapter, not in `@thetigeregg/dev-cli`.
 
 ## Consumer Files
 
@@ -65,19 +65,19 @@ Example config re-exports:
 
 ```js
 // .prettierrc.cjs
-module.exports = require('@sixtopia/prettier-config');
+module.exports = require('@thetigeregg/prettier-config');
 ```
 
 ```js
 // commitlint.config.cjs
 module.exports = {
-  extends: ['@sixtopia/commitlint-config']
+  extends: ['@thetigeregg/commitlint-config']
 };
 ```
 
 ```js
 // .ncurc.cjs
-module.exports = require('@sixtopia/ncu-config');
+module.exports = require('@thetigeregg/ncu-config');
 ```
 
 Example scripts:

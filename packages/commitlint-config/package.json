@@ -1,5 +1,5 @@
 {
-  "name": "@sixtopia/commitlint-config",
+  "name": "@thetigeregg/commitlint-config",
   "version": "0.1.0",
   "description": "Shared commitlint configuration for Sixtopia projects.",
   "main": "index.cjs",

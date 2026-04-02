@@ -1,5 +1,5 @@
 {
-  "name": "@sixtopia/dev-cli",
+  "name": "@thetigeregg/dev-cli",
   "version": "0.1.0",
   "description": "Shared Sixtopia development CLI for worktree, env, and dependency workflows.",
   "type": "module",

@@ -1,6 +1,6 @@
-# `@sixtopia/dev-cli`
+# `@thetigeregg/dev-cli`
 
-Shared CLI for Sixtopia repository setup and maintenance workflows.
+Shared CLI for TheTigerEgg repository setup and maintenance workflows.
 
 ## Commands
 

@@ -1,5 +1,5 @@
 {
-  "name": "@sixtopia/ncu-config",
+  "name": "@thetigeregg/ncu-config",
   "version": "0.1.0",
   "description": "Shared npm-check-updates policy for Sixtopia projects.",
   "main": "index.cjs",

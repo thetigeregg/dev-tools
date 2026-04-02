@@ -1,9 +1,9 @@
-# `@sixtopia/prettier-config`
+# `@thetigeregg/prettier-config`
 
-Shared Prettier defaults for Sixtopia projects.
+Shared Prettier defaults for TheTigerEgg projects.
 
 Use it from a consumer repo:
 
 ```js
-module.exports = require('@sixtopia/prettier-config');
+module.exports = require('@thetigeregg/prettier-config');
 ```

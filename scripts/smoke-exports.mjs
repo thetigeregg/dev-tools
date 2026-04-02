@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 
-const prettierConfig = await import('@sixtopia/prettier-config');
-const commitlintConfig = await import('@sixtopia/commitlint-config');
-const ncuConfig = await import('@sixtopia/ncu-config');
-const devCli = await import('@sixtopia/dev-cli');
+const prettierConfig = await import('@thetigeregg/prettier-config');
+const commitlintConfig = await import('@thetigeregg/commitlint-config');
+const ncuConfig = await import('@thetigeregg/ncu-config');
+const devCli = await import('@thetigeregg/dev-cli');
 
 assert.equal(typeof prettierConfig.default.printWidth, 'number');
 assert.deepEqual(commitlintConfig.default.extends, ['@commitlint/config-conventional']);

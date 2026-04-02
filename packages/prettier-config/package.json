@@ -1,5 +1,5 @@
 {
-  "name": "@sixtopia/prettier-config",
+  "name": "@thetigeregg/prettier-config",
   "version": "0.1.0",
   "description": "Shared Prettier defaults for Sixtopia projects.",
   "main": "index.cjs",
