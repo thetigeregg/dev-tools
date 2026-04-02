@@ -55,7 +55,7 @@ jobs:
             exit 0
           fi
 
-          changeset_files="$(printf '%s\n' "$changed_files" | grep '^\.changeset/.+\.md$' || true)"
+          changeset_files="$(printf '%s\n' "$changed_files" | grep -E '^\.changeset/.+\.md$' || true)"
           if [[ -n "$changeset_files" ]]; then
             echo "Changeset detected."
             exit 0
