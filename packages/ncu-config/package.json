@@ -11,7 +11,10 @@
     "index.cjs",
     "README.md"
   ],
-  "license": "UNLICENSED",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/thetigeregg/dev-tools.git",

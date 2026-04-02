@@ -11,7 +11,10 @@
     "index.cjs",
     "README.md"
   ],
-  "license": "UNLICENSED",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/thetigeregg/dev-tools.git",
@@ -21,7 +24,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@commitlint/config-conventional": "^19.8.1"
+    "@commitlint/config-conventional": "^20.5.0"
   },
   "scripts": {
     "test": "node --test test/*.test.cjs"
