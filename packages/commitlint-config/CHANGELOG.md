@@ -1,5 +1,11 @@
 # @thetigeregg/commitlint-config
 
+## 0.4.1
+
+### Patch Changes
+
+- 4ffb722: align repository urls
+
 ## 0.4.0
 
 ### Minor Changes
