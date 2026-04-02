@@ -1,0 +1,7 @@
+{
+  "name": "@sixtopia/dev-tools",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ]
+}

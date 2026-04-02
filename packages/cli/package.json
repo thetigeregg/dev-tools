@@ -1,0 +1,9 @@
+{
+  "name": "@sixtopia/dev-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "devx": "src/index.mjs"
+  }
+}
