@@ -1,6 +1,6 @@
 # `@thetigeregg/dev-cli`
 
-Shared CLI for TheTigerEgg repository setup and maintenance workflows.
+Shared CLI for thetigeregg repository setup and maintenance workflows.
 
 ## Commands
 

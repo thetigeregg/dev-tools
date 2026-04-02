@@ -1,7 +1,7 @@
 {
   "name": "@thetigeregg/dev-cli",
   "version": "0.2.1",
-  "description": "Shared Sixtopia development CLI for worktree, env, and dependency workflows.",
+  "description": "Shared thetigeregg development CLI for worktree, env, and dependency workflows.",
   "type": "module",
   "bin": {
     "devx": "src/index.mjs"
