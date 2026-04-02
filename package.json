@@ -9,11 +9,22 @@
     "test": "npm run test --workspaces --if-present",
     "smoke": "node ./scripts/smoke-exports.mjs",
     "ci": "npm run test && npm run smoke",
+    "format": "prettier . --check",
+    "deps:audit": "npm audit --workspaces --include-workspace-root",
+    "deps:ncu": "devx deps ncu-all",
+    "commitlint": "commitlint --from=HEAD~1 --to=HEAD --verbose",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "changeset publish"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.6"
+    "@changesets/cli": "^2.29.6",
+    "@commitlint/cli": "^19.8.1",
+    "@thetigeregg/commitlint-config": "workspace:*",
+    "@thetigeregg/dev-cli": "workspace:*",
+    "@thetigeregg/ncu-config": "workspace:*",
+    "@thetigeregg/prettier-config": "workspace:*",
+    "npm-check-updates": "^17.1.16",
+    "prettier": "^3.5.3"
   }
 }
