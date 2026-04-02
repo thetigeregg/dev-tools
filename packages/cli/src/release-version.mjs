@@ -13,9 +13,18 @@ function run(command, { cwd }) {
 }
 
 export function parseSemver(version) {
+  const parsed = tryParseSemver(version);
+  if (!parsed) {
+    throw new Error(`Invalid semver version: ${version}`);
+  }
+
+  return parsed;
+}
+
+function tryParseSemver(version) {
   const match = version.match(/^(\d+)\.(\d+)\.(\d+)$/);
   if (!match) {
-    throw new Error(`Invalid semver version: ${version}`);
+    return null;
   }
 
   return {
@@ -40,8 +49,11 @@ export function bumpVersion(version, bumpType) {
 }
 
 function compareSemver(leftVersion, rightVersion) {
-  const left = parseSemver(leftVersion);
-  const right = parseSemver(rightVersion);
+  const left = tryParseSemver(leftVersion);
+  const right = tryParseSemver(rightVersion);
+  if (!left || !right) {
+    return null;
+  }
 
   if (left.major !== right.major) {
     return left.major - right.major;
@@ -55,7 +67,7 @@ function compareSemver(leftVersion, rightVersion) {
 }
 
 function getLatestTag({ cwd, tagPrefix }) {
-  const tags = execFileSync('git', ['tag', '--list', `${tagPrefix}*`, '--sort=-v:refname'], {
+  const tags = execFileSync('git', ['tag', '--list', '--sort=-v:refname'], {
     cwd,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -64,7 +76,12 @@ function getLatestTag({ cwd, tagPrefix }) {
     return null;
   }
 
-  return tags.split('\n')[0] ?? null;
+  return (
+    tags
+      .split('\n')
+      .map((tag) => tag.trim())
+      .find((tag) => tag.startsWith(tagPrefix)) ?? null
+  );
 }
 
 function getCommitMessages(range, { cwd }) {
@@ -165,8 +182,10 @@ export async function runReleaseVersionCli({
   const latestTag = getLatestTag({ cwd: config.repoRoot, tagPrefix });
   const latestTagVersion =
     latestTag && latestTag.startsWith(tagPrefix) ? latestTag.slice(tagPrefix.length) : latestTag;
+  const comparedLatestTagVersion =
+    latestTagVersion && compareSemver(latestTagVersion, currentVersion);
   const releaseBaseVersion =
-    latestTagVersion && compareSemver(latestTagVersion, currentVersion) > 0
+    typeof comparedLatestTagVersion === 'number' && comparedLatestTagVersion > 0
       ? latestTagVersion
       : currentVersion;
   const range = latestTag ? `${latestTag}..HEAD` : 'HEAD';

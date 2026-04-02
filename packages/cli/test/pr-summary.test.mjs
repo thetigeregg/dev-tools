@@ -12,5 +12,6 @@ test('buildSummaryPrompt includes changed files and diff context', () => {
   assert.match(prompt, /diff --git a\/file b\/file/);
   assert.match(prompt, /pre-PR review/i);
   assert.match(prompt, /regression risks/i);
+  assert.match(prompt, /mention tests that are present in the diff/i);
   assert.match(prompt, /security, production-safety, or performance concerns/i);
 });

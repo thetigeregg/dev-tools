@@ -403,7 +403,8 @@ export function getSimulatorCertificateStatus(context) {
     hasRootCa: isReadableFile(rootCaPath),
     certPath: context.simulatorCertFile,
     keyPath: context.simulatorKeyFile,
-    isConfigured: isReadableFile(context.simulatorCertFile) && isReadableFile(context.simulatorKeyFile),
+    isConfigured:
+      isReadableFile(context.simulatorCertFile) && isReadableFile(context.simulatorKeyFile),
   };
 }
 
@@ -415,7 +416,12 @@ export function printWorktreeInfo(context) {
   console.log('Ports:');
 
   for (const [name, port] of Object.entries(context.runtime.ports)) {
-    console.log(`  ${name.toLowerCase().replace(/_host_port$/, '').replace(/_port$/, '')}: ${port}`);
+    console.log(
+      `  ${name
+        .toLowerCase()
+        .replace(/_host_port$/, '')
+        .replace(/_port$/, '')}: ${port}`
+    );
   }
 
   if (context.runtime.ports.FRONTEND_PORT) {
@@ -496,7 +502,8 @@ export function createFrontendProxyConfig(context) {
 export function resolveFrontendServeConfiguration(context) {
   const localEnvironmentPath = path.resolve(
     context.cwd,
-    context.config.worktree.frontend?.localEnvironmentFile ?? 'src/environments/environment.local.ts'
+    context.config.worktree.frontend?.localEnvironmentFile ??
+      'src/environments/environment.local.ts'
   );
 
   if (existsSync(localEnvironmentPath)) {
@@ -511,6 +518,11 @@ export function resolveFrontendServeConfiguration(context) {
 export function runFrontendDev(context, options = {}) {
   const proxyPath = createFrontendProxyConfig(context);
   const frontendConfig = context.config.worktree.frontend ?? {};
+  const host =
+    options.host ??
+    (options.external
+      ? (frontendConfig.externalHost ?? '0.0.0.0')
+      : (frontendConfig.defaultHost ?? '127.0.0.1'));
 
   if (frontendConfig.prestartCommand) {
     context.runShell(frontendConfig.prestartCommand, context.createSharedEnv());
@@ -521,7 +533,7 @@ export function runFrontendDev(context, options = {}) {
     '--port',
     String(context.runtime.ports.FRONTEND_PORT),
     '--host',
-    options.host ?? frontendConfig.defaultHost ?? '127.0.0.1',
+    host,
     '--proxy-config',
     proxyPath,
     '--configuration',
@@ -529,13 +541,20 @@ export function runFrontendDev(context, options = {}) {
   ];
 
   if (options.external) {
-    console.log('Simulator browser mode: dev server is available on all interfaces.');
+    if (host === '0.0.0.0' || host === '::') {
+      console.log('Simulator browser mode: dev server is available on all interfaces.');
+    } else {
+      console.log(`Simulator browser mode: dev server is bound to ${host}.`);
+    }
     console.log(
       `Open Safari in iPhone Simulator at http://localhost:${String(context.runtime.ports.FRONTEND_PORT)}`
     );
   }
 
-  context.runShell(`${serveCommand} ${serveArgs.map(shellEscape).join(' ')}`, context.createSharedEnv());
+  context.runShell(
+    `${serveCommand} ${serveArgs.map(shellEscape).join(' ')}`,
+    context.createSharedEnv()
+  );
 }
 
 export function buildPwa(context) {
@@ -543,7 +562,10 @@ export function buildPwa(context) {
   if (pwaConfig.prebuildCommand) {
     context.runShell(pwaConfig.prebuildCommand, context.createSharedEnv());
   }
-  context.runShell(pwaConfig.buildCommand ?? 'npx ng build --configuration production', context.createSharedEnv());
+  context.runShell(
+    pwaConfig.buildCommand ?? 'npx ng build --configuration production',
+    context.createSharedEnv()
+  );
 }
 
 export function listBuildOutputEntries(buildRoot) {
@@ -588,7 +610,9 @@ export function printMissingCertificateInstructions(context, logger = console) {
   logger.error('PWA HTTPS certificates are not configured.');
   logger.error(`Expected cert: ${certStatus.certPath}`);
   logger.error(`Expected key:  ${certStatus.keyPath}`);
-  logger.error('Run `npm run dev:pwa:certs:setup` to generate the required localhost certificate files.');
+  logger.error(
+    'Run `npm run dev:pwa:certs:setup` to generate the required localhost certificate files.'
+  );
 }
 
 export function servePwaRootCertificate(context) {
@@ -644,7 +668,9 @@ export function runPwaServe(context) {
   }
 
   console.log('Installed PWA mode: serving production build over HTTPS for simulator testing.');
-  console.log(`Open Safari in iPhone Simulator at https://localhost:${String(context.runtime.ports.PWA_HOST_PORT)}`);
+  console.log(
+    `Open Safari in iPhone Simulator at https://localhost:${String(context.runtime.ports.PWA_HOST_PORT)}`
+  );
   console.log('Then use Share -> Add to Home Screen to launch the standalone PWA.');
 
   context.run('node', [
@@ -689,8 +715,14 @@ export async function runPwaCommand(
 
   if (command === 'serve' || command === 'simulator') {
     const requiredPort =
-      context.config.worktree.pwa?.requiredReachabilityPort ??
-      context.runtime.ports.EDGE_HOST_PORT;
+      context.config.worktree.pwa?.requiredReachabilityPort ?? context.runtime.ports.EDGE_HOST_PORT;
+    if (!Number.isFinite(requiredPort)) {
+      logger.error(
+        'PWA reachability check requires worktree.pwa.requiredReachabilityPort or runtime.ports.EDGE_HOST_PORT to be configured.'
+      );
+      exitFn(1);
+      return;
+    }
     const edgeReachable = await isPortReachableFn(requiredPort);
     if (!edgeReachable) {
       logger.error(

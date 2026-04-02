@@ -5,6 +5,7 @@ import {
   buildComposeArgs,
   buildNvmAwareInstallCommand,
   createWorktreeContext,
+  runFrontendDev,
   runPwaCommand,
 } from '../src/api.mjs';
 
@@ -70,7 +71,10 @@ test('createWorktreeContext derives runtime, compose args, and env helpers from 
     'docker-compose.dev.yml',
   ]);
   assert.ok(context.runtime.projectName.startsWith('gameshelf-feat-'));
-  assert.equal(context.createPwaStackEnv({ NODE_ENV: 'development' }).MANUALS_PUBLIC_BASE_URL, '/manuals');
+  assert.equal(
+    context.createPwaStackEnv({ NODE_ENV: 'development' }).MANUALS_PUBLIC_BASE_URL,
+    '/manuals'
+  );
   assert.equal(context.createSharedEnv({ processEnv: { PATH: '/usr/bin' } }).PATH, '/usr/bin');
 });
 
@@ -105,4 +109,77 @@ test('runPwaCommand simulator reconciles, builds, and serves in order', async ()
   });
 
   assert.deepEqual(operations, ['reconcile', 'build', 'serve']);
+});
+
+test('runFrontendDev defaults to an external bind host for simulator mode', async () => {
+  const context = await createWorktreeContext({
+    cwd: process.cwd(),
+    processEnv: {},
+    config: {
+      ...config,
+      repoRoot: process.cwd(),
+    },
+  });
+  const commands = [];
+  const previousLog = console.log;
+
+  console.log = () => {};
+  context.runShell = (command) => {
+    commands.push(command);
+  };
+
+  try {
+    runFrontendDev(context, { external: true });
+  } finally {
+    console.log = previousLog;
+  }
+
+  assert.equal(commands.length, 2);
+  assert.match(commands[1], /'--host' '0\.0\.0\.0'/);
+});
+
+test('runPwaCommand exits with a clear error when no reachability port is configured', async () => {
+  const context = await createWorktreeContext({
+    cwd: config.repoRoot,
+    processEnv: {},
+    config: {
+      ...config,
+      worktree: {
+        ...config.worktree,
+        runtime: {
+          ...config.worktree.runtime,
+          ports: {
+            ...config.worktree.runtime.ports,
+          },
+        },
+        pwa: {
+          ...config.worktree.pwa,
+        },
+      },
+    },
+  });
+  delete context.runtime.ports.EDGE_HOST_PORT;
+  delete context.config.worktree.pwa.requiredReachabilityPort;
+
+  const errors = [];
+
+  await runPwaCommand(context, 'serve', {
+    isPortReachableFn: async () => {
+      throw new Error('reachability should not run without a port');
+    },
+    logger: {
+      log() {},
+      error(message) {
+        errors.push(message);
+      },
+    },
+    exitFn(code) {
+      throw new Error(`exit:${String(code)}`);
+    },
+  }).catch((error) => {
+    assert.equal(error.message, 'exit:1');
+  });
+
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /requiredReachabilityPort or runtime\.ports\.EDGE_HOST_PORT/);
 });

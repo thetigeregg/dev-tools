@@ -142,3 +142,15 @@ test('runReleaseVersionCli treats regex-like tag prefixes as plain text', async 
 
   assert.equal(result.version, '1.4.1');
 });
+
+test('runReleaseVersionCli ignores prerelease tags that do not parse as x.y.z', async () => {
+  const repoRoot = createFixtureRepo();
+  run('git tag v1.4.0-rc.0', repoRoot);
+  writeFileSync(path.join(repoRoot, 'fix.txt'), 'bug fix\n');
+  run('git add fix.txt', repoRoot);
+  run('git commit -m "fix(cli): ignore prerelease tags for versioning"', repoRoot);
+
+  const result = await runReleaseVersionCli({ cwd: repoRoot, argv: ['--dry-run'] });
+
+  assert.equal(result.version, '1.2.4');
+});
