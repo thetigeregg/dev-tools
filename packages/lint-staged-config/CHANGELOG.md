@@ -1,0 +1,8 @@
+# @thetigeregg/lint-staged-config
+
+## 0.2.0
+
+### Minor Changes
+
+- b02deb1: format code
+- da974db: Introduce new devx commands, shared templates, and a release helper by migrating the remaining CLI logic into @thetigeregg/dev-cli and @thetigeregg/lint-staged-config.
