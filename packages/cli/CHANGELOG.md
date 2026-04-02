@@ -1,5 +1,11 @@
 # @thetigeregg/dev-cli
 
+## 0.4.2
+
+### Patch Changes
+
+- 4ee614e: bump
+
 ## 0.4.1
 
 ### Patch Changes
