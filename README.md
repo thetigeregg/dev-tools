@@ -112,6 +112,16 @@ This repo uses Changesets for versioning and release management.
 2. Run `npm run changeset` and describe the package-level impact.
 3. Merge the generated changeset with your work.
 4. On `main`, the Changesets GitHub workflow opens or updates a release PR.
-5. Merging that PR versions packages and publishes them with `NPM_TOKEN`.
+5. Merging that PR versions packages and publishes them through npm trusted publishing from GitHub Actions.
 
 The repo root stays private; only workspace packages are published.
+
+### Trusted Publishing Setup
+
+Configure npm trusted publishing for each publishable package using:
+
+- GitHub user or organization: `thetigeregg`
+- Repository: `dev-tools`
+- Workflow filename: `release.yml`
+
+The release workflow is configured for OIDC-based publishing and does not require an `NPM_TOKEN`.
