@@ -72,3 +72,25 @@ test('loadDevxConfig normalizes nullable pr and release sections', async () => {
   assert.deepEqual(config.pr, {});
   assert.deepEqual(config.release, {});
 });
+
+test('loadDevxConfig normalizes array config sections to plain objects', async () => {
+  const repoRoot = makeTempRepo();
+  fs.writeFileSync(
+    path.join(repoRoot, 'devx.config.mjs'),
+    `export default {
+      env: [],
+      pr: [],
+      release: [],
+      worktree: []
+    };
+    `,
+    'utf8'
+  );
+
+  const config = await loadDevxConfig({ cwd: repoRoot });
+
+  assert.deepEqual(config.env, {});
+  assert.deepEqual(config.pr, {});
+  assert.deepEqual(config.release, {});
+  assert.deepEqual(config.worktree, {});
+});

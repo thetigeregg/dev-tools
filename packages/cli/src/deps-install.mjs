@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -17,6 +18,62 @@ export function buildInstallArgs(projectPath, mode = 'install') {
   return ['--prefix', projectPath, installCommand];
 }
 
+function hasWorkspaceConfig(repoRoot) {
+  const packageJsonPath = path.join(repoRoot, 'package.json');
+  const lockfilePath = path.join(repoRoot, 'package-lock.json');
+
+  if (!fs.existsSync(packageJsonPath) || !fs.existsSync(lockfilePath)) {
+    return false;
+  }
+
+  try {
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    return Array.isArray(packageJson.workspaces) && packageJson.workspaces.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+export function buildWorkspaceCiArgs() {
+  return ['ci', '--workspaces', '--include-workspace-root'];
+}
+
+export function runWorkspaceCiStep({
+  repoRoot,
+  npmCommand = NPM_COMMAND,
+  spawn = spawnSync,
+  log = console.log,
+  errorLog = console.error,
+}) {
+  const args = buildWorkspaceCiArgs();
+
+  log(`\n==============================`);
+  log(`📦 Installing workspace dependencies (ci)`);
+  log(`==============================`);
+  log(`Running: ${[npmCommand, ...args].join(' ')}`);
+
+  const result = spawn(npmCommand, args, {
+    cwd: repoRoot,
+    stdio: 'inherit',
+  });
+
+  if (result.error) {
+    errorLog(`❌ workspace install failed to run`);
+    errorLog(result.error.message);
+    return { name: 'workspaces', exitCode: 1 };
+  }
+
+  const exitCode = typeof result.status === 'number' ? result.status : 1;
+
+  if (exitCode === 0) {
+    log(`✅ workspace ci completed`);
+  } else {
+    errorLog(`⚠️ workspace ci exited with code ${exitCode}`);
+  }
+
+  return { name: 'workspaces', exitCode };
+}
+
 export function runInstallStep(
   project,
   {
@@ -28,7 +85,7 @@ export function runInstallStep(
     errorLog = console.error,
   }
 ) {
-  const projectPath = project.path === '.' ? '.' : project.absolutePath ?? project.path;
+  const projectPath = project.path === '.' ? '.' : (project.absolutePath ?? project.path);
   const args = buildInstallArgs(projectPath, mode);
 
   log(`\n==============================`);
@@ -67,6 +124,25 @@ export function runInstallAll({
   log = console.log,
   errorLog = console.error,
 } = {}) {
+  if (mode === 'ci' && hasWorkspaceConfig(repoRoot)) {
+    const result = runWorkspaceCiStep({
+      repoRoot,
+      npmCommand,
+      spawn,
+      log,
+      errorLog,
+    });
+
+    if (result.exitCode === 0) {
+      log(`\n✅ All ${mode} steps completed successfully`);
+      return { failures: [], exitCode: 0 };
+    }
+
+    errorLog(`\n⚠️ ${mode} completed with remaining failures:`);
+    errorLog(`- ${result.name} (exit code ${result.exitCode})`);
+    return { failures: [result], exitCode: 1 };
+  }
+
   const failures = [];
 
   for (const project of projects) {
@@ -115,5 +191,7 @@ export function isEntrypoint({ argv1 = process.argv[1], moduleUrl = import.meta.
 }
 
 if (isEntrypoint()) {
-  process.exit((await runInstallAllCli({ mode: process.argv.includes('--ci') ? 'ci' : 'install' })).exitCode);
+  process.exit(
+    (await runInstallAllCli({ mode: process.argv.includes('--ci') ? 'ci' : 'install' })).exitCode
+  );
 }
