@@ -1,5 +1,11 @@
 # @thetigeregg/commitlint-config
 
+## 0.4.0
+
+### Minor Changes
+
+- b02deb1: format code
+
 ## 0.3.0
 
 ### Minor Changes
