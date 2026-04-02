@@ -1,5 +1,11 @@
 # @thetigeregg/lint-staged-config
 
+## 0.2.3
+
+### Patch Changes
+
+- 28c6e8d: fix release
+
 ## 0.2.2
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@thetigeregg/dev-cli",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Shared thetigeregg development CLI for worktree, env, and dependency workflows.",
   "type": "module",
   "bin": {

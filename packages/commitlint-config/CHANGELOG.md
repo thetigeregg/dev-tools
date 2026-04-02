@@ -1,5 +1,11 @@
 # @thetigeregg/commitlint-config
 
+## 0.4.3
+
+### Patch Changes
+
+- 28c6e8d: fix release
+
 ## 0.4.2
 
 ### Patch Changes
