@@ -72,6 +72,7 @@ const config = {
 test('createWorktreeContext derives runtime, compose args, and env helpers from config', async () => {
   const context = await createWorktreeContext({
     cwd: config.repoRoot,
+    argv: ['bootstrap', '--force'],
     processEnv: { PATH: '/usr/bin' },
     config,
   });
@@ -84,6 +85,7 @@ test('createWorktreeContext derives runtime, compose args, and env helpers from 
     'docker-compose.dev.yml',
   ]);
   assert.ok(context.runtime.projectName.startsWith('gameshelf-feat-'));
+  assert.deepEqual(context.args, ['bootstrap', '--force']);
   assert.equal(
     context.createPwaStackEnv({ NODE_ENV: 'development' }).MANUALS_PUBLIC_BASE_URL,
     '/manuals'

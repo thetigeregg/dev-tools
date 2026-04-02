@@ -73,6 +73,17 @@ test('extractSnippet ignores paths that escape the repo root', () => {
   assert.equal(extractSnippet(path.join(parentDir, 'outside.js'), [1], { repoRoot }), '');
 });
 
+test('extractSnippet allows repo files whose names begin with dot-dot', () => {
+  const repoRoot = mkdtempSync(path.join(os.tmpdir(), 'dev-cli-pr-agent-dotdot-'));
+  const filePath = path.join(repoRoot, '..config.js');
+
+  writeFileSync(filePath, ['line 1', 'line 2', 'target 3'].join('\n'));
+
+  const snippet = extractSnippet('..config.js', [3], { repoRoot });
+
+  assert.match(snippet, /target 3/);
+});
+
 test('parseArgs accepts already-sliced argv arrays', () => {
   assert.deepEqual(parseArgs(['123', '--debug', '--copilot-only', '--include-coverage']), {
     prNumber: '123',

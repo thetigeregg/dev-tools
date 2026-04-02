@@ -118,6 +118,7 @@ function resolveConfigFilePath(repoRoot, filePath) {
 
 export async function createWorktreeContext({
   cwd = process.cwd(),
+  argv = process.argv.slice(2),
   processEnv = process.env,
   config,
   platform = process.platform,
@@ -323,7 +324,7 @@ export async function createWorktreeContext({
   return {
     cwd: resolvedConfig.repoRoot,
     platform,
-    args: process.argv.slice(2),
+    args: argv,
     config: resolvedConfig,
     runtime,
     composeArgs,

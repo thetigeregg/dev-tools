@@ -688,7 +688,13 @@ export function extractSnippet(filePath, lines, { repoRoot = process.cwd() } = {
   const absolutePath = path.resolve(resolvedRepoRoot, filePath);
   const relativePath = path.relative(resolvedRepoRoot, absolutePath);
 
-  if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+  const isTraversal =
+    relativePath === '..' ||
+    relativePath.startsWith(`..${path.sep}`) ||
+    relativePath.startsWith('../') ||
+    relativePath.startsWith('..\\');
+
+  if (isTraversal || path.isAbsolute(relativePath)) {
     return '';
   }
 

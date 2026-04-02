@@ -6,13 +6,16 @@ import { pathToFileURL } from 'node:url';
 
 import { loadDevxConfig } from './config.mjs';
 
+const GIT_MAX_BUFFER_BYTES = 1024 * 1024 * 50;
+
 function runGit(args, cwd) {
   try {
     return execFileSync('git', args, {
       cwd,
       encoding: 'utf8',
       stdio: ['pipe', 'pipe', 'pipe'],
-      maxBuffer: 1024 * 1024 * 10,
+      // Allow large diffs without failing before we can generate the prompt.
+      maxBuffer: GIT_MAX_BUFFER_BYTES,
     });
   } catch (error) {
     console.error(`Failed to run command: git ${args.join(' ')}`);
