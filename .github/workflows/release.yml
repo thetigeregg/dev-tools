@@ -31,13 +31,16 @@ jobs:
 
       - name: Validate npm token bootstrap configuration
         if: ${{ vars.NPM_PUBLISH_AUTH == 'token' }}
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
+          if [ -z "$NPM_TOKEN" ]; then
             echo "NPM_PUBLISH_AUTH is set to token, but the NPM_TOKEN secret is not configured." >&2
             exit 1
           fi
 
-      - uses: changesets/action@v1
+      - name: Publish with trusted publishing
+        uses: changesets/action@v1
         if: ${{ vars.NPM_PUBLISH_AUTH != 'token' }}
         with:
           # A custom token is required so release PR updates can trigger PR workflows.
@@ -45,7 +48,8 @@ jobs:
           version: npm run version-packages
           publish: npm run release
 
-      - uses: changesets/action@v1
+      - name: Publish with npm token bootstrap
+        uses: changesets/action@v1
         if: ${{ vars.NPM_PUBLISH_AUTH == 'token' }}
         with:
           # A custom token is required so release PR updates can trigger PR workflows.
