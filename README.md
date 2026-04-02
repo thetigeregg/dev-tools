@@ -119,6 +119,22 @@ npm run deps:ncu
 npm run format
 ```
 
+## Release Hygiene
+
+PRs that change publishable package files under `packages/` are expected to include a changeset created with:
+
+```sh
+npm run changeset
+```
+
+The `Changeset Required` GitHub Action enforces this on pull requests.
+
+If a PR touches package files but should not trigger a release, add the `no-release` label. The workflow also ignores package-only changes to:
+
+- `README.md`
+- `CHANGELOG.md`
+- `test/`
+
 ## Releases
 
 This repo uses Changesets for versioning and release management.
