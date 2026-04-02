@@ -1,6 +1,6 @@
 # `@thetigeregg/commitlint-config`
 
-Shared commitlint defaults for TheTigerEgg projects.
+Shared commitlint defaults for thetigeregg projects.
 
 Use it from a consumer repo:
 

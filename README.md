@@ -1,6 +1,6 @@
 # `@thetigeregg/dev-tools`
 
-Shared development tooling for TheTigerEgg projects.
+Shared development tooling for thetigeregg projects.
 
 This repository is a private monorepo for publishable internal packages. It centralizes reusable developer infrastructure so consumer repos can stay thin and project-specific.
 
