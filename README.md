@@ -1,0 +1,117 @@
+# `@sixtopia/dev-tools`
+
+Shared development tooling for Sixtopia projects.
+
+This repository is a private monorepo for publishable internal packages. It centralizes reusable developer infrastructure so consumer repos can stay thin and project-specific.
+
+## Packages
+
+- `@sixtopia/dev-cli`: the `devx` CLI for shared workflows such as task/worktree lifecycle, env reconciliation, and multi-package dependency maintenance
+- `@sixtopia/prettier-config`: shared Prettier defaults
+- `@sixtopia/commitlint-config`: shared commitlint defaults
+- `@sixtopia/ncu-config`: shared npm-check-updates policy
+
+## Consumer Setup
+
+Install the shared packages from your private registry:
+
+```sh
+npm install -D @sixtopia/dev-cli @sixtopia/prettier-config @sixtopia/commitlint-config @sixtopia/ncu-config
+```
+
+Create a `devx.config.mjs` at the consumer repo root. The shared repo owns the generic mechanics; the consumer repo owns project topology and optional adapter hooks.
+
+```js
+export default {
+  projectName: 'game-shelf',
+  branchPrefix: 'feat/',
+  baseBranch: 'main',
+  worktreeRoot: 'worktrees',
+  packageDirs: ['.', 'packages/web', 'packages/api'],
+  env: {
+    exampleFile: '.env.example',
+    localFile: '.env.local',
+    sharedTemplateFile: '~/.config/game-shelf/worktree.env'
+  },
+  worktree: {
+    adapterModule: './tools/devx/worktree-adapter.mjs'
+  }
+};
+```
+
+### Adapter Model
+
+`devx.config.mjs` is the contract between the shared CLI and a consumer repo.
+
+- Use config for stable repo facts such as branch naming, package directories, and env file locations.
+- Use a local adapter module for project-specific orchestration that should not live in the shared core.
+- `devx worktree ...` commands delegate to `runWorktreeDev(argv, options?)` from the adapter module.
+- `devx task start ...` will call `bootstrapWorktree(context)` from the adapter when present. If no adapter is configured, the shared CLI skips project bootstrap cleanly.
+
+Keep app-specific service names, Docker behavior, runtime config generation, and one-off repo assumptions in the consumer adapter, not in `@sixtopia/dev-cli`.
+
+## Consumer Files
+
+Consumer repos should usually contain:
+
+- `devx.config.mjs`
+- `.prettierrc.cjs`
+- `commitlint.config.cjs`
+- `.ncurc.cjs`
+- `package.json` scripts that call `devx`
+- optional local adapter modules
+
+Example config re-exports:
+
+```js
+// .prettierrc.cjs
+module.exports = require('@sixtopia/prettier-config');
+```
+
+```js
+// commitlint.config.cjs
+module.exports = {
+  extends: ['@sixtopia/commitlint-config']
+};
+```
+
+```js
+// .ncurc.cjs
+module.exports = require('@sixtopia/ncu-config');
+```
+
+Example scripts:
+
+```json
+{
+  "scripts": {
+    "task:start": "devx task start",
+    "worktree:cleanup": "devx worktree cleanup --auto",
+    "env:reconcile": "devx env reconcile",
+    "deps:audit": "devx deps audit-all",
+    "deps:update": "devx deps ncu-all"
+  }
+}
+```
+
+## Local Development
+
+```sh
+npm install
+npm test
+npm run smoke
+```
+
+The smoke check verifies that workspace package exports resolve and that the `devx` entrypoint responds to `--help`.
+
+## Releases
+
+This repo uses Changesets for versioning and release management.
+
+1. Make your changes.
+2. Run `npm run changeset` and describe the package-level impact.
+3. Merge the generated changeset with your work.
+4. On `main`, the Changesets GitHub workflow opens or updates a release PR.
+5. Merging that PR versions packages and publishes them with `NPM_TOKEN`.
+
+The repo root stays private; only workspace packages are published.

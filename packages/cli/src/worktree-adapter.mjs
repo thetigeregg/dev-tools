@@ -2,14 +2,23 @@ import { pathToFileURL } from 'node:url';
 
 import { loadDevxConfig } from './config.mjs';
 
-export async function loadWorktreeAdapter({ cwd = process.cwd() } = {}) {
-  const config = await loadDevxConfig({ cwd });
+export async function loadWorktreeAdapterModule({ cwd = process.cwd(), config } = {}) {
+  const resolvedConfig = config ?? (await loadDevxConfig({ cwd }));
 
-  if (!config.worktree.adapterModuleAbsolute) {
+  if (!resolvedConfig.worktree.adapterModuleAbsolute) {
     throw new Error('devx.config.mjs must define worktree.adapterModule for worktree commands');
   }
 
-  const module = await import(pathToFileURL(config.worktree.adapterModuleAbsolute).href);
+  const module = await import(pathToFileURL(resolvedConfig.worktree.adapterModuleAbsolute).href);
+
+  return {
+    config: resolvedConfig,
+    module,
+  };
+}
+
+export async function loadWorktreeAdapter({ cwd = process.cwd() } = {}) {
+  const { config, module } = await loadWorktreeAdapterModule({ cwd });
   if (typeof module.runWorktreeDev !== 'function') {
     throw new Error(
       `${config.worktree.adapterModule} must export runWorktreeDev(argv, options?) for devx worktree commands`

@@ -43,7 +43,9 @@ export async function loadDevxConfig({
   }
 
   const repoRoot = path.dirname(configPath);
+  const defaultProjectName = path.basename(repoRoot);
   const config = {
+    projectName: defaultProjectName,
     branchPrefix: 'feat/',
     baseBranch: 'main',
     worktreeRoot: 'worktrees',

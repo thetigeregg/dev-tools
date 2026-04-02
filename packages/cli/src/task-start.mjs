@@ -5,6 +5,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { loadDevxConfig } from './config.mjs';
+import { loadWorktreeAdapterModule } from './worktree-adapter.mjs';
 
 const SAFE_BRANCH_PATTERN = /^[A-Za-z0-9._/-]+$/;
 
@@ -56,11 +57,38 @@ export function isEntrypoint({ argv1 = process.argv[1], moduleUrl = import.meta.
   return pathToFileURL(path.resolve(argv1)).href === moduleUrl;
 }
 
+export async function runWorktreeBootstrap({ config, worktreePath, branch }) {
+  if (!config.worktree.adapterModuleAbsolute) {
+    console.log('\nNo worktree bootstrap adapter configured. Skipping project-specific bootstrap.\n');
+    return;
+  }
+
+  const { module } = await loadWorktreeAdapterModule({ config });
+
+  if (typeof module.bootstrapWorktree === 'function') {
+    await module.bootstrapWorktree({
+      branch,
+      config,
+      cwd: worktreePath,
+      worktreePath,
+    });
+    return;
+  }
+
+  const adapterPath = path
+    .relative(worktreePath, config.worktree.adapterModuleAbsolute)
+    .replace(/\\/g, '/');
+
+  run(`node ${JSON.stringify(adapterPath)} bootstrap`, {
+    cwd: worktreePath,
+  });
+}
+
 export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
   const config = await loadDevxConfig({ cwd });
 
   if (!name) {
-    console.error('Usage: npm run task:start <task-name>');
+    console.error('Usage: devx task start <task-name>');
     process.exit(1);
   }
 
@@ -171,15 +199,16 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
     console.log('\nBootstrapping worktree environment...\n');
 
     try {
-      const adapterPath = path.relative(worktreePath, config.worktree.adapterModuleAbsolute).replace(/\\/g, '/');
-      run(`node ${JSON.stringify(adapterPath)} bootstrap`, {
-        cwd: worktreePath,
-      });
+      await runWorktreeBootstrap({ config, worktreePath, branch });
     } catch (error) {
       console.error('\nBootstrap script failed.');
-      console.error(
-        `Run "node ${config.worktree.adapterModule} bootstrap" inside ${worktreePath} and retry.\n`
-      );
+      if (config.worktree.adapterModule) {
+        console.error(
+          `Run "node ${config.worktree.adapterModule} bootstrap" inside ${worktreePath} and retry.\n`
+        );
+      } else {
+        console.error('Add worktree.adapterModule to devx.config.mjs to enable project bootstrap hooks.\n');
+      }
       const code = typeof error.status === 'number' ? error.status : 1;
       process.exit(code);
     }

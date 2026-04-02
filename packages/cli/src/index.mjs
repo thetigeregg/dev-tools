@@ -11,9 +11,8 @@ function printHelp() {
   console.log('');
   console.log('Commands:');
   console.log('  devx task start <name>');
-  console.log('  devx worktree info');
-  console.log('  devx worktree bootstrap [--force]');
   console.log('  devx worktree cleanup [--auto] [--dry-run]');
+  console.log('  devx worktree <adapter-command> [...]');
   console.log('  devx env reconcile');
   console.log('  devx deps audit-all [--fix]');
   console.log('  devx deps ncu-all');
