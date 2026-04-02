@@ -31,6 +31,8 @@ jobs:
 
       - uses: changesets/action@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # npm auth is provided via OIDC trusted publishing, not NPM_TOKEN.
+          # A custom token is required so release PR updates can trigger PR workflows.
+          github-token: ${{ secrets.CHANGESETS_GITHUB_TOKEN }}
           version: npm run version-packages
           publish: npm run release
