@@ -157,12 +157,14 @@ export async function createWorktreeContext({
     expandUserPath(processEnv[keyFileEnvVar] && processEnv[keyFileEnvVar].trim()) ||
     path.join(certDir, 'localhost-key.pem');
 
-  const manualsPublicBaseUrl =
-    pwaConfig.manualsPublicBaseUrl ??
-    (runtime.ports.EDGE_HOST_PORT
+  const manualsPublicBaseUrl = Object.hasOwn(pwaConfig, 'manualsPublicBaseUrl')
+    ? pwaConfig.manualsPublicBaseUrl
+    : runtime.ports.EDGE_HOST_PORT
       ? `http://127.0.0.1:${runtime.ports.EDGE_HOST_PORT}/manuals`
-      : '');
-  const pwaManualsPublicBaseUrl = pwaConfig.pwaManualsPublicBaseUrl ?? '/manuals';
+      : '';
+  const pwaManualsPublicBaseUrl = Object.hasOwn(pwaConfig, 'pwaManualsPublicBaseUrl')
+    ? pwaConfig.pwaManualsPublicBaseUrl
+    : '/manuals';
   const buildRoot = path.resolve(
     resolvedConfig.repoRoot,
     frontendConfig.buildRoot ?? pwaConfig.buildRoot ?? 'www/browser'
@@ -492,6 +494,8 @@ export function getSimulatorCertificateStatus(context) {
 
 export function printWorktreeInfo(context) {
   const certStatus = getSimulatorCertificateStatus(context);
+  const seedPath = context.defaultSeedPath();
+  const seedStatus = existsSync(seedPath) ? '[configured]' : '[missing]';
   console.log(`Worktree path: ${context.cwd}`);
   console.log(`Compose project: ${context.runtime.projectName}`);
   console.log(`Port offset: ${context.runtime.portOffset}`);
@@ -552,7 +556,7 @@ export function printWorktreeInfo(context) {
     console.log('Env file: [missing; shared template not configured]');
   }
 
-  console.log(`DB seed file: ${configState(context.defaultSeedPath())}`);
+  console.log(`DB seed file: ${seedStatus} (${seedPath})`);
 }
 
 export function createFrontendProxyConfig(context) {

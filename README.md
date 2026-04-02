@@ -126,15 +126,14 @@ npm install -D @thetigeregg/dev-cli @thetigeregg/prettier-config @thetigeregg/co
 npm run prepare
 ```
 
-3. Add a minimal `devx.config.mjs` for the repo topology you want `devx` to understand.
-
-4. Run the bootstrap command from the repo root:
+3. Run the bootstrap command from the repo root:
 
 ```sh
 npx devx repo bootstrap
 ```
 
 This seeds missing shared defaults without overwriting files that already exist. It is intended for first-time setup.
+If `devx.config.mjs` does not exist yet, bootstrap falls back to the current working directory as the repo root. You can also point at another repo with `--repo-root <path>` or an explicit config file with `--config <path>`.
 
 Bootstrap currently seeds:
 
@@ -144,16 +143,16 @@ Bootstrap currently seeds:
 - shared GitHub templates such as PR, issue, commit, Dependabot, and release templates
 - `.github/copilot-instructions.md`
 
-5. Review the generated files and replace placeholder values in `devx.config.mjs` with real repo settings.
+4. Review the generated files and replace placeholder values in `devx.config.mjs` with real repo settings.
 
-6. Keep project-specific logic local:
+5. Keep project-specific logic local:
 
 - `worktree.adapterModule`
 - app-specific generation scripts
 - app-specific database flows
 - repo-specific CI workflows
 
-7. Run a verification pass:
+6. Run a verification pass:
 
 ```sh
 npm run lint
@@ -195,6 +194,7 @@ npx devx repo sync
 - repo-specific Husky hooks like `.husky/post-checkout`
 
 Some files are intentionally available only as optional starter templates in `packages/cli/templates/root-optional`, such as `.nvmrc`, `.dockerignore`, and `codecov.yml`. These are not applied automatically because they tend to vary more across repos.
+If a repo has not created `devx.config.mjs` yet, you can still target it with `npx devx repo sync --repo-root <path>` or `npx devx repo sync --config <path>`.
 
 4. Re-run the repo’s normal verification:
 

@@ -60,6 +60,66 @@ function normalizeTemplateRoot(templateRoot) {
   return templateRoot instanceof URL ? fileURLToPath(templateRoot) : templateRoot;
 }
 
+function parseOptionalPathArg(argv, flagName, cwd) {
+  const eqArg = argv.find((arg) => arg.startsWith(`${flagName}=`));
+  if (eqArg) {
+    const value = eqArg.slice(flagName.length + 1);
+    return value ? path.resolve(cwd, value) : null;
+  }
+
+  const argIndex = argv.indexOf(flagName);
+  if (argIndex === -1 || !argv[argIndex + 1] || argv[argIndex + 1].startsWith('-')) {
+    return null;
+  }
+
+  return path.resolve(cwd, argv[argIndex + 1]);
+}
+
+function isMissingConfigError(error, configFileName) {
+  return (
+    error instanceof Error && error.message.startsWith(`Unable to find ${configFileName} from `)
+  );
+}
+
+async function resolveRepoTemplateConfig({
+  cwd,
+  argv,
+  mode,
+  loadConfig = loadDevxConfig,
+  configFileName = 'devx.config.mjs',
+}) {
+  const configPath = parseOptionalPathArg(argv, '--config', cwd);
+  const cliRepoRoot = parseOptionalPathArg(argv, '--repo-root', cwd);
+
+  if (configPath) {
+    const config = await loadConfig({
+      cwd: path.dirname(configPath),
+      configFileName: path.basename(configPath),
+    });
+
+    return { config, configPath, cliRepoRoot };
+  }
+
+  try {
+    const config = await loadConfig({ cwd, configFileName });
+    return { config, configPath: null, cliRepoRoot };
+  } catch (error) {
+    if (mode === 'bootstrap' || mode === 'sync') {
+      if (isMissingConfigError(error, configFileName)) {
+        return {
+          config: {
+            repoRoot: cliRepoRoot || cwd,
+          },
+          configPath: null,
+          cliRepoRoot,
+        };
+      }
+    }
+
+    throw error;
+  }
+}
+
 export function assertTemplateRootsExist({
   groups = TEMPLATE_GROUPS,
   mode = 'sync',
@@ -161,8 +221,15 @@ async function runRepoTemplateCommand({
   argv = process.argv.slice(2),
   mode = 'sync',
   groups = TEMPLATE_GROUPS,
+  loadConfig = loadDevxConfig,
+  log = console.log,
 } = {}) {
-  const config = await loadDevxConfig({ cwd });
+  const { config } = await resolveRepoTemplateConfig({
+    cwd,
+    argv,
+    mode,
+    loadConfig,
+  });
   const dryRun = argv.includes('--dry-run');
   assertTemplateRootsExist({ groups, mode });
   const plan = buildTemplateSyncPlan({ repoRoot: config.repoRoot, mode, groups });
@@ -171,10 +238,11 @@ async function runRepoTemplateCommand({
     plan,
     dryRun,
     skipExisting: mode === 'bootstrap',
+    log,
   });
 
   if (!dryRun) {
-    console.log(
+    log(
       `\n${mode === 'bootstrap' ? 'Bootstrapped' : 'Synced'} ${result.fileCount - result.skippedCount} files${result.skippedCount > 0 ? ` (${result.skippedCount} existing skipped)` : ''}.`
     );
   }

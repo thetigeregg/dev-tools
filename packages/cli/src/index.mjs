@@ -30,9 +30,9 @@ function printHelp() {
   console.log('  devx pr summary');
   console.log('  devx pr agent <PR_NUMBER> [--copilot-only] [--include-coverage] [--debug]');
   console.log('  devx release version [--dry-run]');
-  console.log('  devx repo bootstrap [--dry-run]');
-  console.log('  devx repo sync [--dry-run]');
-  console.log('  devx repo sync-templates [--dry-run]');
+  console.log('  devx repo bootstrap [--dry-run] [--repo-root <path>] [--config <path>]');
+  console.log('  devx repo sync [--dry-run] [--repo-root <path>] [--config <path>]');
+  console.log('  devx repo sync-templates [--dry-run] [--repo-root <path>] [--config <path>]');
 }
 
 const argv = process.argv.slice(2);

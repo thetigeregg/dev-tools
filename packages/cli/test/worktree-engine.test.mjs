@@ -10,6 +10,7 @@ import {
   createWorktreeContext,
   ensureLocalEnvFromSharedTemplate,
   listMissingDependencyDirs,
+  printWorktreeInfo,
   resolveShellInvocation,
   runFrontendDev,
   runPwaCommand,
@@ -84,6 +85,29 @@ test('createWorktreeContext derives runtime, compose args, and env helpers from 
     '/manuals'
   );
   assert.equal(context.createSharedEnv({ processEnv: { PATH: '/usr/bin' } }).PATH, '/usr/bin');
+});
+
+test('createWorktreeContext preserves null manualsPublicBaseUrl overrides', async () => {
+  const context = await createWorktreeContext({
+    cwd: config.repoRoot,
+    processEnv: {},
+    config: {
+      ...config,
+      worktree: {
+        ...config.worktree,
+        pwa: {
+          ...config.worktree.pwa,
+          manualsPublicBaseUrl: null,
+        },
+      },
+    },
+  });
+
+  assert.equal(context.manualsPublicBaseUrl, null);
+  assert.equal(
+    Object.hasOwn(context.createSharedEnv({ processEnv: {} }), 'MANUALS_PUBLIC_BASE_URL'),
+    false
+  );
 });
 
 test('createWorktreeContext resolves repo-relative shared env paths from top-level config', async () => {
@@ -391,4 +415,45 @@ test('listMissingDependencyDirs treats root workspace installs as satisfying nes
   });
 
   assert.deepEqual(missing, []);
+});
+
+test('printWorktreeInfo reports DB seed file status and path', () => {
+  const logs = [];
+  const previousLog = console.log;
+
+  console.log = (message) => {
+    logs.push(message);
+  };
+
+  try {
+    printWorktreeInfo({
+      cwd: '/repo/worktrees/feat/example',
+      runtime: {
+        projectName: 'gameshelf-feat-example',
+        portOffset: 0,
+        ports: {},
+      },
+      simulatorCertFile: '/tmp/localhost.pem',
+      simulatorKeyFile: '/tmp/localhost-key.pem',
+      secretsHostDir: '',
+      localEnvPath: path.join(os.tmpdir(), `devx-missing-env-${process.pid}`),
+      sharedEnvFilePath: undefined,
+      createSharedEnv() {
+        return {};
+      },
+      defaultSeedPath() {
+        return path.join(os.tmpdir(), `devx-missing-seed-${process.pid}`);
+      },
+    });
+  } finally {
+    console.log = previousLog;
+  }
+
+  assert.ok(
+    logs.some((message) =>
+      message.includes(
+        `DB seed file: [missing] (${path.join(os.tmpdir(), `devx-missing-seed-${process.pid}`)})`
+      )
+    )
+  );
 });

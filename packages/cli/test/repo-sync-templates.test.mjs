@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import {
   assertTemplateRootsExist,
   buildTemplateSyncPlan,
+  runRepoBootstrapCli,
+  runRepoSyncCli,
   syncTemplates,
 } from '../src/repo-sync-templates.mjs';
 
@@ -173,4 +175,59 @@ test('assertTemplateRootsExist throws a clear error before plan building when a 
       }),
     /Shared template root not found: \/missing\/templates\/github/
   );
+});
+
+test('runRepoBootstrapCli falls back to cwd when devx.config.mjs is missing', async () => {
+  const calls = [];
+
+  const result = await runRepoBootstrapCli({
+    cwd: '/repo',
+    argv: ['--dry-run'],
+    groups: [
+      {
+        name: 'root',
+        sourceRoot: new URL('../templates/root', import.meta.url),
+        targetRoot: (repoRoot) => repoRoot,
+        modes: ['bootstrap'],
+      },
+    ],
+    loadConfig() {
+      throw new Error('Unable to find devx.config.mjs from /repo');
+    },
+    log(message) {
+      calls.push(message);
+    },
+  });
+
+  assert.equal(result.fileCount > 0, true);
+  assert.equal(result.wroteFiles, false);
+  assert.match(calls[0], /Template sync dry run:/);
+  assert.ok(calls.some((message) => message === '- AGENTS.md'));
+});
+
+test('runRepoSyncCli honors --repo-root when devx.config.mjs is missing', async () => {
+  const calls = [];
+
+  const result = await runRepoSyncCli({
+    cwd: '/workspace',
+    argv: ['--dry-run', '--repo-root', 'packages/example'],
+    groups: [
+      {
+        name: 'github',
+        sourceRoot: new URL('../templates/github', import.meta.url),
+        targetRoot: (repoRoot) => `${repoRoot}/.github`,
+        modes: ['sync'],
+      },
+    ],
+    loadConfig() {
+      throw new Error('Unable to find devx.config.mjs from /workspace');
+    },
+    log(message) {
+      calls.push(message);
+    },
+  });
+
+  assert.equal(result.fileCount > 0, true);
+  assert.equal(result.wroteFiles, false);
+  assert.ok(calls.some((message) => message === '- .github/pull_request_template.md'));
 });
