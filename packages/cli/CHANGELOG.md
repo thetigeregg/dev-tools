@@ -1,5 +1,11 @@
 # @thetigeregg/dev-cli
 
+## 0.4.4
+
+### Patch Changes
+
+- 07944e9: fix
+
 ## 0.4.3
 
 ### Patch Changes

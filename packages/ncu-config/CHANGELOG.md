@@ -1,5 +1,11 @@
 # @thetigeregg/ncu-config
 
+## 0.3.4
+
+### Patch Changes
+
+- 07944e9: fix
+
 ## 0.3.3
 
 ### Patch Changes

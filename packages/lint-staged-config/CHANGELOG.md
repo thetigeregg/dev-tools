@@ -1,5 +1,11 @@
 # @thetigeregg/lint-staged-config
 
+## 0.2.4
+
+### Patch Changes
+
+- 07944e9: fix
+
 ## 0.2.3
 
 ### Patch Changes
