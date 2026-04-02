@@ -62,6 +62,17 @@ test('extractSnippet resolves repo-relative files against the repo root', () => 
   }
 });
 
+test('extractSnippet ignores paths that escape the repo root', () => {
+  const parentDir = mkdtempSync(path.join(os.tmpdir(), 'dev-cli-pr-agent-parent-'));
+  const repoRoot = path.join(parentDir, 'repo');
+  mkdirSync(repoRoot, { recursive: true });
+
+  writeFileSync(path.join(parentDir, 'outside.js'), 'secret\n');
+
+  assert.equal(extractSnippet('../outside.js', [1], { repoRoot }), '');
+  assert.equal(extractSnippet(path.join(parentDir, 'outside.js'), [1], { repoRoot }), '');
+});
+
 test('parseArgs accepts already-sliced argv arrays', () => {
   assert.deepEqual(parseArgs(['123', '--debug', '--copilot-only', '--include-coverage']), {
     prNumber: '123',

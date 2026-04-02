@@ -18,7 +18,7 @@ export function buildInstallArgs(projectPath, mode = 'install') {
   return ['--prefix', projectPath, installCommand];
 }
 
-function hasWorkspaceConfig(repoRoot) {
+export function hasWorkspaceConfig(repoRoot) {
   const packageJsonPath = path.join(repoRoot, 'package.json');
   const lockfilePath = path.join(repoRoot, 'package-lock.json');
 

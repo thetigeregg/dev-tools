@@ -13,6 +13,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 import { loadDevxConfig } from './config.mjs';
+import { hasWorkspaceConfig } from './deps-install.mjs';
 import { buildWorktreeRuntime, expandUserPath } from './worktree-runtime.mjs';
 
 function shellEscape(value, platform = process.platform) {
@@ -361,6 +362,13 @@ export function ensureLocalEnvFromSharedTemplate(context, force = false) {
 }
 
 export function listMissingDependencyDirs(context) {
+  const repoRoot = context.config.repoRoot;
+
+  if (repoRoot && hasWorkspaceConfig(repoRoot)) {
+    const rootModulesDir = path.resolve(repoRoot, 'node_modules');
+    return existsSync(rootModulesDir) ? [] : [rootModulesDir];
+  }
+
   return context.config.packageDirPaths
     .filter((pkg) => pkg.path === '.' || packageHasDependencies(pkg.absolutePath))
     .map((pkg) => path.resolve(pkg.absolutePath, 'node_modules'))

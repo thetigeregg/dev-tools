@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -8,6 +9,7 @@ import {
   buildNvmAwareInstallCommand,
   createWorktreeContext,
   ensureLocalEnvFromSharedTemplate,
+  listMissingDependencyDirs,
   resolveShellInvocation,
   runFrontendDev,
   runPwaCommand,
@@ -352,4 +354,41 @@ test('ensureLocalEnvFromSharedTemplate throws a clear error when the template fi
       ),
     /Shared env template not found at/
   );
+});
+
+test('listMissingDependencyDirs treats root workspace installs as satisfying nested packages', () => {
+  const repoRoot = path.join(os.tmpdir(), `devx-workspace-deps-${process.pid}-${Date.now()}`);
+  const packageDir = path.join(repoRoot, 'packages', 'app');
+
+  mkdirSync(path.join(repoRoot, 'node_modules'), { recursive: true });
+  mkdirSync(packageDir, { recursive: true });
+
+  const rootPackageJson = {
+    name: 'workspace-root',
+    private: true,
+    workspaces: ['packages/*'],
+  };
+  const nestedPackageJson = {
+    name: 'app',
+    version: '1.0.0',
+    dependencies: {
+      react: '^19.0.0',
+    },
+  };
+
+  writeFileSync(path.join(repoRoot, 'package.json'), JSON.stringify(rootPackageJson, null, 2));
+  writeFileSync(path.join(repoRoot, 'package-lock.json'), '{}\n');
+  writeFileSync(path.join(packageDir, 'package.json'), JSON.stringify(nestedPackageJson, null, 2));
+
+  const missing = listMissingDependencyDirs({
+    config: {
+      repoRoot,
+      packageDirPaths: [
+        { path: '.', absolutePath: repoRoot, name: 'root' },
+        { path: 'packages/app', absolutePath: packageDir, name: 'app' },
+      ],
+    },
+  });
+
+  assert.deepEqual(missing, []);
 });

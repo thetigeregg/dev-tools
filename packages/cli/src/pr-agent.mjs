@@ -684,7 +684,14 @@ function intersectCoverageWithPRFiles(uncovered, prFiles) {
 }
 
 export function extractSnippet(filePath, lines, { repoRoot = process.cwd() } = {}) {
-  const absolutePath = path.isAbsolute(filePath) ? filePath : path.join(repoRoot, filePath);
+  const resolvedRepoRoot = path.resolve(repoRoot);
+  const absolutePath = path.resolve(resolvedRepoRoot, filePath);
+  const relativePath = path.relative(resolvedRepoRoot, absolutePath);
+
+  if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+    return '';
+  }
+
   if (!fs.existsSync(absolutePath) || !lines.length) return '';
   const content = fs.readFileSync(absolutePath, 'utf8').split('\n');
   const start = Math.max(Math.min(...lines) - 3, 0);
