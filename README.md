@@ -156,8 +156,9 @@ Configure npm trusted publishing for each publishable package using:
 - Workflow filename: `release.yml`
 
 The release workflow is configured for OIDC-based publishing by default.
-It does not expose npm token auth to the publish step unless you explicitly opt into bootstrap mode and configure the repository secret `NPM_TOKEN`.
-Leaving `NPM_TOKEN` unset keeps the workflow on OIDC trusted publishing.
+Token-based npm auth is enabled only when the repository variable `NPM_PUBLISH_AUTH` is set to `token`.
+When that bootstrap mode is not enabled, the workflow stays on OIDC trusted publishing and ignores `NPM_TOKEN` even if the secret exists.
+When bootstrap mode is enabled, configure the repository secret `NPM_TOKEN` so the publish step can use token-based auth.
 
 For the GitHub side of Changesets:
 
