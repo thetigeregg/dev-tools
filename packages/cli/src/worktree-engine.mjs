@@ -78,6 +78,15 @@ export function resolveWorktreePorts(config) {
   });
 }
 
+function resolveConfigFilePath(repoRoot, filePath) {
+  const expandedPath = expandUserPath(filePath);
+  if (!expandedPath) {
+    return undefined;
+  }
+
+  return path.isAbsolute(expandedPath) ? expandedPath : path.resolve(repoRoot, expandedPath);
+}
+
 export async function createWorktreeContext({
   cwd = process.cwd(),
   processEnv = process.env,
@@ -114,10 +123,16 @@ export async function createWorktreeContext({
   const localEnvPath =
     resolvedConfig.env?.localFileAbsolute ??
     path.resolve(resolvedConfig.repoRoot, envConfig.localFile ?? '.env');
-  const sharedEnvFilePath =
-    expandUserPath(processEnv.WORKTREE_ENV_FILE && processEnv.WORKTREE_ENV_FILE.trim()) ||
-    expandUserPath(envConfig.sharedTemplateFile) ||
-    resolvedConfig.env?.sharedTemplateFile;
+  const sharedEnvFromOverrides =
+    resolveConfigFilePath(
+      resolvedConfig.repoRoot,
+      processEnv.WORKTREE_ENV_FILE && processEnv.WORKTREE_ENV_FILE.trim()
+    ) || resolveConfigFilePath(resolvedConfig.repoRoot, envConfig.sharedTemplateFile);
+  const sharedEnvFromResolvedConfig = resolveConfigFilePath(
+    resolvedConfig.repoRoot,
+    resolvedConfig.env?.sharedTemplateFile
+  );
+  const sharedEnvFilePath = sharedEnvFromOverrides || sharedEnvFromResolvedConfig;
 
   const certDir = path.resolve(resolvedConfig.repoRoot, pwaConfig.certDir ?? '.tmp/pwa-certs');
   const certFileEnvVar = pwaConfig.certFileEnvVar ?? 'WORKTREE_PWA_CERT_FILE';

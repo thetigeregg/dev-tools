@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import {
+  analyzeChecks,
   collectDiscussionReviewItems,
   extractSnippet,
   isCopilotReviewAuthor,
@@ -91,4 +92,46 @@ test('parseArgs rejects non-numeric PR numbers with the usage error', () => {
     process.exit = originalExit;
     console.error = originalConsoleError;
   }
+});
+
+test('analyzeChecks treats completed non-success conclusions as failures', () => {
+  const analysis = analyzeChecks([
+    {
+      name: 'CI',
+      status: 'COMPLETED',
+      conclusion: 'CANCELLED',
+    },
+    {
+      name: 'Coverage Report',
+      status: 'COMPLETED',
+      conclusion: 'NEUTRAL',
+    },
+    {
+      name: 'Docs',
+      status: 'COMPLETED',
+      conclusion: 'SUCCESS',
+    },
+    {
+      name: 'Preview',
+      status: 'IN_PROGRESS',
+      conclusion: null,
+    },
+  ]);
+
+  assert.deepEqual(
+    analysis.ciFailures.map((check) => check.name),
+    ['CI']
+  );
+  assert.deepEqual(
+    analysis.coverageFailures.map((check) => check.name),
+    ['Coverage Report']
+  );
+  assert.deepEqual(
+    analysis.successes.map((check) => check.name),
+    ['Docs']
+  );
+  assert.deepEqual(
+    analysis.pending.map((check) => check.name),
+    ['Preview']
+  );
 });

@@ -177,7 +177,7 @@ function getPRData(prNumber, debug) {
   };
 }
 
-function analyzeChecks(checks) {
+export function analyzeChecks(checks) {
   const ciFailures = [];
   const coverageFailures = [];
   const pending = [];
@@ -202,12 +202,10 @@ function analyzeChecks(checks) {
       continue;
     }
 
-    if (normalized.conclusion === 'FAILURE' || normalized.conclusion === 'TIMED_OUT') {
-      if (/codecov|coverage/i.test(normalized.name)) {
-        coverageFailures.push(normalized);
-      } else {
-        ciFailures.push(normalized);
-      }
+    if (/codecov|coverage/i.test(normalized.name)) {
+      coverageFailures.push(normalized);
+    } else {
+      ciFailures.push(normalized);
     }
   }
 

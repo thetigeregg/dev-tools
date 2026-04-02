@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import os from 'node:os';
+import path from 'node:path';
 import test from 'node:test';
 
 import {
@@ -77,6 +79,47 @@ test('createWorktreeContext derives runtime, compose args, and env helpers from 
     '/manuals'
   );
   assert.equal(context.createSharedEnv({ processEnv: { PATH: '/usr/bin' } }).PATH, '/usr/bin');
+});
+
+test('createWorktreeContext resolves repo-relative shared env paths from top-level config', async () => {
+  const context = await createWorktreeContext({
+    cwd: config.repoRoot,
+    processEnv: {},
+    config: {
+      ...config,
+      env: {
+        sharedTemplateFile: 'config/worktree.env',
+      },
+      worktree: {
+        ...config.worktree,
+        env: {},
+      },
+    },
+  });
+
+  assert.equal(context.sharedEnvFilePath, '/repo/worktrees/feat/example/config/worktree.env');
+});
+
+test('createWorktreeContext expands home-relative shared env paths from top-level config', async () => {
+  const context = await createWorktreeContext({
+    cwd: config.repoRoot,
+    processEnv: {},
+    config: {
+      ...config,
+      env: {
+        sharedTemplateFile: '~/.config/game-shelf/worktree.env',
+      },
+      worktree: {
+        ...config.worktree,
+        env: {},
+      },
+    },
+  });
+
+  assert.equal(
+    context.sharedEnvFilePath,
+    path.join(os.homedir(), '.config', 'game-shelf', 'worktree.env')
+  );
 });
 
 test('buildNvmAwareInstallCommand wraps npm scripts with nvm activation', () => {
