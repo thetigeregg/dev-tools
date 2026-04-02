@@ -1,0 +1,55 @@
+# Dependencies
+**/node_modules
+
+# Build output and caches
+.angular
+dist
+www
+coverage
+out-tsc
+tmp
+
+# Ionic / Capacitor native builds
+android
+ios
+
+# Test artifacts
+playwright-report
+test-results
+.playwright
+
+# Local/editor/system artifacts
+.DS_Store
+.vscode
+.idea
+*.log
+
+# Runtime/generated files
+src/assets/runtime-config.js
+
+# Local data directories
+nas-data
+
+# Lockfiles (avoid large diffs)
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Docker Compose (avoid env interpolation issues)
+docker-compose*.yml
+compose*.yml
+
+# Binary assets
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.ico
+*.pdf
+*.zip
+*.tar
+*.gz
+
+# OS artifacts
+Thumbs.db

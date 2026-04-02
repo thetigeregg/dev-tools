@@ -26,6 +26,9 @@ test('buildTemplateSyncPlan maps shared github templates into repo .github paths
   });
 
   assert.ok(plan.some((item) => item.relativeTargetPath === '.husky/pre-commit'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.editorconfig'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.prettierignore'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.gitleaks.toml'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/pull_request_template.md'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/ISSUE_TEMPLATE/bug.yml'));
   assert.ok(!plan.some((item) => item.relativeTargetPath === '.github/copilot-instructions.md'));
@@ -65,6 +68,9 @@ test('buildTemplateSyncPlan includes root stubs and defaults during bootstrap', 
   assert.ok(plan.some((item) => item.relativeTargetPath === 'devx.config.mjs'));
   assert.ok(plan.some((item) => item.relativeTargetPath === 'lint-staged.config.cjs'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.husky/commit-msg'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.editorconfig'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.prettierignore'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.gitleaks.toml'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/copilot-instructions.md'));
 });
 

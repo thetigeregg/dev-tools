@@ -140,6 +140,7 @@ Shared templates live under:
 
 - `packages/cli/templates/root`
 - `packages/cli/templates/root-shared`
+- `packages/cli/templates/root-optional`
 - `packages/cli/templates/github`
 
 Bootstrap a new consumer repo with missing defaults and config stubs:
@@ -162,7 +163,10 @@ Bootstrap includes:
 
 - `AGENTS.md`
 - `.prettierrc.cjs`
+- `.prettierignore`
 - `.ncurc.cjs`
+- `.editorconfig`
+- `.gitleaks.toml`
 - `commitlint.config.cjs`
 - `devx.config.mjs`
 - `lint-staged.config.cjs`
@@ -174,8 +178,13 @@ Bootstrap includes:
 Sync updates the shared `.github` surface, including:
 
 - shared Husky hooks such as `.husky/pre-commit` and `.husky/commit-msg`
+- `.editorconfig`
+- `.prettierignore`
+- `.gitleaks.toml`
 - PR and issue templates
 - commit template
 - Dependabot and release config
 
 `lint-staged.config.cjs` is bootstrap-only so consumer repos can customize it without later syncs overwriting local changes.
+
+Optional starter files such as `.nvmrc`, `.dockerignore`, and `codecov.yml` are kept under `packages/cli/templates/root-optional` for manual copy-in rather than automatic sync.

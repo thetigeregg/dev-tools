@@ -122,7 +122,7 @@ This seeds missing shared defaults without overwriting files that already exist.
 
 Bootstrap currently seeds:
 
-- root config stubs such as `.prettierrc.cjs`, `.ncurc.cjs`, `commitlint.config.cjs`, `lint-staged.config.cjs`, and `devx.config.mjs`
+- root config stubs and shared defaults such as `.prettierrc.cjs`, `.prettierignore`, `.ncurc.cjs`, `.editorconfig`, `.gitleaks.toml`, `commitlint.config.cjs`, `lint-staged.config.cjs`, and `devx.config.mjs`
 - `AGENTS.md`
 - shared Husky hooks such as `.husky/pre-commit` and `.husky/commit-msg`
 - shared GitHub templates such as PR, issue, commit, Dependabot, and release templates
@@ -177,6 +177,8 @@ npx devx repo sync
 - `lint-staged.config.cjs`
 - `.github/copilot-instructions.md`
 - repo-specific Husky hooks like `.husky/post-checkout`
+
+Some files are intentionally available only as optional starter templates in `packages/cli/templates/root-optional`, such as `.nvmrc`, `.dockerignore`, and `codecov.yml`. These are not applied automatically because they tend to vary more across repos.
 
 4. Re-run the repo’s normal verification:
 
