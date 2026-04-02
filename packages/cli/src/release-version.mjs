@@ -66,6 +66,15 @@ function compareSemver(leftVersion, rightVersion) {
   return left.patch - right.patch;
 }
 
+function isReleaseTag(tag, tagPrefix) {
+  if (!tag.startsWith(tagPrefix)) {
+    return false;
+  }
+
+  const versionPart = tag.slice(tagPrefix.length);
+  return tryParseSemver(versionPart) !== null;
+}
+
 function getLatestTag({ cwd, tagPrefix }) {
   const tags = execFileSync('git', ['tag', '--list', '--sort=-v:refname'], {
     cwd,
@@ -80,7 +89,7 @@ function getLatestTag({ cwd, tagPrefix }) {
     tags
       .split('\n')
       .map((tag) => tag.trim())
-      .find((tag) => tag.startsWith(tagPrefix)) ?? null
+      .find((tag) => isReleaseTag(tag, tagPrefix)) ?? null
   );
 }
 

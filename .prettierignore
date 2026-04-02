@@ -8,6 +8,8 @@ www
 coverage
 out-tsc
 tmp
+.tmp
+**/.tmp
 
 # Ionic / Capacitor native builds
 android

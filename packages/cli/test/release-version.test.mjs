@@ -154,3 +154,20 @@ test('runReleaseVersionCli ignores prerelease tags that do not parse as x.y.z', 
 
   assert.equal(result.version, '1.2.4');
 });
+
+test('runReleaseVersionCli keeps prerelease tags out of the commit range base', async () => {
+  const repoRoot = createFixtureRepo();
+
+  writeFileSync(path.join(repoRoot, 'feature.txt'), 'feature before prerelease\n');
+  run('git add feature.txt', repoRoot);
+  run('git commit -m "feat(cli): add prerelease-safe range handling"', repoRoot);
+  run('git tag v1.3.0-rc.0', repoRoot);
+
+  writeFileSync(path.join(repoRoot, 'fix.txt'), 'bug fix after prerelease\n');
+  run('git add fix.txt', repoRoot);
+  run('git commit -m "fix(cli): patch after prerelease"', repoRoot);
+
+  const result = await runReleaseVersionCli({ cwd: repoRoot, argv: ['--dry-run'] });
+
+  assert.equal(result.version, '1.3.0');
+});
