@@ -49,6 +49,7 @@ jobs:
         with:
           # A custom token is required so release PR updates can trigger PR workflows.
           github-token: ${{ secrets.CHANGESETS_GITHUB_TOKEN }}
+          commit: "chore(release): version packages"
           version: npm run version-packages
 
   publish:

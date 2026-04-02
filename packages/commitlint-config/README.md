@@ -6,6 +6,6 @@ Use it from a consumer repo:
 
 ```js
 module.exports = {
-  extends: ['@thetigeregg/commitlint-config']
+  extends: ['@thetigeregg/commitlint-config'],
 };
 ```

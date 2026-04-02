@@ -56,7 +56,11 @@ export async function runNcuAllCli({ cwd = process.cwd() } = {}) {
     console.log(`==============================`);
 
     try {
-      run(ncuCommand, ['-i', '--packageFile', packageFile, '--format', 'group,repo'], config.repoRoot);
+      run(
+        ncuCommand,
+        ['-i', '--packageFile', packageFile, '--format', 'group,repo'],
+        config.repoRoot
+      );
       run(NPM_COMMAND, ['--prefix', project.absolutePath, 'install'], config.repoRoot);
     } catch (error) {
       const commandString =
