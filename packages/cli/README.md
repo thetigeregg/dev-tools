@@ -165,12 +165,10 @@ Bootstrap includes:
 - `commitlint.config.cjs`
 - `devx.config.mjs`
 - `.github/copilot-instructions.md`
-- shared `.github` templates and workflow/codeql files
+- shared `.github` templates
 
 Sync updates the shared `.github` surface, including:
 
 - PR and issue templates
 - commit template
 - Dependabot and release config
-- workflow templates
-- CodeQL config

@@ -20,7 +20,6 @@ test('buildTemplateSyncPlan maps shared github templates into repo .github paths
 
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/pull_request_template.md'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/ISSUE_TEMPLATE/bug.yml'));
-  assert.ok(plan.some((item) => item.relativeTargetPath === '.github/workflows/ci-pr.yml'));
   assert.ok(!plan.some((item) => item.relativeTargetPath === '.github/copilot-instructions.md'));
 });
 
