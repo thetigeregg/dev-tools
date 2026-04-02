@@ -224,13 +224,18 @@ export function isEntrypoint({ argv1 = process.argv[1], moduleUrl = import.meta.
 export async function runEnvReconcileCli({ cwd = process.cwd() } = {}) {
   const config = await loadDevxConfig({ cwd });
   const defaultSharedEnvFile =
-    config.env.sharedTemplateFile ?? path.join(os.homedir(), '.config', config.projectName, 'worktree.env');
-  const sharedEnvFilePath = path.resolve(expandUserPath(process.env.WORKTREE_ENV_FILE?.trim() || defaultSharedEnvFile));
+    config.env.sharedTemplateFile ??
+    path.join(os.homedir(), '.config', config.projectName, 'worktree.env');
+  const sharedEnvFilePath = path.resolve(
+    expandUserPath(process.env.WORKTREE_ENV_FILE?.trim() || defaultSharedEnvFile)
+  );
   const examplePath = config.env.exampleFileAbsolute;
   const localPath = config.env.localFileAbsolute;
 
   if (!examplePath || !localPath) {
-    throw new Error('devx.config.mjs must define env.exampleFile and env.localFile for env reconcile');
+    throw new Error(
+      'devx.config.mjs must define env.exampleFile and env.localFile for env reconcile'
+    );
   }
 
   console.log('Worktree Env Reconciler');

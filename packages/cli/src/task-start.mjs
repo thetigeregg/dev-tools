@@ -59,7 +59,9 @@ export function isEntrypoint({ argv1 = process.argv[1], moduleUrl = import.meta.
 
 export async function runWorktreeBootstrap({ config, worktreePath, branch }) {
   if (!config.worktree.adapterModuleAbsolute) {
-    console.log('\nNo worktree bootstrap adapter configured. Skipping project-specific bootstrap.\n');
+    console.log(
+      '\nNo worktree bootstrap adapter configured. Skipping project-specific bootstrap.\n'
+    );
     return;
   }
 
@@ -109,7 +111,9 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
   const worktreePath = path.posix.normalize(path.posix.join(config.worktreeRoot, branch));
 
   if (!worktreePath.startsWith(`${config.worktreeRoot}/`)) {
-    console.error('Invalid task name. Worktree path must stay within the configured worktrees directory.');
+    console.error(
+      'Invalid task name. Worktree path must stay within the configured worktrees directory.'
+    );
     process.exit(1);
   }
 
@@ -133,7 +137,9 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
 
     const hasLocalBaseBranch = (() => {
       try {
-        execSync(`git show-ref --verify --quiet refs/heads/${config.baseBranch}`, { stdio: 'ignore' });
+        execSync(`git show-ref --verify --quiet refs/heads/${config.baseBranch}`, {
+          stdio: 'ignore',
+        });
         return true;
       } catch {
         return false;
@@ -144,11 +150,15 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
       console.log(`\nCreating local ${config.baseBranch} from origin/${config.baseBranch}...\n`);
       run(`git branch ${config.baseBranch} origin/${config.baseBranch}`);
     } else {
-      console.log(`\nFast-forwarding local ${config.baseBranch} to origin/${config.baseBranch}...\n`);
+      console.log(
+        `\nFast-forwarding local ${config.baseBranch} to origin/${config.baseBranch}...\n`
+      );
       try {
         run(`git merge-base --is-ancestor ${config.baseBranch} origin/${config.baseBranch}`);
       } catch {
-        console.error(`\nLocal ${config.baseBranch} has diverged from origin/${config.baseBranch}.`);
+        console.error(
+          `\nLocal ${config.baseBranch} has diverged from origin/${config.baseBranch}.`
+        );
         console.error(
           `Reconcile your local ${config.baseBranch} with origin/${config.baseBranch} before starting a new task.`
         );
@@ -207,7 +217,9 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
           `Run "node ${config.worktree.adapterModule} bootstrap" inside ${worktreePath} and retry.\n`
         );
       } else {
-        console.error('Add worktree.adapterModule to devx.config.mjs to enable project bootstrap hooks.\n');
+        console.error(
+          'Add worktree.adapterModule to devx.config.mjs to enable project bootstrap hooks.\n'
+        );
       }
       const code = typeof error.status === 'number' ? error.status : 1;
       process.exit(code);

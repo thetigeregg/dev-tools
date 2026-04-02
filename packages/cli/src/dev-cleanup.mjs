@@ -162,7 +162,10 @@ function getDisplayPath(targetPath, commonRepoRoot) {
   return normalizedTargetPath.slice(commonRepoRoot.length + 1);
 }
 
-export function formatWorktreeDisplayPath(targetPath, commonRepoRoot = getCommonRepoRoot(getCommonGitDir(getCurrentWorktreePath()))) {
+export function formatWorktreeDisplayPath(
+  targetPath,
+  commonRepoRoot = getCommonRepoRoot(getCommonGitDir(getCurrentWorktreePath()))
+) {
   const displayPath = getDisplayPath(targetPath, commonRepoRoot);
   return path.isAbsolute(displayPath) ? displayPath : `./${displayPath}`;
 }
@@ -326,7 +329,9 @@ export function removeOrphanedManagedWorktreeDirs({
         `[dry-run] Would remove orphaned worktree directory ${formatWorktreeDisplayPath(dirPath, commonRepoRoot)}`
       );
     } else {
-      log(`Removing orphaned worktree directory ${formatWorktreeDisplayPath(dirPath, commonRepoRoot)}`);
+      log(
+        `Removing orphaned worktree directory ${formatWorktreeDisplayPath(dirPath, commonRepoRoot)}`
+      );
       removeDir(dirPath);
       pruneAncestors(dirPath, normalizedManagedRoot);
     }
@@ -388,13 +393,17 @@ export function removeMergedWorktrees({
     const isCurrentBranch = w.branch === currentBranch;
 
     if (isCurrentWorktree || isCurrentBranch) {
-      log(`Skipping current worktree/branch: ${w.branch} → ${formatWorktreeDisplayPath(w.path, commonRepoRoot)}`);
+      log(
+        `Skipping current worktree/branch: ${w.branch} → ${formatWorktreeDisplayPath(w.path, commonRepoRoot)}`
+      );
       summary.skippedCurrent.push(w);
       return;
     }
 
     if (!checkWorktreeClean(w.path)) {
-      log(`Skipping dirty worktree/branch: ${w.branch} → ${formatWorktreeDisplayPath(w.path, commonRepoRoot)}`);
+      log(
+        `Skipping dirty worktree/branch: ${w.branch} → ${formatWorktreeDisplayPath(w.path, commonRepoRoot)}`
+      );
       summary.skippedDirty.push(w);
       return;
     }
@@ -546,7 +555,13 @@ export async function main({ auto = false, dryRun = false, cwd = process.cwd() }
   const goneBranches = branchInfo
     .split('\n')
     .filter((line) => line.includes(': gone]'))
-    .map((line) => line.replace(/^[*+]\s*/, '').trim().split(/\s+/)[0])
+    .map(
+      (line) =>
+        line
+          .replace(/^[*+]\s*/, '')
+          .trim()
+          .split(/\s+/)[0]
+    )
     .filter(Boolean);
 
   if (goneBranches.length === 0) {
