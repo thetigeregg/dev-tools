@@ -228,7 +228,7 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
     if (process.platform === 'darwin' && commandExists('code')) {
       console.log('\nOpening VS Code...\n');
       try {
-        run(`code "${worktreePath}"`);
+        execSync('code', [worktreePath], { stdio: 'inherit' });
       } catch {
         console.warn('\nCould not open VS Code automatically.\n');
         console.warn(`Open the worktree manually: ${worktreePath}\n`);
