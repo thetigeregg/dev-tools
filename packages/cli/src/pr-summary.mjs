@@ -45,6 +45,14 @@ Requirements:
 - Fill every section of the PR template
 - Be technically precise and concise
 
+Before writing the PR description, do a brief pre-PR review of the patch:
+
+- identify the main change type: feature, bug fix, refactor, dependency update, or infrastructure/config
+- call out obvious regression risks from changed signatures, return values, queries, or config defaults
+- note whether changed logic appears covered by tests, especially on branches and failure paths
+- mention any obvious security, production-safety, or performance concerns introduced by the diff
+- keep this review focused on the current patch and avoid unrelated refactors
+
 Changed files:
 
 ${files}
