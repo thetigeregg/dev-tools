@@ -1,5 +1,11 @@
 # @thetigeregg/dev-cli
 
+## 0.3.0
+
+### Minor Changes
+
+- 7aaed9c: update naming
+
 ## 0.2.1
 
 ### Patch Changes
