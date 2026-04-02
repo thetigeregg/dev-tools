@@ -2,6 +2,9 @@
   "name": "@thetigeregg/dev-tools",
   "private": true,
   "packageManager": "npm@11.12.1",
+  "engines": {
+    "node": ">=20"
+  },
   "workspaces": [
     "packages/*"
   ],
