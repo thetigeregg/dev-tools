@@ -27,6 +27,10 @@ function resolveConfigPath(repoRoot, value) {
   return path.isAbsolute(value) ? value : path.resolve(repoRoot, value);
 }
 
+function normalizeObjectSection(value) {
+  return value && typeof value === 'object' ? value : {};
+}
+
 export async function loadDevxConfig({
   cwd = process.cwd(),
   configFileName = 'devx.config.mjs',
@@ -56,6 +60,11 @@ export async function loadDevxConfig({
     worktree: {},
     ...rawConfig,
   };
+
+  config.env = normalizeObjectSection(config.env);
+  config.pr = normalizeObjectSection(config.pr);
+  config.release = normalizeObjectSection(config.release);
+  config.worktree = normalizeObjectSection(config.worktree);
 
   config.repoRoot = repoRoot;
   config.configPath = configPath;

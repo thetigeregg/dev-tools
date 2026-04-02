@@ -5,6 +5,7 @@ import {
   buildComposeArgs,
   buildNvmAwareInstallCommand,
   createWorktreeContext,
+  resolveShellInvocation,
   runFrontendDev,
   runPwaCommand,
 } from '../src/api.mjs';
@@ -83,6 +84,17 @@ test('buildNvmAwareInstallCommand wraps npm scripts with nvm activation', () => 
   assert.match(buildNvmAwareInstallCommand('ci:all'), /npm run ci:all/);
 });
 
+test('resolveShellInvocation falls back to cmd.exe on Windows', () => {
+  assert.deepEqual(resolveShellInvocation('npm run dev', 'win32'), {
+    command: 'cmd.exe',
+    args: ['/d', '/s', '/c', 'npm run dev'],
+  });
+  assert.deepEqual(resolveShellInvocation('npm run dev', 'darwin'), {
+    command: 'sh',
+    args: ['-lc', 'npm run dev'],
+  });
+});
+
 test('runPwaCommand simulator reconciles, builds, and serves in order', async () => {
   const context = await createWorktreeContext({
     cwd: config.repoRoot,
@@ -136,6 +148,34 @@ test('runFrontendDev defaults to an external bind host for simulator mode', asyn
 
   assert.equal(commands.length, 2);
   assert.match(commands[1], /'--host' '0\.0\.0\.0'/);
+});
+
+test('runFrontendDev uses Windows-safe quoting when the context platform is win32', async () => {
+  const context = await createWorktreeContext({
+    cwd: process.cwd(),
+    processEnv: {},
+    platform: 'win32',
+    config: {
+      ...config,
+      repoRoot: process.cwd(),
+    },
+  });
+  const commands = [];
+  const previousLog = console.log;
+
+  console.log = () => {};
+  context.runShell = (command) => {
+    commands.push(command);
+  };
+
+  try {
+    runFrontendDev(context, { external: true });
+  } finally {
+    console.log = previousLog;
+  }
+
+  assert.equal(commands.length, 2);
+  assert.match(commands[1], /"--host" "0\.0\.0\.0"/);
 });
 
 test('runPwaCommand exits with a clear error when no reachability port is configured', async () => {

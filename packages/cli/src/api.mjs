@@ -15,6 +15,7 @@ export {
   printMissingCertificateInstructions,
   printWorktreeInfo,
   resolveFrontendServeConfiguration,
+  resolveShellInvocation,
   runComposeCommand,
   runFrontendDev,
   runPwaCommand,

@@ -15,8 +15,26 @@ import { spawnSync } from 'node:child_process';
 import { loadDevxConfig } from './config.mjs';
 import { buildWorktreeRuntime, expandUserPath } from './worktree-runtime.mjs';
 
-function shellEscape(value) {
+function shellEscape(value, platform = process.platform) {
+  if (platform === 'win32') {
+    return `"${String(value).replace(/"/g, '""')}"`;
+  }
+
   return `'${String(value).replace(/'/g, `'"'"'`)}'`;
+}
+
+export function resolveShellInvocation(command, platform = process.platform) {
+  if (platform === 'win32') {
+    return {
+      command: 'cmd.exe',
+      args: ['/d', '/s', '/c', command],
+    };
+  }
+
+  return {
+    command: 'sh',
+    args: ['-lc', command],
+  };
 }
 
 function configState(value) {
@@ -64,6 +82,7 @@ export async function createWorktreeContext({
   cwd = process.cwd(),
   processEnv = process.env,
   config,
+  platform = process.platform,
 } = {}) {
   const resolvedConfig = config ?? (await loadDevxConfig({ cwd }));
   const worktreeConfig = resolvedConfig.worktree ?? {};
@@ -204,10 +223,15 @@ export async function createWorktreeContext({
   }
 
   function runShell(command, env = createSharedEnv()) {
-    run('sh', ['-lc', command], env);
+    const shell = resolveShellInvocation(command, platform);
+    run(shell.command, shell.args, env);
   }
 
   function hasBash() {
+    if (platform === 'win32') {
+      return false;
+    }
+
     const result = spawnSync('bash', ['-lc', 'true'], {
       cwd: resolvedConfig.repoRoot,
       env: createSharedEnv(),
@@ -227,7 +251,8 @@ export async function createWorktreeContext({
   }
 
   function runShellCapture(command, env = createSharedEnv()) {
-    return runCapture('sh', ['-lc', command], env);
+    const shell = resolveShellInvocation(command, platform);
+    return runCapture(shell.command, shell.args, env);
   }
 
   function defaultSeedPath() {
@@ -241,6 +266,7 @@ export async function createWorktreeContext({
 
   return {
     cwd: resolvedConfig.repoRoot,
+    platform,
     args: process.argv.slice(2),
     config: resolvedConfig,
     runtime,
@@ -552,7 +578,7 @@ export function runFrontendDev(context, options = {}) {
   }
 
   context.runShell(
-    `${serveCommand} ${serveArgs.map(shellEscape).join(' ')}`,
+    `${serveCommand} ${serveArgs.map((arg) => shellEscape(arg, context.platform)).join(' ')}`,
     context.createSharedEnv()
   );
 }

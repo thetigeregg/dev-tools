@@ -1,15 +1,19 @@
 #!/usr/bin/env node
-import { execFileSync, execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { loadDevxConfig } from './config.mjs';
 
-function run(command, { cwd }) {
-  return execSync(command, { cwd, stdio: ['ignore', 'pipe', 'pipe'] })
-    .toString()
-    .trim();
+const NPM_COMMAND = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+
+function run(command, args, { cwd }) {
+  return execFileSync(command, args, {
+    cwd,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  }).trim();
 }
 
 export function parseSemver(version) {
@@ -94,7 +98,7 @@ function getLatestTag({ cwd, tagPrefix }) {
 }
 
 function getCommitMessages(range, { cwd }) {
-  const log = run(`git log --format=%s%x1f%b%x1e ${range}`, { cwd });
+  const log = run('git', ['log', '--format=%s%x1f%b%x1e', range], { cwd });
   if (!log) {
     return [];
   }
@@ -127,7 +131,7 @@ export function inferBumpType(commits) {
 }
 
 function getCommitsForChangelog(range, { cwd }) {
-  const log = run(`git log --format=%h%x1f%s ${range}`, { cwd });
+  const log = run('git', ['log', '--format=%h%x1f%s', range], { cwd });
   if (!log) {
     return [];
   }
@@ -204,7 +208,9 @@ export async function runReleaseVersionCli({
   const changelogCommits = getCommitsForChangelog(range, { cwd: config.repoRoot });
 
   if (!dryRun) {
-    run(`npm version ${nextVersion} --no-git-tag-version`, { cwd: path.dirname(packageJsonPath) });
+    run(NPM_COMMAND, ['version', nextVersion, '--no-git-tag-version'], {
+      cwd: path.dirname(packageJsonPath),
+    });
     updateChangelog(nextVersion, changelogCommits, { changelogPath, dryRun });
   }
 
