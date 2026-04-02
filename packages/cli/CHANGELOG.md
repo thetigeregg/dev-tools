@@ -1,5 +1,17 @@
 # @thetigeregg/dev-cli
 
+## 0.4.2
+
+### Patch Changes
+
+- 4ee614e: bump
+
+## 0.4.1
+
+### Patch Changes
+
+- 4ffb722: align repository urls
+
 ## 0.4.0
 
 ### Minor Changes

@@ -1,5 +1,17 @@
 # @thetigeregg/prettier-config
 
+## 0.3.2
+
+### Patch Changes
+
+- 4ee614e: bump
+
+## 0.3.1
+
+### Patch Changes
+
+- 4ffb722: align repository urls
+
 ## 0.3.0
 
 ### Minor Changes

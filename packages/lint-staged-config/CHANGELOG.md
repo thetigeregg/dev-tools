@@ -1,5 +1,17 @@
 # @thetigeregg/lint-staged-config
 
+## 0.2.2
+
+### Patch Changes
+
+- 4ee614e: bump
+
+## 0.2.1
+
+### Patch Changes
+
+- 4ffb722: align repository urls
+
 ## 0.2.0
 
 ### Minor Changes
