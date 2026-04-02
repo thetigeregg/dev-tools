@@ -1,0 +1,53 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches:
+      - main
+      # Add other protected branches here if needed, for example:
+      # - release/*
+  pull_request:
+    branches:
+      - main
+      # Add other protected branches here if needed, for example:
+      # - release/*
+  schedule:
+    # Weekly scan on Thursday at 14:00 UTC.
+    - cron: "0 14 * * 4"
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  analyze:
+    # Skip only release/version bump pushes (not arbitrary [skip ci] commits).
+    if: github.event_name != 'push' || !(startsWith(github.event.head_commit.message, 'chore(release):') && contains(github.event.head_commit.message, '[skip ci]'))
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - javascript-typescript
+          - actions
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v4
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
