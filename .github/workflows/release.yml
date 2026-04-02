@@ -30,19 +30,28 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
           registry-url: https://registry.npmjs.org
 
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
+      - name: Verify npm version
+        run: npm --version
+
       - run: npm install
-      - run: npm --version
       - run: npm run ci
 
       - name: Create release PR or publish packages
+        id: changesets
         uses: changesets/action@v1
         with:
           # A custom token is required so release PR updates can trigger PR workflows.
           github-token: ${{ secrets.CHANGESETS_GITHUB_TOKEN }}
           commit: "chore(release): version packages"
           version: npm run version-packages
-          publish: npm run release
+
+      - name: Publish packages to npm
+        if: ${{ steps.changesets.outputs.hasChangesets == 'false' }}
+        run: npm run release
