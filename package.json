@@ -1,7 +1,7 @@
 {
   "name": "@thetigeregg/dev-tools",
   "private": true,
-  "packageManager": "npm@10.9.4",
+  "packageManager": "npm@11.12.1",
   "workspaces": [
     "packages/*"
   ],
