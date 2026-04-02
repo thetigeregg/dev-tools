@@ -12,6 +12,7 @@
   },
   "files": [
     "src",
+    "templates",
     "README.md"
   ],
   "license": "MIT",

@@ -6,12 +6,17 @@ import { runEnvReconcileCli } from './env-reconcile.mjs';
 import { runNcuAllCli } from './ncu-all.mjs';
 import { runPrAgentCli } from './pr-agent.mjs';
 import { runPrSummaryCli } from './pr-summary.mjs';
+import {
+  runRepoBootstrapCli,
+  runRepoSyncCli,
+  runRepoSyncTemplatesCli,
+} from './repo-sync-templates.mjs';
 import { runReleaseVersionCli } from './release-version.mjs';
 import { runTaskStartCli } from './task-start.mjs';
 import { runWorktreeAdapterCommand } from './worktree-adapter.mjs';
 
 function printHelp() {
-  console.log('Usage: devx <task|worktree|env|deps|pr|release> <command> [options]');
+  console.log('Usage: devx <task|worktree|env|deps|pr|release|repo> <command> [options]');
   console.log('');
   console.log('Commands:');
   console.log('  devx task start <name>');
@@ -25,6 +30,9 @@ function printHelp() {
   console.log('  devx pr summary');
   console.log('  devx pr agent <PR_NUMBER> [--copilot-only] [--include-coverage] [--debug]');
   console.log('  devx release version [--dry-run]');
+  console.log('  devx repo bootstrap [--dry-run]');
+  console.log('  devx repo sync [--dry-run]');
+  console.log('  devx repo sync-templates [--dry-run]');
 }
 
 const argv = process.argv.slice(2);
@@ -87,6 +95,21 @@ if (group === 'pr' && command === 'agent') {
 
 if (group === 'release' && command === 'version') {
   await runReleaseVersionCli({ argv: rest });
+  process.exit(0);
+}
+
+if (group === 'repo' && command === 'sync-templates') {
+  await runRepoSyncTemplatesCli({ argv: rest });
+  process.exit(0);
+}
+
+if (group === 'repo' && command === 'bootstrap') {
+  await runRepoBootstrapCli({ argv: rest });
+  process.exit(0);
+}
+
+if (group === 'repo' && command === 'sync') {
+  await runRepoSyncCli({ argv: rest });
   process.exit(0);
 }
 

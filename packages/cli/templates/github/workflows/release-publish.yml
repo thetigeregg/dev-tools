@@ -1,0 +1,159 @@
+name: Release & Publish
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+concurrency:
+  group: game-shelf-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Bump Version and Tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      major: ${{ steps.version.outputs.major }}
+      minor: ${{ steps.version.outputs.minor }}
+      tag: ${{ steps.version.outputs.tag }}
+      release_sha: ${{ steps.push.outputs.release_sha }}
+
+    steps:
+      - name: Create GitHub App token
+        id: app_token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.AUTOCOMMIT_APP_ID }}
+          private-key: ${{ secrets.AUTOCOMMIT_APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          token: ${{ steps.app_token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Bump version files
+        id: version
+        run: devx release version
+
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit, tag, and push release
+        id: push
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git add package.json package-lock.json CHANGELOG.md
+          if git diff --cached --quiet; then
+            echo "release_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit -m "chore(release): ${RELEASE_TAG} [skip ci]"
+          if git rev-parse -q --verify "refs/tags/${RELEASE_TAG}" >/dev/null; then
+            echo "release_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            git push origin HEAD:main
+            exit 0
+          fi
+          git tag "${RELEASE_TAG}"
+          git push origin HEAD:main
+          git push origin "${RELEASE_TAG}"
+          echo "release_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  publish_images:
+    name: Publish Docker Images
+    needs:
+      - release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image_name: game-shelf-edge
+            dockerfile: edge/Dockerfile
+          - image_name: game-shelf-api
+            dockerfile: server/Dockerfile
+          - image_name: game-shelf-hltb-scraper
+            dockerfile: hltb-scraper/Dockerfile
+          - image_name: game-shelf-metacritic-scraper
+            dockerfile: metacritic-scraper/Dockerfile
+          - image_name: game-shelf-psprices-scraper
+            dockerfile: psprices-scraper/Dockerfile
+          - image_name: game-shelf-backup
+            dockerfile: backup/Dockerfile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.release.outputs.release_sha }}
+
+      - name: Write production Firebase environment
+        if: matrix.image_name == 'game-shelf-edge'
+        run: bash scripts/write-environment-prod.sh prod
+        env:
+          FIREBASE_API_KEY_PROD: ${{ secrets.FIREBASE_API_KEY_PROD }}
+          FIREBASE_AUTH_DOMAIN_PROD: ${{ secrets.FIREBASE_AUTH_DOMAIN_PROD }}
+          FIREBASE_PROJECT_ID_PROD: ${{ secrets.FIREBASE_PROJECT_ID_PROD }}
+          FIREBASE_STORAGE_BUCKET_PROD: ${{ secrets.FIREBASE_STORAGE_BUCKET_PROD }}
+          FIREBASE_MESSAGING_SENDER_ID_PROD: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID_PROD }}
+          FIREBASE_APP_ID_PROD: ${{ secrets.FIREBASE_APP_ID_PROD }}
+          FIREBASE_VAPID_KEY_PROD: ${{ secrets.FIREBASE_VAPID_KEY_PROD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image_name }}
+          tags: |
+            type=raw,value=main
+            type=raw,value=${{ needs.release.outputs.tag }}
+            type=raw,value=${{ needs.release.outputs.version }}
+            type=raw,value=${{ needs.release.outputs.major }}.${{ needs.release.outputs.minor }}
+            type=raw,value=${{ needs.release.outputs.major }}
+            type=sha,format=short
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image_name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image_name }}

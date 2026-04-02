@@ -16,6 +16,9 @@ devx deps ncu-all
 devx pr summary
 devx pr agent <PR_NUMBER> [--copilot-only] [--include-coverage] [--debug]
 devx release version [--dry-run]
+devx repo bootstrap [--dry-run]
+devx repo sync [--dry-run]
+devx repo sync-templates [--dry-run]
 ```
 
 ## Shared Worktree API
@@ -130,3 +133,44 @@ Keep repo-specific orchestration in `worktree.adapterModule`, including:
 - DB seed refresh/apply logic
 - repo-specific SQL or data reconciliation
 - special-case service flows not expressible as shared config
+
+## Shared Templates
+
+Shared templates live under:
+
+- `packages/cli/templates/root`
+- `packages/cli/templates/github`
+
+Bootstrap a new consumer repo with missing defaults and config stubs:
+
+```sh
+devx repo bootstrap
+```
+
+Sync the shared GitHub template surface into an existing consumer repo:
+
+```sh
+devx repo sync
+```
+
+`devx repo sync-templates` remains as a compatibility alias for `devx repo sync`.
+
+Use `--dry-run` to preview the target files without copying.
+
+Bootstrap includes:
+
+- `AGENTS.md`
+- `.prettierrc.cjs`
+- `.ncurc.cjs`
+- `commitlint.config.cjs`
+- `devx.config.mjs`
+- `.github/copilot-instructions.md`
+- shared `.github` templates and workflow/codeql files
+
+Sync updates the shared `.github` surface, including:
+
+- PR and issue templates
+- commit template
+- Dependabot and release config
+- workflow templates
+- CodeQL config

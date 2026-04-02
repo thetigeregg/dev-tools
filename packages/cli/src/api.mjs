@@ -36,6 +36,13 @@ export { runEnvReconcileCli } from './env-reconcile.mjs';
 export { runNcuAllCli } from './ncu-all.mjs';
 export { runPrAgentCli } from './pr-agent.mjs';
 export { runPrSummaryCli } from './pr-summary.mjs';
+export {
+  buildTemplateSyncPlan,
+  runRepoBootstrapCli,
+  runRepoSyncCli,
+  runRepoSyncTemplatesCli,
+  syncTemplates,
+} from './repo-sync-templates.mjs';
 export { runReleaseVersionCli } from './release-version.mjs';
 export { runTaskStartCli } from './task-start.mjs';
 export { runWorktreeAdapterCommand } from './worktree-adapter.mjs';

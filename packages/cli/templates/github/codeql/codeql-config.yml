@@ -1,0 +1,8 @@
+name: Repo CodeQL config
+
+# Fastify routes are protected by global @fastify/rate-limit registration plus
+# per-route applyRouteRateLimit(...) usage, but js/missing-rate-limiting does not
+# recognize this repo's established pattern and produces false positives.
+query-filters:
+  - exclude:
+      id: js/missing-rate-limiting
