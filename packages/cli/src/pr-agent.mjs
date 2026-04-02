@@ -269,12 +269,14 @@ function includeReviewItem(body, author, state) {
 }
 
 function normalizeText(value) {
-  return String(value || '').replace(/\r\n/g, '\n').trim();
+  return String(value || '')
+    .replace(/\r\n/g, '\n')
+    .trim();
 }
 
-function isCopilotReviewAuthor(author) {
+export function isCopilotReviewAuthor(author) {
   const normalizedAuthor = String(author || '').toLowerCase();
-  return normalizedAuthor.includes('copilot') || normalizedAuthor.includes('bot');
+  return normalizedAuthor.includes('copilot');
 }
 
 function uniqueBy(items, makeKey) {
@@ -291,13 +293,11 @@ function uniqueBy(items, makeKey) {
   return result;
 }
 
-function collectDiscussionReviewItems(comments, reviews, { copilotOnly = false } = {}) {
+export function collectDiscussionReviewItems(comments, reviews, { copilotOnly = false } = {}) {
   const results = [];
 
   for (const comment of comments) {
     const author = comment.author?.login || 'reviewer';
-    if (comment.path == null && comment.line == null) continue;
-
     const normalizedBody = normalizeText(comment.body ?? '');
     if (!includeReviewItem(normalizedBody, author)) continue;
     if (copilotOnly && !isCopilotReviewAuthor(author)) continue;
@@ -305,8 +305,8 @@ function collectDiscussionReviewItems(comments, reviews, { copilotOnly = false }
     results.push({
       author,
       body: normalizedBody,
-      file: comment.path,
-      line: comment.line,
+      file: comment.path ?? null,
+      line: comment.line ?? null,
       state: null,
     });
   }
@@ -331,7 +331,8 @@ function collectDiscussionReviewItems(comments, reviews, { copilotOnly = false }
 
   return uniqueBy(
     results,
-    (item) => `${item.author}|${item.file ?? ''}|${item.line ?? ''}|${item.state ?? ''}|${item.body}`
+    (item) =>
+      `${item.author}|${item.file ?? ''}|${item.line ?? ''}|${item.state ?? ''}|${item.body}`
   );
 }
 
@@ -380,14 +381,18 @@ query($owner:String!, $repo:String!, $pr:Int!, $cursor:String) {
 
     const result = runGh(args, debug, { allowFailure: true });
     if (!result) {
-      warnings.push('Review threads were unavailable, so inline review feedback may be incomplete.');
+      warnings.push(
+        'Review threads were unavailable, so inline review feedback may be incomplete.'
+      );
       return { threads: [], warnings };
     }
 
     const data = JSON.parse(result);
     const page = data?.data?.repository?.pullRequest?.reviewThreads;
     if (!page) {
-      warnings.push('Review threads were unavailable, so inline review feedback may be incomplete.');
+      warnings.push(
+        'Review threads were unavailable, so inline review feedback may be incomplete.'
+      );
       return { threads: [], warnings };
     }
 
@@ -426,7 +431,10 @@ function buildInlineReviewTasks(threads, { copilotOnly = false } = {}) {
     });
   }
 
-  return uniqueBy(tasks, (item) => `${item.author}|${item.file}|${item.line}|${item.body}|${item.diff}`);
+  return uniqueBy(
+    tasks,
+    (item) => `${item.author}|${item.file}|${item.line}|${item.body}|${item.diff}`
+  );
 }
 
 function groupReviewTasksByFile(tasks) {
@@ -497,7 +505,9 @@ function getLatestWorkflowRun(headRefName, workflowName, debug, { allowFailure =
 }
 
 function getJobs(runId, debug) {
-  const result = runGh(['run', 'view', String(runId), '--json', 'jobs'], debug, { allowFailure: true });
+  const result = runGh(['run', 'view', String(runId), '--json', 'jobs'], debug, {
+    allowFailure: true,
+  });
   if (!result) return [];
   const parsed = JSON.parse(result);
   return Array.isArray(parsed.jobs) ? parsed.jobs : [];
@@ -509,7 +519,11 @@ function findFailedSteps(jobs) {
     if (!Array.isArray(job.steps)) continue;
     for (const step of job.steps) {
       if (step.conclusion === 'failure') {
-        failures.push({ job: job.name || 'Unnamed job', step: step.name || 'Unnamed step', jobId: job.databaseId });
+        failures.push({
+          job: job.name || 'Unnamed job',
+          step: step.name || 'Unnamed step',
+          jobId: job.databaseId,
+        });
       }
     }
   }
@@ -658,7 +672,9 @@ function collectCoverage(artifactDir) {
 }
 
 function dedupeAndSortNumbers(values) {
-  return [...new Set(values.map((value) => Number(value)).filter(Number.isFinite))].sort((a, b) => a - b);
+  return [...new Set(values.map((value) => Number(value)).filter(Number.isFinite))].sort(
+    (a, b) => a - b
+  );
 }
 
 function intersectCoverageWithPRFiles(uncovered, prFiles) {
@@ -671,15 +687,21 @@ function intersectCoverageWithPRFiles(uncovered, prFiles) {
   return tasks;
 }
 
-function extractSnippet(filePath, lines) {
-  if (!fs.existsSync(filePath) || !lines.length) return '';
-  const content = fs.readFileSync(filePath, 'utf8').split('\n');
+export function extractSnippet(filePath, lines, { repoRoot = process.cwd() } = {}) {
+  const absolutePath = path.isAbsolute(filePath) ? filePath : path.join(repoRoot, filePath);
+  if (!fs.existsSync(absolutePath) || !lines.length) return '';
+  const content = fs.readFileSync(absolutePath, 'utf8').split('\n');
   const start = Math.max(Math.min(...lines) - 3, 0);
   const end = Math.min(Math.max(...lines) + 3, content.length);
   return content.slice(start, end).join('\n').trim();
 }
 
-function collectCoverageTasks(prData, debug, coverageArtifactName, { preferredRunId = null, includeCoverage = false, hasCoverageFailures = false } = {}) {
+function collectCoverageTasks(
+  prData,
+  debug,
+  coverageArtifactName,
+  { preferredRunId = null, includeCoverage = false, hasCoverageFailures = false } = {}
+) {
   if (!includeCoverage && !hasCoverageFailures) {
     return { run: null, tasks: [], warnings: [] };
   }
@@ -698,7 +720,9 @@ function collectCoverageTasks(prData, debug, coverageArtifactName, { preferredRu
     return {
       run: { databaseId: preferredRunId },
       tasks: [],
-      warnings: [`Coverage artifact "${coverageArtifactName}" was not available on workflow run ${preferredRunId}.`],
+      warnings: [
+        `Coverage artifact "${coverageArtifactName}" was not available on workflow run ${preferredRunId}.`,
+      ],
     };
   }
 
@@ -708,7 +732,7 @@ function collectCoverageTasks(prData, debug, coverageArtifactName, { preferredRu
     const tasks = Object.keys(intersected).map((filePath) => ({
       file: filePath,
       lines: intersected[filePath],
-      snippet: extractSnippet(filePath, intersected[filePath]),
+      snippet: extractSnippet(filePath, intersected[filePath], { repoRoot: prData.repoRoot }),
     }));
 
     return {
@@ -716,7 +740,9 @@ function collectCoverageTasks(prData, debug, coverageArtifactName, { preferredRu
       tasks,
       warnings: tasks.length
         ? []
-        : ['Coverage artifacts were downloaded, but no uncovered lines matched the files modified in this PR.'],
+        : [
+            'Coverage artifacts were downloaded, but no uncovered lines matched the files modified in this PR.',
+          ],
     };
   } finally {
     fs.rmSync(artifactDir, { recursive: true, force: true });
@@ -773,7 +799,11 @@ function buildCurrentStatus(data) {
 }
 
 function buildPrompt(data, config) {
-  const verifyCommands = config.pr.verifyCommands ?? ['npm run lint', 'npm run test', 'npm run build'];
+  const verifyCommands = config.pr.verifyCommands ?? [
+    'npm run lint',
+    'npm run test',
+    'npm run build',
+  ];
   const additionalVerifyCommands = config.pr.additionalVerifyCommands ?? [];
 
   const sections = [];
@@ -800,7 +830,9 @@ function buildPrompt(data, config) {
     sections.push(`# Prompt Warnings\n\n${bulletList(data.warnings)}`);
   }
 
-  sections.push(`# Changed Files\n\n${bulletList(data.files.length ? data.files : ['No changed files reported'])}`);
+  sections.push(
+    `# Changed Files\n\n${bulletList(data.files.length ? data.files : ['No changed files reported'])}`
+  );
 
   if (data.ci.tasks.length || data.checks.ciFailures.length) {
     let md = '# CI Failure Tasks\n';
@@ -891,7 +923,11 @@ function buildPrompt(data, config) {
     );
   }
 
-  doneLines.push('', config.pr.finalInstruction ?? 'Finally: generate the Conventional Commit message for the changes.');
+  doneLines.push(
+    '',
+    config.pr.finalInstruction ??
+      'Finally: generate the Conventional Commit message for the changes.'
+  );
   sections.push(doneLines.join('\n'));
 
   if (data.diff) {
@@ -918,7 +954,10 @@ export async function runPrAgentCli({ argv = process.argv, cwd = process.cwd() }
   console.log(`Generating agent prompt for PR #${options.prNumber}`);
 
   const repoInfo = getRepoInfo(debug);
-  const prData = getPRData(options.prNumber, debug);
+  const prData = {
+    ...getPRData(options.prNumber, debug),
+    repoRoot: config.repoRoot,
+  };
   const warnings = [];
   const checkAnalysis = analyzeChecks(prData.checks);
   const discussionReviewItems = collectDiscussionReviewItems(prData.comments, prData.reviews, {

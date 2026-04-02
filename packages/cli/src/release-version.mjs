@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { execSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -55,7 +55,11 @@ function compareSemver(leftVersion, rightVersion) {
 }
 
 function getLatestTag({ cwd, tagPrefix }) {
-  const tags = run(`git tag --list '${tagPrefix}*' --sort=-v:refname`, { cwd });
+  const tags = execFileSync('git', ['tag', '--list', `${tagPrefix}*`, '--sort=-v:refname'], {
+    cwd,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  }).trim();
   if (!tags) {
     return null;
   }
@@ -122,7 +126,9 @@ function updateChangelog(nextVersion, commits, { changelogPath, dryRun }) {
       : ['- Maintenance release'];
   const entry = `${releaseTitle}\n${lines.join('\n')}\n`;
 
-  const existing = existsSync(changelogPath) ? readFileSync(changelogPath, 'utf8').trim() : '# Changelog';
+  const existing = existsSync(changelogPath)
+    ? readFileSync(changelogPath, 'utf8').trim()
+    : '# Changelog';
   const normalized = existing.length > 0 ? existing : '# Changelog';
   const next = `${normalized}\n\n${entry}\n`;
 
@@ -144,8 +150,10 @@ export async function runReleaseVersionCli({
 } = {}) {
   const dryRun = argv.includes('--dry-run');
   const config = await loadDevxConfig({ cwd });
-  const packageJsonPath = config.release.packageJsonFileAbsolute ?? path.join(config.repoRoot, 'package.json');
-  const changelogPath = config.release.changelogFileAbsolute ?? path.join(config.repoRoot, 'CHANGELOG.md');
+  const packageJsonPath =
+    config.release.packageJsonFileAbsolute ?? path.join(config.repoRoot, 'package.json');
+  const changelogPath =
+    config.release.changelogFileAbsolute ?? path.join(config.repoRoot, 'CHANGELOG.md');
   const tagPrefix = config.release.tagPrefix ?? 'v';
 
   const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf8'));

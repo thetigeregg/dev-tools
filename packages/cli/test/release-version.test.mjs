@@ -56,10 +56,7 @@ test('parseSemver and bumpVersion handle supported semver bumps', () => {
 test('inferBumpType honors breaking, feat, then patch semantics', () => {
   assert.equal(inferBumpType([{ subject: 'fix(api): patch', body: '' }]), 'patch');
   assert.equal(inferBumpType([{ subject: 'feat(ui): add page', body: '' }]), 'minor');
-  assert.equal(
-    inferBumpType([{ subject: 'feat(api)!: change contract', body: '' }]),
-    'major'
-  );
+  assert.equal(inferBumpType([{ subject: 'feat(api)!: change contract', body: '' }]), 'major');
 });
 
 test('runReleaseVersionCli bumps and updates changelog from conventional commits', async () => {
@@ -71,9 +68,18 @@ test('runReleaseVersionCli bumps and updates changelog from conventional commits
   const result = await runReleaseVersionCli({ cwd: repoRoot, argv: [] });
 
   assert.equal(result.version, '1.3.0');
-  assert.equal(JSON.parse(readFileSync(path.join(repoRoot, 'package.json'), 'utf8')).version, '1.3.0');
-  assert.match(readFileSync(path.join(repoRoot, 'CHANGELOG.md'), 'utf8'), /## v1\.3\.0 - \d{4}-\d{2}-\d{2}/);
-  assert.match(readFileSync(path.join(repoRoot, 'CHANGELOG.md'), 'utf8'), /feat\(cli\): add release helper/);
+  assert.equal(
+    JSON.parse(readFileSync(path.join(repoRoot, 'package.json'), 'utf8')).version,
+    '1.3.0'
+  );
+  assert.match(
+    readFileSync(path.join(repoRoot, 'CHANGELOG.md'), 'utf8'),
+    /## v1\.3\.0 - \d{4}-\d{2}-\d{2}/
+  );
+  assert.match(
+    readFileSync(path.join(repoRoot, 'CHANGELOG.md'), 'utf8'),
+    /feat\(cli\): add release helper/
+  );
 });
 
 test('runReleaseVersionCli dry-run leaves files untouched', async () => {
@@ -89,4 +95,27 @@ test('runReleaseVersionCli dry-run leaves files untouched', async () => {
   assert.equal(result.version, '1.2.4');
   assert.equal(readFileSync(path.join(repoRoot, 'package.json'), 'utf8'), beforePackage);
   assert.equal(readFileSync(path.join(repoRoot, 'CHANGELOG.md'), 'utf8'), beforeChangelog);
+});
+
+test('runReleaseVersionCli honors the latest matching prefixed tag', async () => {
+  const repoRoot = createFixtureRepo();
+  writeFileSync(
+    path.join(repoRoot, 'devx.config.mjs'),
+    `export default {
+  projectName: 'fixture-app',
+  release: {
+    tagPrefix: 'release-',
+  },
+};
+`
+  );
+
+  run('git tag release-1.4.0', repoRoot);
+  writeFileSync(path.join(repoRoot, 'fix.txt'), 'bug fix\n');
+  run('git add devx.config.mjs fix.txt', repoRoot);
+  run('git commit -m "fix(cli): respect prefixed tags"', repoRoot);
+
+  const result = await runReleaseVersionCli({ cwd: repoRoot, argv: ['--dry-run'] });
+
+  assert.equal(result.version, '1.4.1');
 });
