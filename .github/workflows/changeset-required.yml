@@ -1,0 +1,68 @@
+name: Changeset Required
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  changeset-required:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate changeset presence
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.sha }}
+          HEAD_REF: ${{ github.event.pull_request.head.sha }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          set -euo pipefail
+
+          if [[ ",${PR_LABELS}," == *",no-release,"* ]]; then
+            echo "Skipping changeset requirement because the PR has the no-release label."
+            exit 0
+          fi
+
+          changed_files="$(git diff --name-only "$BASE_REF" "$HEAD_REF")"
+
+          if [[ -z "$changed_files" ]]; then
+            echo "No changed files detected."
+            exit 0
+          fi
+
+          package_changes="$(printf '%s\n' "$changed_files" | grep '^packages/' || true)"
+          if [[ -z "$package_changes" ]]; then
+            echo "No publishable package files changed."
+            exit 0
+          fi
+
+          non_release_package_changes="$(printf '%s\n' "$package_changes" | grep -vE '^packages/[^/]+/(README\.md|CHANGELOG\.md|test/)' || true)"
+          if [[ -z "$non_release_package_changes" ]]; then
+            echo "Only package docs, changelogs, or tests changed. No changeset required."
+            exit 0
+          fi
+
+          changeset_files="$(printf '%s\n' "$changed_files" | grep '^\.changeset/.+\.md$' || true)"
+          if [[ -n "$changeset_files" ]]; then
+            echo "Changeset detected."
+            exit 0
+          fi
+
+          echo "Package changes were detected without a changeset."
+          echo "Add one with 'npm run changeset', or apply the 'no-release' label if this PR should not publish."
+          echo
+          echo "Relevant package changes:"
+          printf '%s\n' "$non_release_package_changes"
+          exit 1

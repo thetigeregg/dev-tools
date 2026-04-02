@@ -25,8 +25,6 @@ env:
 
 jobs:
   analyze:
-    # Skip only release/version bump pushes (not arbitrary [skip ci] commits).
-    if: github.event_name != 'push' || !(startsWith(github.event.head_commit.message, 'chore(release):') && contains(github.event.head_commit.message, '[skip ci]'))
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
     strategy:
