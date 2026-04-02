@@ -8,6 +8,7 @@ import {
   collectDiscussionReviewItems,
   extractSnippet,
   isCopilotReviewAuthor,
+  parseArgs,
 } from '../src/pr-agent.mjs';
 
 test('collectDiscussionReviewItems keeps general PR discussion comments', () => {
@@ -58,4 +59,13 @@ test('extractSnippet resolves repo-relative files against the repo root', () => 
   } finally {
     process.chdir(previousCwd);
   }
+});
+
+test('parseArgs accepts already-sliced argv arrays', () => {
+  assert.deepEqual(parseArgs(['123', '--debug', '--copilot-only', '--include-coverage']), {
+    prNumber: '123',
+    debug: true,
+    copilotOnly: true,
+    includeCoverage: true,
+  });
 });

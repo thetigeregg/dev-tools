@@ -21,9 +21,7 @@ const DEFAULT_LOG_TERMS = [
   'Exception',
 ];
 
-function parseArgs(argv) {
-  const args = argv.slice(2);
-
+export function parseArgs(args) {
   const options = {
     prNumber: null,
     debug: false,
@@ -937,7 +935,7 @@ function buildPrompt(data, config) {
   return sections.join('\n\n---\n\n').trim() + '\n';
 }
 
-export async function runPrAgentCli({ argv = process.argv, cwd = process.cwd() } = {}) {
+export async function runPrAgentCli({ argv = process.argv.slice(2), cwd = process.cwd() } = {}) {
   const options = parseArgs(argv);
   const config = await loadDevxConfig({ cwd });
   const debug = process.env.DEBUG_PR_AGENT === '1' || options.debug;

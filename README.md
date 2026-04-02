@@ -22,6 +22,12 @@ npm install -D @thetigeregg/dev-cli @thetigeregg/prettier-config @thetigeregg/co
 
 The local toolchain packages are required because the shared Husky hooks and `devx` dependency commands call their binaries directly.
 
+Enable Husky after installing dependencies:
+
+```sh
+npm run prepare
+```
+
 Create a `devx.config.mjs` at the consumer repo root. The shared repo owns the generic mechanics; the consumer repo owns project topology and optional adapter hooks.
 
 ```js
@@ -114,9 +120,15 @@ The bootstrap flow below assumes a modern Node release. If you install the lates
 npm install -D @thetigeregg/dev-cli @thetigeregg/prettier-config @thetigeregg/commitlint-config @thetigeregg/lint-staged-config @thetigeregg/ncu-config husky lint-staged @commitlint/cli prettier npm-check-updates
 ```
 
-2. Add a minimal `devx.config.mjs` for the repo topology you want `devx` to understand.
+2. Enable the shared Husky hooks:
 
-3. Run the bootstrap command from the repo root:
+```sh
+npm run prepare
+```
+
+3. Add a minimal `devx.config.mjs` for the repo topology you want `devx` to understand.
+
+4. Run the bootstrap command from the repo root:
 
 ```sh
 npx devx repo bootstrap
@@ -132,16 +144,16 @@ Bootstrap currently seeds:
 - shared GitHub templates such as PR, issue, commit, Dependabot, and release templates
 - `.github/copilot-instructions.md`
 
-4. Review the generated files and replace placeholder values in `devx.config.mjs` with real repo settings.
+5. Review the generated files and replace placeholder values in `devx.config.mjs` with real repo settings.
 
-5. Keep project-specific logic local:
+6. Keep project-specific logic local:
 
 - `worktree.adapterModule`
 - app-specific generation scripts
 - app-specific database flows
 - repo-specific CI workflows
 
-6. Run a verification pass:
+7. Run a verification pass:
 
 ```sh
 npm run lint

@@ -11,6 +11,7 @@ import {
 test('sanitize keeps URL-safe worktree names compact', () => {
   assert.equal(sanitize('Feature/Hello World'), 'feature-hello-world');
   assert.equal(sanitize('---'), '');
+  assert.equal(sanitize('feature branch - extra', 15), 'feature-branch');
 });
 
 test('detectWorktreeHint prefers the first directory below worktrees', () => {

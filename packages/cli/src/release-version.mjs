@@ -163,7 +163,8 @@ export async function runReleaseVersionCli({
   }
 
   const latestTag = getLatestTag({ cwd: config.repoRoot, tagPrefix });
-  const latestTagVersion = latestTag ? latestTag.replace(new RegExp(`^${tagPrefix}`), '') : null;
+  const latestTagVersion =
+    latestTag && latestTag.startsWith(tagPrefix) ? latestTag.slice(tagPrefix.length) : latestTag;
   const releaseBaseVersion =
     latestTagVersion && compareSemver(latestTagVersion, currentVersion) > 0
       ? latestTagVersion

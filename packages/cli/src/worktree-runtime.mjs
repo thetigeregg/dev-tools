@@ -39,7 +39,9 @@ export function sanitize(value, maxLength = 63) {
   while (start < end && result[start] === '-') start++;
   while (end > start && result[end - 1] === '-') end--;
 
-  return result.slice(start, end).slice(0, maxLength);
+  const trimmed = result.slice(start, end).slice(0, maxLength);
+
+  return trimmed.replace(/^-+/, '').replace(/-+$/, '');
 }
 
 export function detectWorktreeHint(repoPath) {

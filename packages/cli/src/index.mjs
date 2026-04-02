@@ -89,7 +89,7 @@ if (group === 'pr' && command === 'summary') {
 }
 
 if (group === 'pr' && command === 'agent') {
-  await runPrAgentCli({ argv: ['node', 'devx pr agent', ...rest] });
+  await runPrAgentCli({ argv: rest });
   process.exit(0);
 }
 

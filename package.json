@@ -22,7 +22,7 @@
     "repo:sync": "devx repo sync",
     "repo:sync-templates": "devx repo sync-templates",
     "pr:summary": "devx pr summary",
-    "pr:agent": "sh -c 'if [ \"$#\" -eq 0 ]; then echo \"Error: Missing PR number.\" >&2; echo \"Usage: npm run pr:agent -- <PR_NUMBER>\" >&2; exit 1; fi; devx pr agent \"$@\"' --",
+    "pr:agent": "devx pr agent",
     "commitlint": "commitlint --from=HEAD~1 --to=HEAD --verbose",
     "changeset": "changeset",
     "version-packages": "changeset version",

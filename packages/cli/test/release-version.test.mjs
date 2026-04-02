@@ -119,3 +119,26 @@ test('runReleaseVersionCli honors the latest matching prefixed tag', async () =>
 
   assert.equal(result.version, '1.4.1');
 });
+
+test('runReleaseVersionCli treats regex-like tag prefixes as plain text', async () => {
+  const repoRoot = createFixtureRepo();
+  writeFileSync(
+    path.join(repoRoot, 'devx.config.mjs'),
+    `export default {
+  projectName: 'fixture-app',
+  release: {
+    tagPrefix: 'release.',
+  },
+};
+`
+  );
+
+  run('git tag release.1.4.0', repoRoot);
+  writeFileSync(path.join(repoRoot, 'fix.txt'), 'bug fix\n');
+  run('git add devx.config.mjs fix.txt', repoRoot);
+  run('git commit -m "fix(cli): handle dotted tag prefixes"', repoRoot);
+
+  const result = await runReleaseVersionCli({ cwd: repoRoot, argv: ['--dry-run'] });
+
+  assert.equal(result.version, '1.4.1');
+});
