@@ -57,6 +57,14 @@ test('inferBumpType honors breaking, feat, then patch semantics', () => {
   assert.equal(inferBumpType([{ subject: 'fix(api): patch', body: '' }]), 'patch');
   assert.equal(inferBumpType([{ subject: 'feat(ui): add page', body: '' }]), 'minor');
   assert.equal(inferBumpType([{ subject: 'feat(api)!: change contract', body: '' }]), 'major');
+  assert.equal(inferBumpType([{ subject: 'chore(release): 1.2.4', body: '' }]), 'none');
+  assert.equal(
+    inferBumpType([
+      { subject: 'chore(release): 1.2.4', body: '' },
+      { subject: 'feat(ui): add page', body: '' },
+    ]),
+    'minor'
+  );
 });
 
 test('runReleaseVersionCli bumps and updates changelog from conventional commits', async () => {
@@ -182,6 +190,24 @@ test('runReleaseVersionCli no-ops when HEAD already matches the latest release t
   assert.equal(result.version, '1.2.3');
   assert.equal(result.bumpType, 'none');
   assert.equal(readFileSync(path.join(repoRoot, 'package.json'), 'utf8'), beforePackage);
+  assert.equal(readFileSync(path.join(repoRoot, 'CHANGELOG.md'), 'utf8'), beforeChangelog);
+});
+
+test('runReleaseVersionCli ignores release bookkeeping commits when inferring the next bump', async () => {
+  const repoRoot = createFixtureRepo();
+  writeFileSync(
+    path.join(repoRoot, 'package.json'),
+    JSON.stringify({ name: 'fixture-app', version: '1.2.4', private: true }, null, 2) + '\n'
+  );
+
+  run('git add package.json', repoRoot);
+  run('git commit -m "chore(release): 1.2.4"', repoRoot);
+
+  const beforeChangelog = readFileSync(path.join(repoRoot, 'CHANGELOG.md'), 'utf8');
+  const result = await runReleaseVersionCli({ cwd: repoRoot, argv: ['--dry-run'] });
+
+  assert.equal(result.version, '1.2.4');
+  assert.equal(result.bumpType, 'none');
   assert.equal(readFileSync(path.join(repoRoot, 'CHANGELOG.md'), 'utf8'), beforeChangelog);
 });
 

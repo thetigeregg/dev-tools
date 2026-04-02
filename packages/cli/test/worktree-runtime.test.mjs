@@ -15,6 +15,8 @@ test('sanitize keeps URL-safe worktree names compact', () => {
   assert.equal(sanitize(0), '0');
   assert.equal(sanitize(12345), '12345');
   assert.equal(sanitize(null), '');
+  assert.equal(sanitize('---Feature---', 7), 'feature');
+  assert.equal(sanitize('feature---branch---extra', 14), 'feature-branch');
 });
 
 test('detectWorktreeHint prefers the first directory below worktrees', () => {

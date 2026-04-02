@@ -7,6 +7,7 @@ import {
   buildComposeArgs,
   buildNvmAwareInstallCommand,
   createWorktreeContext,
+  ensureLocalEnvFromSharedTemplate,
   resolveShellInvocation,
   runFrontendDev,
   runPwaCommand,
@@ -323,4 +324,32 @@ test('runWorktreeBootstrap passes force through to dependency installation', () 
   assert.equal(calls.length, 1);
   assert.match(calls[0].command, /npm run deps:ci-all/);
   assert.equal(calls[0].fallbackCommand, 'npm run deps:ci-all');
+});
+
+test('ensureLocalEnvFromSharedTemplate throws a clear error when force bootstrapping without a template path', () => {
+  assert.throws(
+    () =>
+      ensureLocalEnvFromSharedTemplate(
+        {
+          localEnvPath: path.join(os.tmpdir(), `devx-bootstrap-missing-${process.pid}.env`),
+          sharedEnvFilePath: undefined,
+        },
+        true
+      ),
+    /Shared env template path is not configured/
+  );
+});
+
+test('ensureLocalEnvFromSharedTemplate throws a clear error when the template file is missing', () => {
+  assert.throws(
+    () =>
+      ensureLocalEnvFromSharedTemplate(
+        {
+          localEnvPath: path.join(os.tmpdir(), `devx-bootstrap-missing-file-${process.pid}.env`),
+          sharedEnvFilePath: path.join(os.tmpdir(), `devx-nope-${process.pid}.env`),
+        },
+        true
+      ),
+    /Shared env template not found at/
+  );
 });

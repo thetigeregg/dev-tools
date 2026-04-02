@@ -113,15 +113,25 @@ function getCommitMessages(range, { cwd }) {
     });
 }
 
+function isReleaseCommitSubject(subject) {
+  return /^chore\(release\):/i.test(String(subject || '').trim());
+}
+
 export function inferBumpType(commits) {
-  for (const commit of commits) {
+  const relevantCommits = commits.filter((commit) => !isReleaseCommitSubject(commit.subject));
+
+  if (relevantCommits.length === 0) {
+    return 'none';
+  }
+
+  for (const commit of relevantCommits) {
     const full = `${commit.subject}\n${commit.body}`;
     if (/BREAKING CHANGE:/i.test(full) || /^[a-z]+(?:\([^)]*\))?!:/i.test(commit.subject)) {
       return 'major';
     }
   }
 
-  for (const commit of commits) {
+  for (const commit of relevantCommits) {
     if (/^feat(?:\([^)]*\))?:\s/i.test(commit.subject)) {
       return 'minor';
     }
@@ -232,6 +242,26 @@ export async function runReleaseVersionCli({
   }
 
   const bumpType = inferBumpType(commits);
+  if (bumpType === 'none') {
+    const parsedCurrentVersion = parseSemver(currentVersion);
+
+    setOutput('version', currentVersion);
+    setOutput('major', String(parsedCurrentVersion.major));
+    setOutput('minor', String(parsedCurrentVersion.minor));
+    setOutput('tag', `${tagPrefix}${currentVersion}`);
+    setOutput('bump_type', 'none');
+
+    process.stdout.write(`${currentVersion}\n`);
+
+    return {
+      version: currentVersion,
+      major: parsedCurrentVersion.major,
+      minor: parsedCurrentVersion.minor,
+      tag: `${tagPrefix}${currentVersion}`,
+      bumpType: 'none',
+    };
+  }
+
   const nextVersion = bumpVersion(releaseBaseVersion, bumpType);
   const changelogCommits = getCommitsForChangelog(range, { cwd: config.repoRoot });
 

@@ -334,10 +334,21 @@ export function ensureLocalEnvFromSharedTemplate(context, force = false) {
     return;
   }
 
-  if (!context.sharedEnvFilePath || !existsSync(context.sharedEnvFilePath)) {
+  if (!context.sharedEnvFilePath) {
     if (force) {
-      console.error(`Shared env template not found: ${context.sharedEnvFilePath}`);
-      process.exit(1);
+      const message =
+        'Shared env template path is not configured in the worktree context; cannot bootstrap .env.';
+      console.error(message);
+      throw new Error(message);
+    }
+    return;
+  }
+
+  if (!existsSync(context.sharedEnvFilePath)) {
+    if (force) {
+      const message = `Shared env template not found at "${context.sharedEnvFilePath}".`;
+      console.error(message);
+      throw new Error(message);
     }
     return;
   }

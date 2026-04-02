@@ -6,7 +6,8 @@ import path from 'node:path';
 export function sanitize(value, maxLength = 63) {
   if (value === null || value === undefined) return '';
 
-  let result = '';
+  const limit = Math.max(0, maxLength);
+  const chars = [];
   let prevWasDash = false;
   const lower = String(value).toLowerCase();
 
@@ -17,30 +18,29 @@ export function sanitize(value, maxLength = 63) {
 
     if (isValid) {
       if (char === '-') {
-        if (!prevWasDash) {
-          result += '-';
+        if (!prevWasDash && chars.length > 0 && chars.length < limit) {
+          chars.push('-');
           prevWasDash = true;
         }
       } else {
-        result += char;
+        if (chars.length >= limit) {
+          break;
+        }
+
+        chars.push(char);
         prevWasDash = false;
       }
-    } else if (!prevWasDash) {
-      result += '-';
+    } else if (!prevWasDash && chars.length > 0 && chars.length < limit) {
+      chars.push('-');
       prevWasDash = true;
     }
   }
 
-  // trim leading/trailing dashes
-  let start = 0;
-  let end = result.length;
+  while (chars.length > 0 && chars[chars.length - 1] === '-') {
+    chars.pop();
+  }
 
-  while (start < end && result[start] === '-') start++;
-  while (end > start && result[end - 1] === '-') end--;
-
-  const trimmed = result.slice(start, end).slice(0, maxLength);
-
-  return trimmed.replace(/^-+/, '').replace(/-+$/, '');
+  return chars.join('');
 }
 
 export function detectWorktreeHint(repoPath) {
