@@ -4,12 +4,11 @@ import os from 'node:os';
 import path from 'node:path';
 
 export function sanitize(value, maxLength = 63) {
-  if (!value) return '';
+  if (value === null || value === undefined) return '';
 
   let result = '';
   let prevWasDash = false;
-
-  const lower = value.toLowerCase();
+  const lower = String(value).toLowerCase();
 
   for (let i = 0; i < lower.length; i++) {
     const char = lower[i];

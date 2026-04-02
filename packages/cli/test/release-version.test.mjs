@@ -171,3 +171,16 @@ test('runReleaseVersionCli keeps prerelease tags out of the commit range base', 
 
   assert.equal(result.version, '1.3.0');
 });
+
+test('runReleaseVersionCli no-ops when HEAD already matches the latest release tag', async () => {
+  const repoRoot = createFixtureRepo();
+  const beforePackage = readFileSync(path.join(repoRoot, 'package.json'), 'utf8');
+  const beforeChangelog = readFileSync(path.join(repoRoot, 'CHANGELOG.md'), 'utf8');
+
+  const result = await runReleaseVersionCli({ cwd: repoRoot, argv: [] });
+
+  assert.equal(result.version, '1.2.3');
+  assert.equal(result.bumpType, 'none');
+  assert.equal(readFileSync(path.join(repoRoot, 'package.json'), 'utf8'), beforePackage);
+  assert.equal(readFileSync(path.join(repoRoot, 'CHANGELOG.md'), 'utf8'), beforeChangelog);
+});

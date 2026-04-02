@@ -203,6 +203,26 @@ export async function runReleaseVersionCli({
       : currentVersion;
   const range = latestTag ? `${latestTag}..HEAD` : 'HEAD';
   const commits = getCommitMessages(range, { cwd: config.repoRoot });
+  if (latestTag && commits.length === 0) {
+    const parsedCurrentVersion = parseSemver(currentVersion);
+
+    setOutput('version', currentVersion);
+    setOutput('major', String(parsedCurrentVersion.major));
+    setOutput('minor', String(parsedCurrentVersion.minor));
+    setOutput('tag', `${tagPrefix}${currentVersion}`);
+    setOutput('bump_type', 'none');
+
+    process.stdout.write(`${currentVersion}\n`);
+
+    return {
+      version: currentVersion,
+      major: parsedCurrentVersion.major,
+      minor: parsedCurrentVersion.minor,
+      tag: `${tagPrefix}${currentVersion}`,
+      bumpType: 'none',
+    };
+  }
+
   const bumpType = inferBumpType(commits);
   const nextVersion = bumpVersion(releaseBaseVersion, bumpType);
   const changelogCommits = getCommitsForChangelog(range, { cwd: config.repoRoot });
