@@ -14,7 +14,7 @@
   "license": "UNLICENSED",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sixtopia/dev-tools.git",
+    "url": "https://github.com/thetigeregg/dev-tools.git",
     "directory": "packages/prettier-config"
   },
   "engines": {
