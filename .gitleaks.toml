@@ -1,0 +1,4 @@
+title = "thetigeregg shared gitleaks config"
+
+[extend]
+useDefault = true
