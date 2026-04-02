@@ -41,7 +41,7 @@ export function parseArgs(args) {
     }
   }
 
-  if (!options.prNumber) {
+  if (!options.prNumber || !/^\d+$/.test(options.prNumber)) {
     console.error(
       'Usage: devx pr agent <PR_NUMBER> [--copilot-only] [--include-coverage] [--debug]'
     );

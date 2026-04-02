@@ -69,3 +69,26 @@ test('parseArgs accepts already-sliced argv arrays', () => {
     includeCoverage: true,
   });
 });
+
+test('parseArgs rejects non-numeric PR numbers with the usage error', () => {
+  const originalExit = process.exit;
+  const originalConsoleError = console.error;
+  const consoleMessages = [];
+
+  process.exit = (code) => {
+    throw new Error(`process.exit:${code}`);
+  };
+  console.error = (message) => {
+    consoleMessages.push(message);
+  };
+
+  try {
+    assert.throws(() => parseArgs(['abc', '--debug']), /process\.exit:1/);
+    assert.deepEqual(consoleMessages, [
+      'Usage: devx pr agent <PR_NUMBER> [--copilot-only] [--include-coverage] [--debug]',
+    ]);
+  } finally {
+    process.exit = originalExit;
+    console.error = originalConsoleError;
+  }
+});
