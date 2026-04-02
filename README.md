@@ -104,6 +104,21 @@ npm run smoke
 
 The smoke check verifies that workspace package exports resolve and that the `devx` entrypoint responds to `--help`.
 
+This repo also dogfoods its own shared tooling at the root:
+
+- [devx.config.mjs](/Users/sixtopia/projects/dev-tools/devx.config.mjs) configures `devx` against the workspace packages
+- [.prettierrc.cjs](/Users/sixtopia/projects/dev-tools/.prettierrc.cjs) re-exports `@thetigeregg/prettier-config`
+- [commitlint.config.cjs](/Users/sixtopia/projects/dev-tools/commitlint.config.cjs) extends `@thetigeregg/commitlint-config`
+- [.ncurc.cjs](/Users/sixtopia/projects/dev-tools/.ncurc.cjs) re-exports `@thetigeregg/ncu-config`
+
+Useful root scripts:
+
+```sh
+npm run deps:audit
+npm run deps:ncu
+npm run format
+```
+
 ## Releases
 
 This repo uses Changesets for versioning and release management.
