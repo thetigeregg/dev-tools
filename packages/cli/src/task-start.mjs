@@ -81,7 +81,8 @@ export async function runWorktreeBootstrap({ config, worktreePath, branch }) {
     .relative(worktreePath, config.worktree.adapterModuleAbsolute)
     .replace(/\\/g, '/');
 
-  run(`node ${JSON.stringify(adapterPath)} bootstrap`, {
+  execSync('node', [adapterPath, 'bootstrap'], {
+    stdio: 'inherit',
     cwd: worktreePath,
   });
 }
