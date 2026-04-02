@@ -1,5 +1,11 @@
 # @thetigeregg/commitlint-config
 
+## 0.2.0
+
+### Minor Changes
+
+- 19099a4: bumped dependencies
+
 ## 0.1.1
 
 ### Patch Changes
