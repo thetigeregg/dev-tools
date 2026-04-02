@@ -1,5 +1,11 @@
 # @thetigeregg/ncu-config
 
+## 0.3.3
+
+### Patch Changes
+
+- 28c6e8d: fix release
+
 ## 0.3.2
 
 ### Patch Changes
