@@ -59,7 +59,10 @@ test('runTaskStartCli does not execute shell content from baseBranch config', as
 
   try {
     process.chdir(tempRoot);
-    await assert.rejects(runTaskStartCli('safe-branch', { cwd: repoPath }), /process\.exit:/);
+    await assert.rejects(runTaskStartCli('safe-branch', { cwd: repoPath }), (error) => {
+      assert.match(error.message, /process\.exit:1/);
+      return true;
+    });
   } finally {
     process.chdir(originalCwd);
     process.exit = originalExit;

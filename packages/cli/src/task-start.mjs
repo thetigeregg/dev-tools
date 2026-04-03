@@ -13,6 +13,21 @@ function runGit(args, options = {}) {
   return execFileSync('git', args, options);
 }
 
+function validateBranchName(branchName, label) {
+  if (!SAFE_BRANCH_PATTERN.test(branchName) || branchName.startsWith('-')) {
+    console.error(
+      `Invalid ${label}. Use only letters, numbers, ".", "_", "-", "/", and do not start with "-".`
+    );
+    process.exit(1);
+  }
+
+  const pathSegments = branchName.split('/');
+  if (pathSegments.some((segment) => !segment || segment === '.' || segment === '..')) {
+    console.error(`Invalid ${label}. Dot segments and empty path segments are not allowed.`);
+    process.exit(1);
+  }
+}
+
 function commandExists(command) {
   try {
     execSync(`command -v ${command}`, { stdio: 'ignore' });
@@ -96,18 +111,8 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
     process.exit(1);
   }
 
-  if (!SAFE_BRANCH_PATTERN.test(name) || name.startsWith('-')) {
-    console.error(
-      'Invalid task name. Use only letters, numbers, ".", "_", "-", "/", and do not start with "-".'
-    );
-    process.exit(1);
-  }
-
-  const pathSegments = name.split('/');
-  if (pathSegments.some((segment) => !segment || segment === '.' || segment === '..')) {
-    console.error('Invalid task name. Dot segments and empty path segments are not allowed.');
-    process.exit(1);
-  }
+  validateBranchName(name, 'task name');
+  validateBranchName(config.baseBranch, 'base branch config');
 
   const branch = name.includes('/') ? name : `${config.branchPrefix}${name}`;
   const worktreePath = path.join(config.worktreeRootAbsolute, branch);
@@ -119,7 +124,7 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
     process.exit(1);
   }
 
-  const worktreeParentDir = worktreePath.split('/').slice(0, -1).join('/');
+  const worktreeParentDir = path.dirname(worktreePath);
   if (worktreeParentDir) {
     mkdirSync(worktreeParentDir, { recursive: true });
   }
