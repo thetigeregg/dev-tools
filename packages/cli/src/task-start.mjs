@@ -65,6 +65,16 @@ function getWorktreePathForBranch(branchName, { cwd }) {
   return null;
 }
 
+export function isPathWithinParent(parentPath, targetPath) {
+  const relativePath = path.relative(parentPath, targetPath);
+  return (
+    relativePath.length > 0 &&
+    relativePath !== '..' &&
+    !relativePath.startsWith(`..${path.sep}`) &&
+    !path.isAbsolute(relativePath)
+  );
+}
+
 export function isEntrypoint({ argv1 = process.argv[1], moduleUrl = import.meta.url } = {}) {
   if (!argv1) {
     return false;
@@ -117,7 +127,7 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
   const branch = name.includes('/') ? name : `${config.branchPrefix}${name}`;
   const worktreePath = path.join(config.worktreeRootAbsolute, branch);
 
-  if (!worktreePath.startsWith(`${config.worktreeRootAbsolute}${path.sep}`)) {
+  if (!isPathWithinParent(config.worktreeRootAbsolute, worktreePath)) {
     console.error(
       'Invalid task name. Worktree path must stay within the configured worktrees directory.'
     );

@@ -5,7 +5,7 @@ import { existsSync, mkdtempSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { runTaskStartCli } from '../src/task-start.mjs';
+import { isPathWithinParent, runTaskStartCli } from '../src/task-start.mjs';
 
 function runCommand(command, args, options = {}) {
   return execFileSync(command, args, {
@@ -69,4 +69,11 @@ test('runTaskStartCli does not execute shell content from baseBranch config', as
   }
 
   assert.equal(existsSync(markerPath), false);
+});
+
+test('isPathWithinParent accepts paths when worktree root ends with a separator', () => {
+  const worktreeRoot = path.join(os.tmpdir(), 'dev-cli-worktrees') + path.sep;
+  const worktreePath = path.join(worktreeRoot, 'feat', 'example-task');
+
+  assert.equal(isPathWithinParent(worktreeRoot, worktreePath), true);
 });
