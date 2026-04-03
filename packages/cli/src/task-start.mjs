@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { execSync } from 'node:child_process';
+import { execSync, execFileSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -9,8 +9,28 @@ import { loadWorktreeAdapterModule } from './worktree-adapter.mjs';
 
 const SAFE_BRANCH_PATTERN = /^[A-Za-z0-9._/-]+$/;
 
-function run(cmd, opts = {}) {
-  execSync(cmd, { stdio: 'inherit', ...opts });
+function runGit(args, options = {}) {
+  return execFileSync('git', args, options);
+}
+
+function validateBranchName(branchName, label) {
+  if (typeof branchName !== 'string' || branchName.length === 0) {
+    console.error(`Invalid ${label}. It must be a non-empty string.`);
+    process.exit(1);
+  }
+
+  if (!SAFE_BRANCH_PATTERN.test(branchName) || branchName.startsWith('-')) {
+    console.error(
+      `Invalid ${label}. Use only letters, numbers, ".", "_", "-", "/", and do not start with "-".`
+    );
+    process.exit(1);
+  }
+
+  const pathSegments = branchName.split('/');
+  if (pathSegments.some((segment) => !segment || segment === '.' || segment === '..')) {
+    console.error(`Invalid ${label}. Dot segments and empty path segments are not allowed.`);
+    process.exit(1);
+  }
 }
 
 function commandExists(command) {
@@ -22,9 +42,10 @@ function commandExists(command) {
   }
 }
 
-function getWorktreePathForBranch(branchName) {
-  const output = execSync('git worktree list --porcelain', {
+function getWorktreePathForBranch(branchName, { cwd }) {
+  const output = runGit(['worktree', 'list', '--porcelain'], {
     encoding: 'utf8',
+    cwd,
   });
   const normalizedOutput = output.replace(/\r\n/g, '\n');
   const targetRef = `refs/heads/${branchName}`;
@@ -47,6 +68,16 @@ function getWorktreePathForBranch(branchName) {
   }
 
   return null;
+}
+
+export function isPathWithinParent(parentPath, targetPath) {
+  const relativePath = path.relative(parentPath, targetPath);
+  return (
+    relativePath.length > 0 &&
+    relativePath !== '..' &&
+    !relativePath.startsWith(`..${path.sep}`) &&
+    !path.isAbsolute(relativePath)
+  );
 }
 
 export function isEntrypoint({ argv1 = process.argv[1], moduleUrl = import.meta.url } = {}) {
@@ -81,7 +112,8 @@ export async function runWorktreeBootstrap({ config, worktreePath, branch }) {
     .relative(worktreePath, config.worktree.adapterModuleAbsolute)
     .replace(/\\/g, '/');
 
-  run(`node ${JSON.stringify(adapterPath)} bootstrap`, {
+  execFileSync(process.execPath, [adapterPath, 'bootstrap'], {
+    stdio: 'inherit',
     cwd: worktreePath,
   });
 }
@@ -94,37 +126,29 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
     process.exit(1);
   }
 
-  if (!SAFE_BRANCH_PATTERN.test(name) || name.startsWith('-')) {
-    console.error(
-      'Invalid task name. Use only letters, numbers, ".", "_", "-", "/", and do not start with "-".'
-    );
-    process.exit(1);
-  }
-
-  const pathSegments = name.split('/');
-  if (pathSegments.some((segment) => !segment || segment === '.' || segment === '..')) {
-    console.error('Invalid task name. Dot segments and empty path segments are not allowed.');
-    process.exit(1);
-  }
+  validateBranchName(name, 'task name');
+  validateBranchName(config.baseBranch, 'base branch config');
 
   const branch = name.includes('/') ? name : `${config.branchPrefix}${name}`;
-  const worktreePath = path.posix.normalize(path.posix.join(config.worktreeRoot, branch));
+  validateBranchName(branch, 'branch name');
+  const worktreePath = path.join(config.worktreeRootAbsolute, branch);
 
-  if (!worktreePath.startsWith(`${config.worktreeRoot}/`)) {
+  if (!isPathWithinParent(config.worktreeRootAbsolute, worktreePath)) {
     console.error(
       'Invalid task name. Worktree path must stay within the configured worktrees directory.'
     );
     process.exit(1);
   }
 
-  const worktreeParentDir = worktreePath.split('/').slice(0, -1).join('/');
+  const worktreeParentDir = path.dirname(worktreePath);
   if (worktreeParentDir) {
     mkdirSync(worktreeParentDir, { recursive: true });
   }
 
   try {
-    const statusOutput = execSync('git status --porcelain', {
+    const statusOutput = runGit(['status', '--porcelain'], {
       encoding: 'utf8',
+      cwd: config.repoRoot,
     }).trim();
     if (statusOutput) {
       console.error('\nWorking directory has uncommitted changes.');
@@ -133,12 +157,16 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
     }
 
     console.log(`\nFetching latest origin/${config.baseBranch}...\n`);
-    run(`git fetch origin ${config.baseBranch} --prune`);
+    runGit(['fetch', 'origin', config.baseBranch, '--prune'], {
+      stdio: 'inherit',
+      cwd: config.repoRoot,
+    });
 
     const hasLocalBaseBranch = (() => {
       try {
-        execSync(`git show-ref --verify --quiet refs/heads/${config.baseBranch}`, {
+        runGit(['show-ref', '--verify', '--quiet', `refs/heads/${config.baseBranch}`], {
           stdio: 'ignore',
+          cwd: config.repoRoot,
         });
         return true;
       } catch {
@@ -148,13 +176,19 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
 
     if (!hasLocalBaseBranch) {
       console.log(`\nCreating local ${config.baseBranch} from origin/${config.baseBranch}...\n`);
-      run(`git branch ${config.baseBranch} origin/${config.baseBranch}`);
+      runGit(['branch', config.baseBranch, `origin/${config.baseBranch}`], {
+        stdio: 'inherit',
+        cwd: config.repoRoot,
+      });
     } else {
       console.log(
         `\nFast-forwarding local ${config.baseBranch} to origin/${config.baseBranch}...\n`
       );
       try {
-        run(`git merge-base --is-ancestor ${config.baseBranch} origin/${config.baseBranch}`);
+        runGit(['merge-base', '--is-ancestor', config.baseBranch, `origin/${config.baseBranch}`], {
+          stdio: 'ignore',
+          cwd: config.repoRoot,
+        });
       } catch {
         console.error(
           `\nLocal ${config.baseBranch} has diverged from origin/${config.baseBranch}.`
@@ -168,10 +202,12 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
         process.exit(1);
       }
 
-      const mainWorktreePath = getWorktreePathForBranch(config.baseBranch);
+      const mainWorktreePath = getWorktreePathForBranch(config.baseBranch, {
+        cwd: config.repoRoot,
+      });
       if (mainWorktreePath) {
         try {
-          const mainWorktreeStatus = execSync('git status --porcelain', {
+          const mainWorktreeStatus = runGit(['status', '--porcelain'], {
             cwd: mainWorktreePath,
             encoding: 'utf8',
           }).trim();
@@ -195,16 +231,23 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
           process.exit(code);
         }
 
-        run(`git merge --ff-only origin/${config.baseBranch}`, {
+        runGit(['merge', '--ff-only', `origin/${config.baseBranch}`], {
+          stdio: 'inherit',
           cwd: mainWorktreePath,
         });
       } else {
-        run(`git branch -f ${config.baseBranch} origin/${config.baseBranch}`);
+        runGit(['branch', '-f', config.baseBranch, `origin/${config.baseBranch}`], {
+          stdio: 'inherit',
+          cwd: config.repoRoot,
+        });
       }
     }
 
     console.log(`\nCreating worktree for branch: ${branch}\n`);
-    run(`git worktree add ${worktreePath} -b ${branch} ${config.baseBranch}`);
+    runGit(['worktree', 'add', worktreePath, '-b', branch, config.baseBranch], {
+      stdio: 'inherit',
+      cwd: config.repoRoot,
+    });
 
     console.log('\nBootstrapping worktree environment...\n');
 
@@ -228,7 +271,7 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
     if (process.platform === 'darwin' && commandExists('code')) {
       console.log('\nOpening VS Code...\n');
       try {
-        run(`code "${worktreePath}"`);
+        execFileSync('code', [worktreePath], { stdio: 'inherit' });
       } catch {
         console.warn('\nCould not open VS Code automatically.\n');
         console.warn(`Open the worktree manually: ${worktreePath}\n`);

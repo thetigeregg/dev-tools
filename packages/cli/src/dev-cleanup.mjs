@@ -9,6 +9,22 @@ import { loadDevxConfig } from './config.mjs';
 const DEFAULT_MAX_BUFFER = 10 * 1024 * 1024;
 const IGNORABLE_DIRECTORY_ENTRIES = new Set(['.DS_Store', '.localized', 'Thumbs.db']);
 
+export function trimTrailingPathSeparators(pathValue, pathModule = path) {
+  const normalizedRoot = pathModule.parse(pathValue).root.replace(/\\/g, '/');
+  const minimumLength = normalizedRoot.length || 1;
+  const trailingSeparators = new Set(['/', '\\']);
+  if (pathModule.sep) {
+    trailingSeparators.add(pathModule.sep);
+  }
+  let end = pathValue.length;
+
+  while (end > minimumLength && trailingSeparators.has(pathValue[end - 1])) {
+    end--;
+  }
+
+  return pathValue.slice(0, end);
+}
+
 function normalizePathForCompare(pathValue) {
   let resolved = path.resolve(pathValue);
 
@@ -18,7 +34,7 @@ function normalizePathForCompare(pathValue) {
     // Keep resolved path when realpath lookup fails.
   }
 
-  return resolved.replace(/\\/g, '/').replace(/\/+$/, '');
+  return trimTrailingPathSeparators(resolved.replace(/\\/g, '/'));
 }
 
 function normalizePathForMatch(pathValue) {
@@ -237,10 +253,16 @@ function looksLikeManagedWorktreeRoot(dirPath, gitCommonDir) {
 }
 
 function toBranchFromManagedWorktreePath(managedWorktreesRoot, dirPath) {
-  return path
-    .relative(managedWorktreesRoot, dirPath)
-    .replace(/\\/g, '/')
-    .replace(/^\/+|\/+$/g, '');
+  let result = path.relative(managedWorktreesRoot, dirPath).replace(/\\/g, '/');
+  let start = 0;
+  let end = result.length;
+  while (start < end && result[start] === '/') {
+    start++;
+  }
+  while (end > start && result[end - 1] === '/') {
+    end--;
+  }
+  return result.slice(start, end);
 }
 
 function findOrphanedManagedWorktreeDirs({
