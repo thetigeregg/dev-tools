@@ -9,6 +9,10 @@ import { loadWorktreeAdapterModule } from './worktree-adapter.mjs';
 
 const SAFE_BRANCH_PATTERN = /^[A-Za-z0-9._/-]+$/;
 
+function runGit(args, options = {}) {
+  return execFileSync('git', args, options);
+}
+
 function commandExists(command) {
   try {
     execSync(`command -v ${command}`, { stdio: 'ignore' });
@@ -18,9 +22,10 @@ function commandExists(command) {
   }
 }
 
-function getWorktreePathForBranch(branchName) {
-  const output = execFileSync('git', ['worktree', 'list', '--porcelain'], {
+function getWorktreePathForBranch(branchName, { cwd }) {
+  const output = runGit(['worktree', 'list', '--porcelain'], {
     encoding: 'utf8',
+    cwd,
   });
   const normalizedOutput = output.replace(/\r\n/g, '\n');
   const targetRef = `refs/heads/${branchName}`;
@@ -105,9 +110,9 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
   }
 
   const branch = name.includes('/') ? name : `${config.branchPrefix}${name}`;
-  const worktreePath = path.posix.normalize(path.posix.join(config.worktreeRoot, branch));
+  const worktreePath = path.join(config.worktreeRootAbsolute, branch);
 
-  if (!worktreePath.startsWith(`${config.worktreeRoot}/`)) {
+  if (!worktreePath.startsWith(`${config.worktreeRootAbsolute}${path.sep}`)) {
     console.error(
       'Invalid task name. Worktree path must stay within the configured worktrees directory.'
     );
@@ -120,8 +125,9 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
   }
 
   try {
-    const statusOutput = execFileSync('git', ['status', '--porcelain'], {
+    const statusOutput = runGit(['status', '--porcelain'], {
       encoding: 'utf8',
+      cwd: config.repoRoot,
     }).trim();
     if (statusOutput) {
       console.error('\nWorking directory has uncommitted changes.');
@@ -130,19 +136,17 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
     }
 
     console.log(`\nFetching latest origin/${config.baseBranch}...\n`);
-    execFileSync('git', ['fetch', 'origin', config.baseBranch, '--prune'], {
+    runGit(['fetch', 'origin', config.baseBranch, '--prune'], {
       stdio: 'inherit',
+      cwd: config.repoRoot,
     });
 
     const hasLocalBaseBranch = (() => {
       try {
-        execFileSync(
-          'git',
-          ['show-ref', '--verify', '--quiet', `refs/heads/${config.baseBranch}`],
-          {
-            stdio: 'ignore',
-          }
-        );
+        runGit(['show-ref', '--verify', '--quiet', `refs/heads/${config.baseBranch}`], {
+          stdio: 'ignore',
+          cwd: config.repoRoot,
+        });
         return true;
       } catch {
         return false;
@@ -151,19 +155,19 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
 
     if (!hasLocalBaseBranch) {
       console.log(`\nCreating local ${config.baseBranch} from origin/${config.baseBranch}...\n`);
-      execFileSync('git', ['branch', config.baseBranch, `origin/${config.baseBranch}`], {
+      runGit(['branch', config.baseBranch, `origin/${config.baseBranch}`], {
         stdio: 'inherit',
+        cwd: config.repoRoot,
       });
     } else {
       console.log(
         `\nFast-forwarding local ${config.baseBranch} to origin/${config.baseBranch}...\n`
       );
       try {
-        execFileSync(
-          'git',
-          ['merge-base', '--is-ancestor', config.baseBranch, `origin/${config.baseBranch}`],
-          { stdio: 'ignore' }
-        );
+        runGit(['merge-base', '--is-ancestor', config.baseBranch, `origin/${config.baseBranch}`], {
+          stdio: 'ignore',
+          cwd: config.repoRoot,
+        });
       } catch {
         console.error(
           `\nLocal ${config.baseBranch} has diverged from origin/${config.baseBranch}.`
@@ -177,10 +181,12 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
         process.exit(1);
       }
 
-      const mainWorktreePath = getWorktreePathForBranch(config.baseBranch);
+      const mainWorktreePath = getWorktreePathForBranch(config.baseBranch, {
+        cwd: config.repoRoot,
+      });
       if (mainWorktreePath) {
         try {
-          const mainWorktreeStatus = execFileSync('git', ['status', '--porcelain'], {
+          const mainWorktreeStatus = runGit(['status', '--porcelain'], {
             cwd: mainWorktreePath,
             encoding: 'utf8',
           }).trim();
@@ -204,20 +210,22 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
           process.exit(code);
         }
 
-        execFileSync('git', ['merge', '--ff-only', `origin/${config.baseBranch}`], {
+        runGit(['merge', '--ff-only', `origin/${config.baseBranch}`], {
           stdio: 'inherit',
           cwd: mainWorktreePath,
         });
       } else {
-        execFileSync('git', ['branch', '-f', config.baseBranch, `origin/${config.baseBranch}`], {
+        runGit(['branch', '-f', config.baseBranch, `origin/${config.baseBranch}`], {
           stdio: 'inherit',
+          cwd: config.repoRoot,
         });
       }
     }
 
     console.log(`\nCreating worktree for branch: ${branch}\n`);
-    execFileSync('git', ['worktree', 'add', worktreePath, '-b', branch, config.baseBranch], {
+    runGit(['worktree', 'add', worktreePath, '-b', branch, config.baseBranch], {
       stdio: 'inherit',
+      cwd: config.repoRoot,
     });
 
     console.log('\nBootstrapping worktree environment...\n');

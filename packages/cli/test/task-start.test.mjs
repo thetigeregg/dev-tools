@@ -52,13 +52,16 @@ test('runTaskStartCli does not execute shell content from baseBranch config', as
   runCommand('git', ['commit', '-m', 'test: add task-start config'], { cwd: repoPath });
 
   const originalExit = process.exit;
+  const originalCwd = process.cwd();
   process.exit = (code) => {
     throw new Error(`process.exit:${code}`);
   };
 
   try {
+    process.chdir(tempRoot);
     await assert.rejects(runTaskStartCli('safe-branch', { cwd: repoPath }), /process\.exit:/);
   } finally {
+    process.chdir(originalCwd);
     process.exit = originalExit;
   }
 
