@@ -2,4 +2,4 @@
 '@thetigeregg/dev-cli': patch
 ---
 
-fix CodeQL issues
+Harden git command execution and path normalization

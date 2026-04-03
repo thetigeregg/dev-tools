@@ -130,6 +130,7 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
   validateBranchName(config.baseBranch, 'base branch config');
 
   const branch = name.includes('/') ? name : `${config.branchPrefix}${name}`;
+  validateBranchName(branch, 'branch name');
   const worktreePath = path.join(config.worktreeRootAbsolute, branch);
 
   if (!isPathWithinParent(config.worktreeRootAbsolute, worktreePath)) {
