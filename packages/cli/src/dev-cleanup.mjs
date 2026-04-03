@@ -12,9 +12,13 @@ const IGNORABLE_DIRECTORY_ENTRIES = new Set(['.DS_Store', '.localized', 'Thumbs.
 export function trimTrailingPathSeparators(pathValue, pathModule = path) {
   const normalizedRoot = pathModule.parse(pathValue).root.replace(/\\/g, '/');
   const minimumLength = normalizedRoot.length || 1;
+  const trailingSeparators = new Set(['/', '\\']);
+  if (pathModule.sep) {
+    trailingSeparators.add(pathModule.sep);
+  }
   let end = pathValue.length;
 
-  while (end > minimumLength && pathValue[end - 1] === '/') {
+  while (end > minimumLength && trailingSeparators.has(pathValue[end - 1])) {
     end--;
   }
 
