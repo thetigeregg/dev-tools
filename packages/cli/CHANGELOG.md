@@ -1,5 +1,11 @@
 # @thetigeregg/dev-cli
 
+## 0.4.4
+
+### Patch Changes
+
+- 3d89021: Harden git command execution and path normalization
+
 ## 0.4.3
 
 ### Patch Changes
