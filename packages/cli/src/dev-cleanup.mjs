@@ -9,6 +9,18 @@ import { loadDevxConfig } from './config.mjs';
 const DEFAULT_MAX_BUFFER = 10 * 1024 * 1024;
 const IGNORABLE_DIRECTORY_ENTRIES = new Set(['.DS_Store', '.localized', 'Thumbs.db']);
 
+export function trimTrailingPathSeparators(pathValue, pathModule = path) {
+  const normalizedRoot = pathModule.parse(pathValue).root.replace(/\\/g, '/');
+  const minimumLength = normalizedRoot.length || 1;
+  let end = pathValue.length;
+
+  while (end > minimumLength && pathValue[end - 1] === '/') {
+    end--;
+  }
+
+  return pathValue.slice(0, end);
+}
+
 function normalizePathForCompare(pathValue) {
   let resolved = path.resolve(pathValue);
 
@@ -18,12 +30,7 @@ function normalizePathForCompare(pathValue) {
     // Keep resolved path when realpath lookup fails.
   }
 
-  let normalized = resolved.replace(/\\/g, '/');
-  let end = normalized.length;
-  while (end > 1 && normalized[end - 1] === '/') {
-    end--;
-  }
-  return normalized.slice(0, end);
+  return trimTrailingPathSeparators(resolved.replace(/\\/g, '/'));
 }
 
 function normalizePathForMatch(pathValue) {

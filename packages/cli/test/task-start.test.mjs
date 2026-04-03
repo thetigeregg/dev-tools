@@ -1,0 +1,66 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdtempSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+import { runTaskStartCli } from '../src/task-start.mjs';
+
+function runCommand(command, args, options = {}) {
+  return execFileSync(command, args, {
+    encoding: 'utf8',
+    stdio: 'pipe',
+    ...options,
+  });
+}
+
+function configureGitRepo(repoPath) {
+  runCommand('git', ['config', 'user.name', 'Dev Tools Test'], { cwd: repoPath });
+  runCommand('git', ['config', 'user.email', 'dev-tools@example.com'], { cwd: repoPath });
+}
+
+test('runTaskStartCli does not execute shell content from baseBranch config', async () => {
+  const tempRoot = mkdtempSync(path.join(os.tmpdir(), 'dev-cli-task-start-'));
+  const remotePath = path.join(tempRoot, 'remote.git');
+  const seedPath = path.join(tempRoot, 'seed');
+  const repoPath = path.join(tempRoot, 'repo');
+  const markerPath = path.join(tempRoot, 'shell-injection-marker');
+  const injectedBaseBranch = `main; touch '${markerPath}'`;
+
+  runCommand('git', ['init', '--bare', remotePath]);
+  runCommand('git', ['init', '-b', 'main', seedPath]);
+  configureGitRepo(seedPath);
+  runCommand('git', ['remote', 'add', 'origin', remotePath], { cwd: seedPath });
+  writeFileSync(path.join(seedPath, 'README.md'), '# test\n');
+  runCommand('git', ['add', 'README.md'], { cwd: seedPath });
+  runCommand('git', ['commit', '-m', 'chore: seed repo'], { cwd: seedPath });
+  runCommand('git', ['push', '-u', 'origin', 'main'], { cwd: seedPath });
+
+  runCommand('git', ['clone', remotePath, repoPath]);
+  configureGitRepo(repoPath);
+  writeFileSync(
+    path.join(repoPath, 'devx.config.mjs'),
+    `export default {
+      baseBranch: ${JSON.stringify(injectedBaseBranch)},
+      worktreeRoot: '.worktrees'
+    };
+`,
+    'utf8'
+  );
+  runCommand('git', ['add', 'devx.config.mjs'], { cwd: repoPath });
+  runCommand('git', ['commit', '-m', 'test: add task-start config'], { cwd: repoPath });
+
+  const originalExit = process.exit;
+  process.exit = (code) => {
+    throw new Error(`process.exit:${code}`);
+  };
+
+  try {
+    await assert.rejects(runTaskStartCli('safe-branch', { cwd: repoPath }), /process\.exit:/);
+  } finally {
+    process.exit = originalExit;
+  }
+
+  assert.equal(existsSync(markerPath), false);
+});
