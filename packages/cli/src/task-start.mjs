@@ -14,6 +14,13 @@ function runGit(args, options = {}) {
 }
 
 function validateBranchName(branchName, label) {
+  if (typeof branchName !== 'string' || branchName.length === 0) {
+    console.error(
+      `Invalid ${label}. Use only letters, numbers, ".", "_", "-", "/", and do not start with "-".`
+    );
+    process.exit(1);
+  }
+
   if (!SAFE_BRANCH_PATTERN.test(branchName) || branchName.startsWith('-')) {
     console.error(
       `Invalid ${label}. Use only letters, numbers, ".", "_", "-", "/", and do not start with "-".`

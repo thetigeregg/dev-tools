@@ -71,6 +71,61 @@ test('runTaskStartCli does not execute shell content from baseBranch config', as
   assert.equal(existsSync(markerPath), false);
 });
 
+test('runTaskStartCli exits cleanly when baseBranch config is not a string', async () => {
+  const tempRoot = mkdtempSync(path.join(os.tmpdir(), 'dev-cli-task-start-'));
+  const remotePath = path.join(tempRoot, 'remote.git');
+  const seedPath = path.join(tempRoot, 'seed');
+  const repoPath = path.join(tempRoot, 'repo');
+
+  runCommand('git', ['init', '--bare', remotePath]);
+  runCommand('git', ['init', '-b', 'main', seedPath]);
+  configureGitRepo(seedPath);
+  runCommand('git', ['remote', 'add', 'origin', remotePath], { cwd: seedPath });
+  writeFileSync(path.join(seedPath, 'README.md'), '# test\n');
+  runCommand('git', ['add', 'README.md'], { cwd: seedPath });
+  runCommand('git', ['commit', '-m', 'chore: seed repo'], { cwd: seedPath });
+  runCommand('git', ['push', '-u', 'origin', 'main'], { cwd: seedPath });
+
+  runCommand('git', ['clone', remotePath, repoPath]);
+  configureGitRepo(repoPath);
+  writeFileSync(
+    path.join(repoPath, 'devx.config.mjs'),
+    `export default {
+      baseBranch: null,
+      worktreeRoot: '.worktrees'
+    };
+`,
+    'utf8'
+  );
+  runCommand('git', ['add', 'devx.config.mjs'], { cwd: repoPath });
+  runCommand('git', ['commit', '-m', 'test: add invalid task-start config'], { cwd: repoPath });
+
+  const originalError = console.error;
+  const originalExit = process.exit;
+  const originalCwd = process.cwd();
+  const errors = [];
+  console.error = (...args) => {
+    errors.push(args.join(' '));
+  };
+  process.exit = (code) => {
+    throw new Error(`process.exit:${code}`);
+  };
+
+  try {
+    process.chdir(tempRoot);
+    await assert.rejects(runTaskStartCli('safe-branch', { cwd: repoPath }), (error) => {
+      assert.match(error.message, /process\.exit:1/);
+      return true;
+    });
+  } finally {
+    process.chdir(originalCwd);
+    console.error = originalError;
+    process.exit = originalExit;
+  }
+
+  assert.match(errors.join('\n'), /Invalid base branch config/);
+});
+
 test('isPathWithinParent accepts paths when worktree root ends with a separator', () => {
   const worktreeRoot = path.join(os.tmpdir(), 'dev-cli-worktrees') + path.sep;
   const worktreePath = path.join(worktreeRoot, 'feat', 'example-task');
