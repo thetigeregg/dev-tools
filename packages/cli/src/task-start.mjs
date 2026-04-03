@@ -15,9 +15,7 @@ function runGit(args, options = {}) {
 
 function validateBranchName(branchName, label) {
   if (typeof branchName !== 'string' || branchName.length === 0) {
-    console.error(
-      `Invalid ${label}. Use only letters, numbers, ".", "_", "-", "/", and do not start with "-".`
-    );
+    console.error(`Invalid ${label}. It must be a non-empty string.`);
     process.exit(1);
   }
 

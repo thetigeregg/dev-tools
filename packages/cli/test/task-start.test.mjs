@@ -123,7 +123,7 @@ test('runTaskStartCli exits cleanly when baseBranch config is not a string', asy
     process.exit = originalExit;
   }
 
-  assert.match(errors.join('\n'), /Invalid base branch config/);
+  assert.match(errors.join('\n'), /Invalid base branch config\. It must be a non-empty string\./);
 });
 
 test('isPathWithinParent accepts paths when worktree root ends with a separator', () => {
