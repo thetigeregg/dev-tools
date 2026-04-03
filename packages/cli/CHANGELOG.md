@@ -1,5 +1,11 @@
 # @thetigeregg/dev-cli
 
+## 0.4.5
+
+### Patch Changes
+
+- ad40dc5: bump versions in lock
+
 ## 0.4.4
 
 ### Patch Changes

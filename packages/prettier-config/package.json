@@ -1,6 +1,6 @@
 {
   "name": "@thetigeregg/prettier-config",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Shared Prettier defaults for thetigeregg projects.",
   "main": "index.cjs",
   "exports": {

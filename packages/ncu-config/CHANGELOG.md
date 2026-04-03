@@ -1,5 +1,11 @@
 # @thetigeregg/ncu-config
 
+## 0.3.4
+
+### Patch Changes
+
+- ad40dc5: bump versions in lock
+
 ## 0.3.3
 
 ### Patch Changes
