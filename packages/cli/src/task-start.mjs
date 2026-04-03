@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { execSync } from 'node:child_process';
+import { execSync, execFileSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -81,7 +81,8 @@ export async function runWorktreeBootstrap({ config, worktreePath, branch }) {
     .relative(worktreePath, config.worktree.adapterModuleAbsolute)
     .replace(/\\/g, '/');
 
-  run(`node ${JSON.stringify(adapterPath)} bootstrap`, {
+  execFileSync(process.execPath, [adapterPath, 'bootstrap'], {
+    stdio: 'inherit',
     cwd: worktreePath,
   });
 }
@@ -204,7 +205,9 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
     }
 
     console.log(`\nCreating worktree for branch: ${branch}\n`);
-    run(`git worktree add ${worktreePath} -b ${branch} ${config.baseBranch}`);
+    execFileSync('git', ['worktree', 'add', worktreePath, '-b', branch, config.baseBranch], {
+      stdio: 'inherit',
+    });
 
     console.log('\nBootstrapping worktree environment...\n');
 
@@ -228,7 +231,7 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
     if (process.platform === 'darwin' && commandExists('code')) {
       console.log('\nOpening VS Code...\n');
       try {
-        run(`code "${worktreePath}"`);
+        execFileSync('code', [worktreePath], { stdio: 'inherit' });
       } catch {
         console.warn('\nCould not open VS Code automatically.\n');
         console.warn(`Open the worktree manually: ${worktreePath}\n`);

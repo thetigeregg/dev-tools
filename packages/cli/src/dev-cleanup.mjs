@@ -18,7 +18,12 @@ function normalizePathForCompare(pathValue) {
     // Keep resolved path when realpath lookup fails.
   }
 
-  return resolved.replace(/\\/g, '/').replace(/\/+$/, '');
+  let normalized = resolved.replace(/\\/g, '/');
+  let end = normalized.length;
+  while (end > 1 && normalized[end - 1] === '/') {
+    end--;
+  }
+  return normalized.slice(0, end);
 }
 
 function normalizePathForMatch(pathValue) {
@@ -237,10 +242,16 @@ function looksLikeManagedWorktreeRoot(dirPath, gitCommonDir) {
 }
 
 function toBranchFromManagedWorktreePath(managedWorktreesRoot, dirPath) {
-  return path
-    .relative(managedWorktreesRoot, dirPath)
-    .replace(/\\/g, '/')
-    .replace(/^\/+|\/+$/g, '');
+  let result = path.relative(managedWorktreesRoot, dirPath).replace(/\\/g, '/');
+  let start = 0;
+  let end = result.length;
+  while (start < end && result[start] === '/') {
+    start++;
+  }
+  while (end > start && result[end - 1] === '/') {
+    end--;
+  }
+  return result.slice(start, end);
 }
 
 function findOrphanedManagedWorktreeDirs({
