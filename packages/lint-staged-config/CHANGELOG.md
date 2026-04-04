@@ -1,5 +1,11 @@
 # @thetigeregg/lint-staged-config
 
+## 0.2.4
+
+### Patch Changes
+
+- ad40dc5: bump versions in lock
+
 ## 0.2.3
 
 ### Patch Changes
