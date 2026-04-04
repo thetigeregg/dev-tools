@@ -38,6 +38,7 @@ export { loadDevxConfig } from './config.mjs';
 export { runInstallAllCli } from './deps-install.mjs';
 export { main as runWorktreeCleanupCli } from './dev-cleanup.mjs';
 export { runEnvReconcileCli } from './env-reconcile.mjs';
+export { runGithubSarifPullCli } from './github-sarif-pull.mjs';
 export { runNcuAllCli } from './ncu-all.mjs';
 export { runPrAgentCli } from './pr-agent.mjs';
 export { runPrSummaryCli } from './pr-summary.mjs';
