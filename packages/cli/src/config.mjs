@@ -55,6 +55,7 @@ export async function loadDevxConfig({
     worktreeRoot: 'worktrees',
     packageDirs: ['.'],
     env: {},
+    github: {},
     pr: {},
     release: {},
     worktree: {},
@@ -62,6 +63,7 @@ export async function loadDevxConfig({
   };
 
   config.env = normalizeObjectSection(config.env);
+  config.github = normalizeObjectSection(config.github);
   config.pr = normalizeObjectSection(config.pr);
   config.release = normalizeObjectSection(config.release);
   config.worktree = normalizeObjectSection(config.worktree);
@@ -87,6 +89,13 @@ export async function loadDevxConfig({
   }
   if (config.env.localFile) {
     config.env.localFileAbsolute = resolveConfigPath(repoRoot, config.env.localFile);
+  }
+
+  if (config.github.sarifOutputDir) {
+    config.github.sarifOutputDirAbsolute = resolveConfigPath(
+      repoRoot,
+      config.github.sarifOutputDir
+    );
   }
 
   if (config.pr.summaryOutputFile) {

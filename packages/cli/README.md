@@ -15,10 +15,42 @@ devx deps audit-all [--fix]
 devx deps ncu-all
 devx pr summary
 devx pr agent <PR_NUMBER> [--copilot-only] [--include-coverage] [--debug]
+devx github sarif pull [--repo owner/name] [--out-dir <path>] [--ref <ref>] [--category <value>] [--limit <n>] [--force] [--dry-run] [--debug]
 devx release version [--dry-run]
 devx repo bootstrap [--dry-run]
 devx repo sync [--dry-run]
 devx repo sync-templates [--dry-run]
+```
+
+## GitHub SARIF Pull
+
+Download GitHub code scanning SARIF analyses for the current repository:
+
+```sh
+devx github sarif pull
+```
+
+Optional flags:
+
+- `--repo owner/name` to target a different GitHub repository
+- `--out-dir <path>` to override the local output directory
+- `--ref <ref>` to pull analyses only for a specific Git ref
+- `--category <value>` to pull analyses only for a specific category
+- `--limit <n>` to cap how many analyses are processed after filtering
+- `--force` to re-download analyses even if the analysis ID is already present locally
+- `--dry-run` to preview downloads without writing files
+- `--debug` to echo GitHub CLI commands as they run
+
+`devx.config.mjs` can optionally define:
+
+```js
+export default {
+  github: {
+    repo: 'owner/name',
+    sarifOutputDir: 'artifacts/sarif',
+    sarifPullLimit: 25,
+  },
+};
 ```
 
 ## Shared Worktree API
