@@ -144,7 +144,7 @@ export function buildSarifFilename(analysis) {
     fallback: DEFAULT_CATEGORY,
   });
 
-  return `codeql-${createdAt}-${ref}-${category}-${analysis.id}.sarif`;
+  return `sarif-${createdAt}-${ref}-${category}-${analysis.id}.sarif`;
 }
 
 export function filterAnalyses(analyses, { ref = null, category = null, limit = null } = {}) {
@@ -334,7 +334,9 @@ export async function runGithubSarifPullCli({
     outDir,
     analyses,
     downloads,
-    downloadedCount: downloads.length,
+    downloadedCount: options.dryRun ? 0 : downloads.length,
+    plannedCount: downloads.length,
+    dryRun: options.dryRun,
     skippedCount,
   };
 }

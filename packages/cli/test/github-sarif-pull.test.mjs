@@ -97,7 +97,7 @@ test('buildSarifFilename sanitizes timestamp, ref, and category segments', () =>
       ref: 'refs/heads/feature/sarif',
       category: 'codeql/javascript-typescript',
     }),
-    'codeql-2026-04-04T12-34-56Z-feature-sarif-codeql-javascript-typescript-42.sarif'
+    'sarif-2026-04-04T12-34-56Z-feature-sarif-codeql-javascript-typescript-42.sarif'
   );
 });
 
@@ -105,9 +105,9 @@ test('collectDownloadedAnalysisIds extracts ids from existing sarif filenames', 
   assert.deepEqual(
     [
       ...collectDownloadedAnalysisIds([
-        'codeql-a-b-c-123.sarif',
+        'sarif-a-b-c-123.sarif',
         'note.txt',
-        'codeql-x-y-z-456.sarif',
+        'sarif-x-y-z-456.sarif',
       ]),
     ],
     ['123', '456']
@@ -173,7 +173,7 @@ test('runGithubSarifPullCli dry run resolves repo, applies filters, and skips ex
     `,
     'utf8'
   );
-  fs.writeFileSync(path.join(outDir, 'codeql-old-main-cat-100.sarif'), '{}', 'utf8');
+  fs.writeFileSync(path.join(outDir, 'sarif-old-main-cat-100.sarif'), '{}', 'utf8');
 
   const execCalls = [];
   const originalConsoleLog = console.log;
@@ -215,7 +215,9 @@ test('runGithubSarifPullCli dry run resolves repo, applies filters, and skips ex
 
     assert.equal(result.repo, 'config/repo');
     assert.equal(result.outDir, outDir);
-    assert.equal(result.downloadedCount, 1);
+    assert.equal(result.downloadedCount, 0);
+    assert.equal(result.plannedCount, 1);
+    assert.equal(result.dryRun, true);
     assert.equal(result.skippedCount, 1);
     assert.equal(result.downloads[0].id, '101');
     assert.equal(execCalls.length, 1);
@@ -227,6 +229,95 @@ test('runGithubSarifPullCli dry run resolves repo, applies filters, and skips ex
 });
 
 test('runGithubSarifPullCli returns an empty downloads array when no analyses match', async () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'devx-github-sarif-empty-'));
+  fs.writeFileSync(
+    path.join(repoRoot, 'devx.config.mjs'),
+    `export default {
+      github: {
+        repo: 'config/repo'
+      }
+    };
+    `,
+    'utf8'
+  );
+
+  const originalConsoleLog = console.log;
+  console.log = () => {};
+
+  try {
+    const result = await runGithubSarifPullCli({
+      argv: [],
+      cwd: repoRoot,
+      execFile: (command, args) => {
+        if (command === 'gh' && args[0] === 'api' && args.includes('--paginate')) {
+          return JSON.stringify([[]]);
+        }
+
+        throw new Error(`Unexpected gh call: ${args.join(' ')}`);
+      },
+    });
+
+    assert.deepEqual(result, {
+      repo: 'config/repo',
+      outDir: path.join(repoRoot, 'artifacts', 'sarif'),
+      analyses: [],
+      downloads: [],
+      downloadedCount: 0,
+      skippedCount: 0,
+    });
+  } finally {
+    console.log = originalConsoleLog;
+  }
+});
+
+test('runGithubSarifPullCli reports planned downloads separately from actual writes in dry run mode', async () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'devx-github-sarif-dry-run-counts-'));
+  fs.writeFileSync(
+    path.join(repoRoot, 'devx.config.mjs'),
+    `export default {
+      github: {
+        repo: 'config/repo'
+      }
+    };
+    `,
+    'utf8'
+  );
+
+  const originalConsoleLog = console.log;
+  console.log = () => {};
+
+  try {
+    const result = await runGithubSarifPullCli({
+      argv: ['--dry-run'],
+      cwd: repoRoot,
+      execFile: (command, args) => {
+        if (command === 'gh' && args[0] === 'api' && args.includes('--paginate')) {
+          return JSON.stringify([
+            [
+              {
+                id: 201,
+                created_at: '2026-04-04T12:00:00Z',
+                ref: 'refs/heads/main',
+                category: 'cat',
+              },
+            ],
+          ]);
+        }
+
+        throw new Error(`Unexpected gh call: ${args.join(' ')}`);
+      },
+    });
+
+    assert.equal(result.downloadedCount, 0);
+    assert.equal(result.plannedCount, 1);
+    assert.equal(result.dryRun, true);
+    assert.equal(result.downloads[0].id, '201');
+  } finally {
+    console.log = originalConsoleLog;
+  }
+});
+
+test('runGithubSarifPullCli keeps the empty result shape when no analyses match', async () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'devx-github-sarif-empty-'));
   fs.writeFileSync(
     path.join(repoRoot, 'devx.config.mjs'),
@@ -335,11 +426,13 @@ test('runGithubSarifPullCli writes sarif files and falls back to gh repo view', 
       repoRoot,
       'artifacts',
       'sarif',
-      'codeql-2026-04-04T12-00-00Z-main-codeql-js-301.sarif'
+      'sarif-2026-04-04T12-00-00Z-main-codeql-js-301.sarif'
     );
 
     assert.equal(result.repo, 'detected/repo');
     assert.equal(result.downloadedCount, 1);
+    assert.equal(result.plannedCount, 1);
+    assert.equal(result.dryRun, false);
     assert.equal(fs.readFileSync(writtenFile, 'utf8'), '{"runs":[]}');
   } finally {
     console.log = originalConsoleLog;
