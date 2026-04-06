@@ -81,7 +81,7 @@ export function parseGithubSarifPullArgs(args) {
 function runGh(
   args,
   debug,
-  { allowFailure = false, encoding = 'utf8', execFile = execFileSync } = {}
+  { allowFailure = false, cwd = undefined, encoding = 'utf8', execFile = execFileSync } = {}
 ) {
   if (debug) {
     console.log('[debug]', 'gh', args.join(' '));
@@ -89,6 +89,7 @@ function runGh(
 
   try {
     return execFile('gh', args, {
+      cwd,
       encoding,
       stdio: ['pipe', 'pipe', 'pipe'],
       maxBuffer: GH_MAX_BUFFER_BYTES,
@@ -202,22 +203,30 @@ export function resolveSarifOutputDir({
   return path.join(repoRoot, DEFAULT_OUTPUT_DIR);
 }
 
-function detectRepoFromGh(debug, execFile) {
-  const result = runGh(['repo', 'view', '--json', 'nameWithOwner'], debug, { execFile });
+function detectRepoFromGh(debug, execFile, cwd) {
+  const result = runGh(['repo', 'view', '--json', 'nameWithOwner'], debug, {
+    allowFailure: true,
+    cwd,
+    execFile,
+  });
+  if (!result) {
+    return null;
+  }
+
   const parsed = JSON.parse(result);
   return parsed.nameWithOwner || null;
 }
 
-function fetchAnalysisPages(repo, debug, execFile) {
+function fetchAnalysisPages(repo, debug, execFile, cwd) {
   const result = runGh(
     ['api', '--paginate', '--slurp', `repos/${repo}/code-scanning/analyses`],
     debug,
-    { execFile }
+    { cwd, execFile }
   );
   return JSON.parse(result);
 }
 
-function downloadSarif(repo, analysisId, debug, execFile) {
+function downloadSarif(repo, analysisId, debug, execFile, cwd) {
   return runGh(
     [
       'api',
@@ -226,7 +235,7 @@ function downloadSarif(repo, analysisId, debug, execFile) {
       `repos/${repo}/code-scanning/analyses/${analysisId}`,
     ],
     debug,
-    { encoding: 'buffer', execFile }
+    { cwd, encoding: 'buffer', execFile }
   );
 }
 
@@ -239,7 +248,8 @@ export async function runGithubSarifPullCli({
   const options = parseGithubSarifPullArgs(argv);
   const config = await loadDevxConfig({ cwd });
   const hasExplicitRepo = Boolean(options.repo ?? config.github.repo);
-  const detectedRepo = hasExplicitRepo ? null : detectRepoFromGh(options.debug, execFile);
+  const repoCwd = config.repoRoot;
+  const detectedRepo = hasExplicitRepo ? null : detectRepoFromGh(options.debug, execFile, repoCwd);
 
   const repo = resolveSarifRepo({
     cliRepo: options.repo,
@@ -260,7 +270,7 @@ export async function runGithubSarifPullCli({
     configOutDirAbsolute: config.github.sarifOutputDirAbsolute,
   });
 
-  const pages = fetchAnalysisPages(repo, options.debug, execFile);
+  const pages = fetchAnalysisPages(repo, options.debug, execFile, repoCwd);
   const analyses = filterAnalyses(flattenAnalysisPages(pages), {
     ref: options.ref,
     category: options.category,
@@ -275,6 +285,8 @@ export async function runGithubSarifPullCli({
       analyses: [],
       downloads: [],
       downloadedCount: 0,
+      plannedCount: 0,
+      dryRun: options.dryRun,
       skippedCount: 0,
     };
   }
@@ -316,7 +328,7 @@ export async function runGithubSarifPullCli({
     }
 
     console.log(`Downloading SARIF for analysis ${analysisId} -> ${filePath}`);
-    const sarifPayload = downloadSarif(repo, analysisId, options.debug, execFile);
+    const sarifPayload = downloadSarif(repo, analysisId, options.debug, execFile, repoCwd);
     fsModule.writeFileSync(filePath, sarifPayload);
     downloadedIds.add(analysisId);
   }

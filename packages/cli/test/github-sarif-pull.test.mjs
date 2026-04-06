@@ -263,6 +263,8 @@ test('runGithubSarifPullCli returns an empty downloads array when no analyses ma
       analyses: [],
       downloads: [],
       downloadedCount: 0,
+      plannedCount: 0,
+      dryRun: false,
       skippedCount: 0,
     });
   } finally {
@@ -317,43 +319,97 @@ test('runGithubSarifPullCli reports planned downloads separately from actual wri
   }
 });
 
-test('runGithubSarifPullCli keeps the empty result shape when no analyses match', async () => {
-  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'devx-github-sarif-empty-'));
-  fs.writeFileSync(
-    path.join(repoRoot, 'devx.config.mjs'),
-    `export default {
-      github: {
-        repo: 'config/repo'
-      }
-    };
-    `,
-    'utf8'
-  );
+test('runGithubSarifPullCli returns null repo detection failures so guidance can be shown', async () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'devx-github-sarif-detect-fail-'));
+  fs.writeFileSync(path.join(repoRoot, 'devx.config.mjs'), 'export default {};\n', 'utf8');
+
+  const originalConsoleError = console.error;
+  const originalConsoleLog = console.log;
+  const errors = [];
+
+  console.error = (message) => {
+    errors.push(message);
+  };
+  console.log = () => {};
+  const originalExit = process.exit;
+  process.exit = (code) => {
+    throw new Error(`process.exit:${code}`);
+  };
+
+  try {
+    await assert.rejects(
+      async () =>
+        runGithubSarifPullCli({
+          argv: [],
+          cwd: repoRoot,
+          execFile: (command, args) => {
+            if (command === 'gh' && args[0] === 'repo' && args[1] === 'view') {
+              const error = new Error('gh repo view failed');
+              error.status = 1;
+              throw error;
+            }
+
+            throw new Error(`Unexpected gh call: ${args.join(' ')}`);
+          },
+        }),
+      /process\.exit:1/
+    );
+
+    assert.match(
+      errors[0],
+      /Unable to resolve a GitHub repository\. Pass --repo owner\/name or set github\.repo\./
+    );
+  } finally {
+    process.exit = originalExit;
+    console.error = originalConsoleError;
+    console.log = originalConsoleLog;
+  }
+});
+
+test('runGithubSarifPullCli passes repo root as cwd to gh commands', async () => {
+  const parentDir = fs.mkdtempSync(path.join(os.tmpdir(), 'devx-github-sarif-parent-'));
+  const repoRoot = path.join(parentDir, 'repo');
+  const nestedCwd = path.join(repoRoot, 'packages', 'cli');
+  fs.mkdirSync(nestedCwd, { recursive: true });
+  fs.writeFileSync(path.join(repoRoot, 'devx.config.mjs'), 'export default {};\n', 'utf8');
 
   const originalConsoleLog = console.log;
   console.log = () => {};
+  const ghOptions = [];
 
   try {
     const result = await runGithubSarifPullCli({
       argv: [],
-      cwd: repoRoot,
-      execFile: (command, args) => {
+      cwd: nestedCwd,
+      execFile: (command, args, options) => {
+        ghOptions.push({ command, args, cwd: options?.cwd, encoding: options?.encoding });
+
+        if (command === 'gh' && args[0] === 'repo' && args[1] === 'view') {
+          return JSON.stringify({ nameWithOwner: 'detected/repo' });
+        }
         if (command === 'gh' && args[0] === 'api' && args.includes('--paginate')) {
-          return JSON.stringify([[]]);
+          return JSON.stringify([
+            [
+              {
+                id: 401,
+                created_at: '2026-04-04T12:00:00Z',
+                ref: 'refs/heads/main',
+                category: 'codeql/js',
+              },
+            ],
+          ]);
+        }
+        if (command === 'gh' && args[0] === 'api' && String(args.at(-1)).endsWith('/401')) {
+          return Buffer.from('{"runs":[]}');
         }
 
         throw new Error(`Unexpected gh call: ${args.join(' ')}`);
       },
     });
 
-    assert.deepEqual(result, {
-      repo: 'config/repo',
-      outDir: path.join(repoRoot, 'artifacts', 'sarif'),
-      analyses: [],
-      downloads: [],
-      downloadedCount: 0,
-      skippedCount: 0,
-    });
+    assert.equal(result.repo, 'detected/repo');
+    assert.equal(ghOptions.length, 3);
+    assert.ok(ghOptions.every((call) => call.cwd === repoRoot));
   } finally {
     console.log = originalConsoleLog;
   }
