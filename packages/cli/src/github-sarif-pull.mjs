@@ -238,8 +238,8 @@ export async function runGithubSarifPullCli({
 } = {}) {
   const options = parseGithubSarifPullArgs(argv);
   const config = await loadDevxConfig({ cwd });
-  const detectedRepo =
-    options.repo || config.github.repo ? null : detectRepoFromGh(options.debug, execFile);
+  const hasExplicitRepo = Boolean(options.repo ?? config.github.repo);
+  const detectedRepo = hasExplicitRepo ? null : detectRepoFromGh(options.debug, execFile);
 
   const repo = resolveSarifRepo({
     cliRepo: options.repo,

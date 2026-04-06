@@ -268,6 +268,35 @@ test('runGithubSarifPullCli returns an empty downloads array when no analyses ma
   }
 });
 
+test('runGithubSarifPullCli does not detect repo when cli repo is provided', async () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'devx-github-sarif-cli-repo-'));
+  fs.writeFileSync(path.join(repoRoot, 'devx.config.mjs'), 'export default {};\n', 'utf8');
+
+  const originalConsoleLog = console.log;
+  console.log = () => {};
+
+  try {
+    const result = await runGithubSarifPullCli({
+      argv: ['--repo', 'cli/repo'],
+      cwd: repoRoot,
+      execFile: (command, args) => {
+        if (args[0] === 'repo' && args[1] === 'view') {
+          throw new Error('repo detection should not run when --repo is provided');
+        }
+        if (command === 'gh' && args[0] === 'api' && args.includes('--paginate')) {
+          return JSON.stringify([[]]);
+        }
+
+        throw new Error(`Unexpected gh call: ${args.join(' ')}`);
+      },
+    });
+
+    assert.equal(result.repo, 'cli/repo');
+  } finally {
+    console.log = originalConsoleLog;
+  }
+});
+
 test('runGithubSarifPullCli writes sarif files and falls back to gh repo view', async () => {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'devx-github-sarif-write-'));
   fs.writeFileSync(path.join(repoRoot, 'devx.config.mjs'), 'export default {};\n', 'utf8');
