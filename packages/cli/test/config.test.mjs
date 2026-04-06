@@ -55,7 +55,7 @@ test('loadDevxConfig defaults projectName to the repo directory name', async () 
   assert.equal(config.projectName, path.basename(repoRoot));
 });
 
-test('loadDevxConfig normalizes nullable pr and release sections', async () => {
+test('loadDevxConfig normalizes nullable github, pr, and release sections', async () => {
   const repoRoot = makeTempRepo();
   fs.writeFileSync(
     path.join(repoRoot, 'devx.config.mjs'),
