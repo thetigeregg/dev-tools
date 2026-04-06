@@ -306,16 +306,18 @@ function fetchAnalyses(
   return filterAnalyses(matchedAnalyses, { limit });
 }
 
-function downloadSarif(repo, analysisId, debug, execFile, cwd) {
-  return runGh(
+function downloadSarifToFile(repo, analysisId, filePath, debug, execFile, cwd) {
+  runGh(
     [
       'api',
       '-H',
       'Accept: application/sarif+json',
+      '--output',
+      filePath,
       `repos/${repo}/code-scanning/analyses/${analysisId}`,
     ],
     debug,
-    { cwd, encoding: 'buffer', execFile }
+    { cwd, execFile }
   );
 }
 
@@ -324,6 +326,7 @@ export async function runGithubSarifPullCli({
   cwd = process.cwd(),
   execFile = execFileSync,
   fsModule = fs,
+  downloadSarif = downloadSarifToFile,
 } = {}) {
   const options = parseGithubSarifPullArgs(argv);
   const config = await loadDevxConfig({ cwd });
@@ -419,8 +422,7 @@ export async function runGithubSarifPullCli({
     }
 
     console.log(`Downloading SARIF for analysis ${analysisId} -> ${filePath}`);
-    const sarifPayload = downloadSarif(repo, analysisId, options.debug, execFile, repoCwd);
-    fsModule.writeFileSync(filePath, sarifPayload);
+    downloadSarif(repo, analysisId, filePath, options.debug, execFile, repoCwd);
     downloadedIds.add(analysisId);
   }
 

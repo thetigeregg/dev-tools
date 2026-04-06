@@ -379,16 +379,16 @@ test('runGithubSarifPullCli passes repo root as cwd to gh commands', async () =>
         if (command === 'gh' && args[0] === 'api' && args[1] === '--include') {
           return `\n\n${JSON.stringify([{ id: 401, created_at: '2026-04-04T12:00:00Z', ref: 'refs/heads/main', category: 'codeql/js' }])}`;
         }
-        if (command === 'gh' && args[0] === 'api' && String(args.at(-1)).endsWith('/401')) {
-          return Buffer.from('{"runs":[]}');
-        }
 
         throw new Error(`Unexpected gh call: ${args.join(' ')}`);
+      },
+      downloadSarif: (_repo, _analysisId, filePath) => {
+        fs.writeFileSync(filePath, '{"runs":[]}', 'utf8');
       },
     });
 
     assert.equal(result.repo, 'detected/repo');
-    assert.equal(ghOptions.length, 3);
+    assert.equal(ghOptions.length, 2);
     assert.ok(ghOptions.every((call) => call.cwd === repoRoot));
   } finally {
     console.log = originalConsoleLog;
@@ -442,11 +442,11 @@ test('runGithubSarifPullCli writes sarif files and falls back to gh repo view', 
         if (args[0] === 'api' && args[1] === '--include') {
           return `\n\n${JSON.stringify([{ id: 301, created_at: '2026-04-04T12:00:00Z', ref: 'refs/heads/main', category: 'codeql/js' }])}`;
         }
-        if (args[0] === 'api' && String(args.at(-1)).endsWith('/301')) {
-          return Buffer.from('{"runs":[]}');
-        }
 
         throw new Error(`Unexpected gh call: ${args.join(' ')}`);
+      },
+      downloadSarif: (_repo, _analysisId, filePath) => {
+        fs.writeFileSync(filePath, '{"runs":[]}', 'utf8');
       },
     });
     const writtenFile = path.join(
@@ -536,5 +536,48 @@ test('runGithubSarifPullCli exits with a clear error when out-dir points to a fi
     console.error = originalConsoleError;
     console.log = originalConsoleLog;
     process.exit = originalExit;
+  }
+});
+
+test('runGithubSarifPullCli streams SARIF downloads to gh output files', async () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'devx-github-sarif-gh-output-'));
+  fs.writeFileSync(path.join(repoRoot, 'devx.config.mjs'), 'export default {};\n', 'utf8');
+
+  const originalConsoleLog = console.log;
+  console.log = () => {};
+  const ghCalls = [];
+
+  try {
+    await runGithubSarifPullCli({
+      argv: [],
+      cwd: repoRoot,
+      execFile: (command, args, options) => {
+        ghCalls.push({ command, args, options });
+
+        if (args[0] === 'repo' && args[1] === 'view') {
+          return JSON.stringify({ nameWithOwner: 'detected/repo' });
+        }
+        if (args[0] === 'api' && args[1] === '--include') {
+          return `\n\n${JSON.stringify([{ id: 601, created_at: '2026-04-04T12:00:00Z', ref: 'refs/heads/main', category: 'cat' }])}`;
+        }
+        if (args[0] === 'api' && args.includes('--output')) {
+          const outputIndex = args.indexOf('--output');
+          fs.writeFileSync(args[outputIndex + 1], '{"runs":[]}', 'utf8');
+          return '';
+        }
+
+        throw new Error(`Unexpected gh call: ${args.join(' ')}`);
+      },
+    });
+
+    const downloadCall = ghCalls.find((call) => call.args.includes('--output'));
+    assert.ok(downloadCall);
+    assert.equal(downloadCall.options?.encoding, 'utf8');
+    assert.equal(
+      downloadCall.args[downloadCall.args.indexOf('--output') + 1],
+      path.join(repoRoot, 'artifacts', 'sarif', 'sarif-2026-04-04T12-00-00Z-main-cat-601.sarif')
+    );
+  } finally {
+    console.log = originalConsoleLog;
   }
 });
