@@ -161,7 +161,6 @@ test('runGithubSarifPullCli dry run resolves repo, applies filters, and skips ex
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'devx-github-sarif-'));
   const outDir = path.join(repoRoot, 'existing-sarif');
   fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(path.join(repoRoot, 'devx.config.mjs'), '', 'utf8');
   fs.writeFileSync(
     path.join(repoRoot, 'devx.config.mjs'),
     `export default {
@@ -222,6 +221,48 @@ test('runGithubSarifPullCli dry run resolves repo, applies filters, and skips ex
     assert.equal(execCalls.length, 1);
     assert.ok(logs.some((line) => line.includes('Skipping 100')));
     assert.ok(logs.some((line) => line.includes('[dry-run] Would download 101')));
+  } finally {
+    console.log = originalConsoleLog;
+  }
+});
+
+test('runGithubSarifPullCli returns an empty downloads array when no analyses match', async () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'devx-github-sarif-empty-'));
+  fs.writeFileSync(
+    path.join(repoRoot, 'devx.config.mjs'),
+    `export default {
+      github: {
+        repo: 'config/repo'
+      }
+    };
+    `,
+    'utf8'
+  );
+
+  const originalConsoleLog = console.log;
+  console.log = () => {};
+
+  try {
+    const result = await runGithubSarifPullCli({
+      argv: [],
+      cwd: repoRoot,
+      execFile: (command, args) => {
+        if (command === 'gh' && args[0] === 'api' && args.includes('--paginate')) {
+          return JSON.stringify([[]]);
+        }
+
+        throw new Error(`Unexpected gh call: ${args.join(' ')}`);
+      },
+    });
+
+    assert.deepEqual(result, {
+      repo: 'config/repo',
+      outDir: path.join(repoRoot, 'artifacts', 'sarif'),
+      analyses: [],
+      downloads: [],
+      downloadedCount: 0,
+      skippedCount: 0,
+    });
   } finally {
     console.log = originalConsoleLog;
   }

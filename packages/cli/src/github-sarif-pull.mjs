@@ -269,7 +269,14 @@ export async function runGithubSarifPullCli({
 
   if (!analyses.length) {
     console.log(`No SARIF analyses found for ${repo}.`);
-    return { repo, outDir, analyses: [], downloadedCount: 0, skippedCount: 0 };
+    return {
+      repo,
+      outDir,
+      analyses: [],
+      downloads: [],
+      downloadedCount: 0,
+      skippedCount: 0,
+    };
   }
 
   let downloadedIds = new Set();
