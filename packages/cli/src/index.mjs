@@ -3,6 +3,7 @@ import { runAuditAllCli } from './audit-all.mjs';
 import { runInstallAllCli } from './deps-install.mjs';
 import { main as runCleanupCli } from './dev-cleanup.mjs';
 import { runEnvReconcileCli } from './env-reconcile.mjs';
+import { runGithubSarifPullCli } from './github-sarif-pull.mjs';
 import { runNcuAllCli } from './ncu-all.mjs';
 import { runPrAgentCli } from './pr-agent.mjs';
 import { runPrSummaryCli } from './pr-summary.mjs';
@@ -16,7 +17,7 @@ import { runTaskStartCli } from './task-start.mjs';
 import { runWorktreeAdapterCommand } from './worktree-adapter.mjs';
 
 function printHelp() {
-  console.log('Usage: devx <task|worktree|env|deps|pr|release|repo> <command> [options]');
+  console.log('Usage: devx <task|worktree|env|deps|pr|github|release|repo> <command> [options]');
   console.log('');
   console.log('Commands:');
   console.log('  devx task start <name>');
@@ -29,6 +30,9 @@ function printHelp() {
   console.log('  devx deps ncu-all');
   console.log('  devx pr summary');
   console.log('  devx pr agent <PR_NUMBER> [--copilot-only] [--include-coverage] [--debug]');
+  console.log(
+    '  devx github sarif pull [--repo owner/name] [--out-dir <path>] [--ref <ref>] [--category <value>] [--limit <n>] [--force] [--dry-run] [--debug]'
+  );
   console.log('  devx release version [--dry-run]');
   console.log('  devx repo bootstrap [--dry-run] [--repo-root <path>] [--config <path>]');
   console.log('  devx repo sync [--dry-run] [--repo-root <path>] [--config <path>]');
@@ -90,6 +94,11 @@ if (group === 'pr' && command === 'summary') {
 
 if (group === 'pr' && command === 'agent') {
   await runPrAgentCli({ argv: rest });
+  process.exit(0);
+}
+
+if (group === 'github' && command === 'sarif' && rest[0] === 'pull') {
+  await runGithubSarifPullCli({ argv: rest.slice(1) });
   process.exit(0);
 }
 
