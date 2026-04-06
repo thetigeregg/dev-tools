@@ -111,6 +111,54 @@ function runGh(
   }
 }
 
+function parseGhApiResponse(result) {
+  const separator = '\r\n\r\n';
+  const fallbackSeparator = '\n\n';
+  const separatorIndex = result.indexOf(separator);
+  if (separatorIndex !== -1) {
+    return {
+      headers: result.slice(0, separatorIndex),
+      body: result.slice(separatorIndex + separator.length),
+    };
+  }
+
+  const fallbackIndex = result.indexOf(fallbackSeparator);
+  if (fallbackIndex !== -1) {
+    return {
+      headers: result.slice(0, fallbackIndex),
+      body: result.slice(fallbackIndex + fallbackSeparator.length),
+    };
+  }
+
+  return { headers: '', body: result };
+}
+
+function getNextLink(headers) {
+  const linkHeaderLine = headers
+    .split(/\r?\n/)
+    .find((line) => line.toLowerCase().startsWith('link:'));
+
+  if (!linkHeaderLine) {
+    return null;
+  }
+
+  const match = linkHeaderLine.match(/<([^>]+)>;\s*rel="next"/i);
+  return match ? match[1] : null;
+}
+
+function normalizeNextEndpoint(nextLink) {
+  if (!nextLink) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(nextLink)) {
+    const url = new URL(nextLink);
+    return `${url.pathname.replace(/^\/+/, '')}${url.search}`;
+  }
+
+  return nextLink.replace(/^\/+/, '');
+}
+
 export function flattenAnalysisPages(payload) {
   if (!Array.isArray(payload)) {
     return [];
@@ -170,6 +218,16 @@ export function filterAnalyses(analyses, { ref = null, category = null, limit = 
   return filtered.slice(0, limit);
 }
 
+function analysisMatchesFilters(analysis, { ref = null, category = null } = {}) {
+  if (ref && analysis.ref !== ref) {
+    return false;
+  }
+  if (category && analysis.category !== category) {
+    return false;
+  }
+  return true;
+}
+
 export function collectDownloadedAnalysisIds(fileNames) {
   const downloadedIds = new Set();
 
@@ -217,13 +275,35 @@ function detectRepoFromGh(debug, execFile, cwd) {
   return parsed.nameWithOwner || null;
 }
 
-function fetchAnalysisPages(repo, debug, execFile, cwd) {
-  const result = runGh(
-    ['api', '--paginate', '--slurp', `repos/${repo}/code-scanning/analyses`],
-    debug,
-    { cwd, execFile }
-  );
-  return JSON.parse(result);
+function fetchAnalyses(
+  repo,
+  { ref = null, category = null, limit = null } = {},
+  debug,
+  execFile,
+  cwd
+) {
+  const matchedAnalyses = [];
+  let endpoint = `repos/${repo}/code-scanning/analyses?per_page=100`;
+
+  while (endpoint) {
+    const result = runGh(['api', '--include', endpoint], debug, { cwd, execFile });
+    const { headers, body } = parseGhApiResponse(result);
+    const pageAnalyses = JSON.parse(body);
+
+    for (const analysis of Array.isArray(pageAnalyses) ? pageAnalyses : []) {
+      if (analysisMatchesFilters(analysis, { ref, category })) {
+        matchedAnalyses.push(analysis);
+      }
+    }
+
+    if (limit != null && matchedAnalyses.length >= limit) {
+      break;
+    }
+
+    endpoint = normalizeNextEndpoint(getNextLink(headers));
+  }
+
+  return filterAnalyses(matchedAnalyses, { limit });
 }
 
 function downloadSarif(repo, analysisId, debug, execFile, cwd) {
@@ -270,12 +350,23 @@ export async function runGithubSarifPullCli({
     configOutDirAbsolute: config.github.sarifOutputDirAbsolute,
   });
 
-  const pages = fetchAnalysisPages(repo, options.debug, execFile, repoCwd);
-  const analyses = filterAnalyses(flattenAnalysisPages(pages), {
-    ref: options.ref,
-    category: options.category,
-    limit: options.limit ?? config.github.sarifPullLimit ?? null,
-  });
+  const outDirExists = fsModule.existsSync(outDir);
+  if (outDirExists && !fsModule.statSync(outDir).isDirectory()) {
+    console.error(`Output path exists but is not a directory: ${outDir}`);
+    process.exit(1);
+  }
+
+  const analyses = fetchAnalyses(
+    repo,
+    {
+      ref: options.ref,
+      category: options.category,
+      limit: options.limit ?? config.github.sarifPullLimit ?? null,
+    },
+    options.debug,
+    execFile,
+    repoCwd
+  );
 
   if (!analyses.length) {
     console.log(`No SARIF analyses found for ${repo}.`);
@@ -292,7 +383,7 @@ export async function runGithubSarifPullCli({
   }
 
   let downloadedIds = new Set();
-  if (fsModule.existsSync(outDir)) {
+  if (outDirExists) {
     downloadedIds = collectDownloadedAnalysisIds(fsModule.readdirSync(outDir));
   }
 

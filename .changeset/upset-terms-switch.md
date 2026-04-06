@@ -2,4 +2,4 @@
 '@thetigeregg/dev-cli': minor
 ---
 
-add SARIF command
+add the `devx github sarif pull` command

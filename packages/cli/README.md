@@ -34,7 +34,7 @@ Optional flags:
 
 - `--repo owner/name` to target a different GitHub repository
 - `--out-dir <path>` to override the local output directory
-- `--ref <ref>` to pull analyses only for a specific Git ref
+- `--ref <ref>` to pull analyses only for a specific full Git ref (for example, `refs/heads/main`)
 - `--category <value>` to pull analyses only for a specific category
 - `--limit <n>` to cap how many analyses are processed after filtering
 - `--force` to re-download analyses even if the analysis ID is already present locally

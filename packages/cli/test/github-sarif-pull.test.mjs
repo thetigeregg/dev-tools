@@ -190,23 +190,21 @@ test('runGithubSarifPullCli dry run resolves repo, applies filters, and skips ex
       execFile: (command, args, options) => {
         execCalls.push([command, args, options?.encoding ?? 'utf8']);
 
-        if (args[0] === 'api' && args.includes('--paginate')) {
-          return JSON.stringify([
-            [
-              {
-                id: 100,
-                created_at: '2026-04-04T12:00:00Z',
-                ref: 'refs/heads/main',
-                category: 'cat',
-              },
-              {
-                id: 101,
-                created_at: '2026-04-04T11:00:00Z',
-                ref: 'refs/heads/main',
-                category: 'cat',
-              },
-            ],
-          ]);
+        if (args[0] === 'api' && args[1] === '--include') {
+          return `\n\n${JSON.stringify([
+            {
+              id: 100,
+              created_at: '2026-04-04T12:00:00Z',
+              ref: 'refs/heads/main',
+              category: 'cat',
+            },
+            {
+              id: 101,
+              created_at: '2026-04-04T11:00:00Z',
+              ref: 'refs/heads/main',
+              category: 'cat',
+            },
+          ])}`;
         }
 
         throw new Error(`Unexpected gh call: ${args.join(' ')}`);
@@ -249,8 +247,8 @@ test('runGithubSarifPullCli returns an empty downloads array when no analyses ma
       argv: [],
       cwd: repoRoot,
       execFile: (command, args) => {
-        if (command === 'gh' && args[0] === 'api' && args.includes('--paginate')) {
-          return JSON.stringify([[]]);
+        if (command === 'gh' && args[0] === 'api' && args[1] === '--include') {
+          return '\n\n[]';
         }
 
         throw new Error(`Unexpected gh call: ${args.join(' ')}`);
@@ -293,17 +291,8 @@ test('runGithubSarifPullCli reports planned downloads separately from actual wri
       argv: ['--dry-run'],
       cwd: repoRoot,
       execFile: (command, args) => {
-        if (command === 'gh' && args[0] === 'api' && args.includes('--paginate')) {
-          return JSON.stringify([
-            [
-              {
-                id: 201,
-                created_at: '2026-04-04T12:00:00Z',
-                ref: 'refs/heads/main',
-                category: 'cat',
-              },
-            ],
-          ]);
+        if (command === 'gh' && args[0] === 'api' && args[1] === '--include') {
+          return `\n\n${JSON.stringify([{ id: 201, created_at: '2026-04-04T12:00:00Z', ref: 'refs/heads/main', category: 'cat' }])}`;
         }
 
         throw new Error(`Unexpected gh call: ${args.join(' ')}`);
@@ -387,17 +376,8 @@ test('runGithubSarifPullCli passes repo root as cwd to gh commands', async () =>
         if (command === 'gh' && args[0] === 'repo' && args[1] === 'view') {
           return JSON.stringify({ nameWithOwner: 'detected/repo' });
         }
-        if (command === 'gh' && args[0] === 'api' && args.includes('--paginate')) {
-          return JSON.stringify([
-            [
-              {
-                id: 401,
-                created_at: '2026-04-04T12:00:00Z',
-                ref: 'refs/heads/main',
-                category: 'codeql/js',
-              },
-            ],
-          ]);
+        if (command === 'gh' && args[0] === 'api' && args[1] === '--include') {
+          return `\n\n${JSON.stringify([{ id: 401, created_at: '2026-04-04T12:00:00Z', ref: 'refs/heads/main', category: 'codeql/js' }])}`;
         }
         if (command === 'gh' && args[0] === 'api' && String(args.at(-1)).endsWith('/401')) {
           return Buffer.from('{"runs":[]}');
@@ -430,8 +410,8 @@ test('runGithubSarifPullCli does not detect repo when cli repo is provided', asy
         if (args[0] === 'repo' && args[1] === 'view') {
           throw new Error('repo detection should not run when --repo is provided');
         }
-        if (command === 'gh' && args[0] === 'api' && args.includes('--paginate')) {
-          return JSON.stringify([[]]);
+        if (command === 'gh' && args[0] === 'api' && args[1] === '--include') {
+          return '\n\n[]';
         }
 
         throw new Error(`Unexpected gh call: ${args.join(' ')}`);
@@ -459,17 +439,8 @@ test('runGithubSarifPullCli writes sarif files and falls back to gh repo view', 
         if (args[0] === 'repo' && args[1] === 'view') {
           return JSON.stringify({ nameWithOwner: 'detected/repo' });
         }
-        if (args[0] === 'api' && args.includes('--paginate')) {
-          return JSON.stringify([
-            [
-              {
-                id: 301,
-                created_at: '2026-04-04T12:00:00Z',
-                ref: 'refs/heads/main',
-                category: 'codeql/js',
-              },
-            ],
-          ]);
+        if (args[0] === 'api' && args[1] === '--include') {
+          return `\n\n${JSON.stringify([{ id: 301, created_at: '2026-04-04T12:00:00Z', ref: 'refs/heads/main', category: 'codeql/js' }])}`;
         }
         if (args[0] === 'api' && String(args.at(-1)).endsWith('/301')) {
           return Buffer.from('{"runs":[]}');
@@ -492,5 +463,78 @@ test('runGithubSarifPullCli writes sarif files and falls back to gh repo view', 
     assert.equal(fs.readFileSync(writtenFile, 'utf8'), '{"runs":[]}');
   } finally {
     console.log = originalConsoleLog;
+  }
+});
+
+test('runGithubSarifPullCli stops fetching analysis pages once the requested limit is satisfied', async () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'devx-github-sarif-limit-'));
+  fs.writeFileSync(path.join(repoRoot, 'devx.config.mjs'), 'export default {};\n', 'utf8');
+
+  const originalConsoleLog = console.log;
+  console.log = () => {};
+  const endpoints = [];
+
+  try {
+    const result = await runGithubSarifPullCli({
+      argv: ['--repo', 'cli/repo', '--dry-run', '--limit', '1'],
+      cwd: repoRoot,
+      execFile: (command, args) => {
+        if (command === 'gh' && args[0] === 'api' && args[1] === '--include') {
+          endpoints.push(args[2]);
+          if (args[2] === 'repos/cli/repo/code-scanning/analyses?per_page=100') {
+            return `link: <https://api.github.com/repos/cli/repo/code-scanning/analyses?page=2>; rel="next"\n\n${JSON.stringify([{ id: 501, created_at: '2026-04-04T12:00:00Z', ref: 'refs/heads/main', category: 'cat' }])}`;
+          }
+
+          throw new Error(`Unexpected extra page fetch: ${args[2]}`);
+        }
+
+        throw new Error(`Unexpected gh call: ${args.join(' ')}`);
+      },
+    });
+
+    assert.equal(result.plannedCount, 1);
+    assert.deepEqual(endpoints, ['repos/cli/repo/code-scanning/analyses?per_page=100']);
+  } finally {
+    console.log = originalConsoleLog;
+  }
+});
+
+test('runGithubSarifPullCli exits with a clear error when out-dir points to a file', async () => {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'devx-github-sarif-out-file-'));
+  const outFile = path.join(repoRoot, 'sarif-output');
+  fs.writeFileSync(path.join(repoRoot, 'devx.config.mjs'), 'export default {};\n', 'utf8');
+  fs.writeFileSync(outFile, 'not a directory', 'utf8');
+
+  const originalConsoleError = console.error;
+  const originalConsoleLog = console.log;
+  const originalExit = process.exit;
+  const errors = [];
+
+  console.error = (message) => {
+    errors.push(message);
+  };
+  console.log = () => {};
+  process.exit = (code) => {
+    throw new Error(`process.exit:${code}`);
+  };
+
+  try {
+    await assert.rejects(
+      async () =>
+        runGithubSarifPullCli({
+          argv: ['--repo', 'cli/repo', '--out-dir', outFile],
+          cwd: repoRoot,
+          execFile: () => {
+            throw new Error('analysis fetch should not run when output path is invalid');
+          },
+        }),
+      /process\.exit:1/
+    );
+
+    assert.match(errors[0], /Output path exists but is not a directory:/);
+  } finally {
+    console.error = originalConsoleError;
+    console.log = originalConsoleLog;
+    process.exit = originalExit;
   }
 });
