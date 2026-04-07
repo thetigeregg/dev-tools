@@ -46,6 +46,8 @@ The CLI searches upward for `devx.config.mjs` and uses it to resolve:
 - release file locations
 - optional worktree adapter hooks
 
+Module format: `@thetigeregg/dev-cli` is ESM, so `devx.config.mjs` and any `worktree.adapterModule` should be authored as ESM modules (use `.mjs`, `export default`, and `import`).
+
 `worktree.adapterModule` powers repo-specific worktree commands. When present:
 
 - `runWorktreeDev(argv, options?)` powers `devx worktree ...`

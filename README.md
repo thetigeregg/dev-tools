@@ -48,6 +48,11 @@ export default {
 };
 ```
 
+## Module Format (ESM vs CommonJS)
+
+- `@thetigeregg/dev-cli` is **ESM**. Consumer `devx.config.mjs` and any `worktree.adapterModule` are expected to be **ESM modules** (use `.mjs`, `export default`, and `import`).
+- The shared config packages (`@thetigeregg/prettier-config`, `@thetigeregg/commitlint-config`, `@thetigeregg/lint-staged-config`, `@thetigeregg/ncu-config`) are **CommonJS**. Re-export them from consumer `*.cjs` config files using `module.exports = require('...')`.
+
 ### Adapter Model
 
 `devx.config.mjs` is the contract between the shared CLI and a consumer repo.
