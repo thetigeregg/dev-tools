@@ -1,0 +1,26 @@
+---
+description: Agent behaviour when working a PR agent prompt
+globs: ["**/*"]
+alwaysApply: false
+---
+
+## Fix Strategy
+
+Work through the following priorities in order:
+
+1. Fix CI failures
+2. Fix failing tests
+3. Address uncovered code in changed files
+4. Resolve unresolved review comments
+5. Ensure linting and build succeed
+
+Always fix root causes rather than suppressing errors.
+Avoid unrelated refactors.
+
+## Definition of Done
+
+The pull request is complete only when all required checks
+and review feedback are resolved.
+
+Before finishing, verify locally using the commands listed
+in the generated prompt's Definition of Done section.

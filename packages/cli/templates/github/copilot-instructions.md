@@ -1,5 +1,10 @@
 # Copilot Repository Instructions
 
+These instructions apply to GitHub Copilot when used on the GitHub platform
+(pull request reviews, Copilot chat on github.com, and other GitHub AI features).
+
+Local IDE agent rules live in `.cursor/rules/` and are managed separately.
+
 Copilot MUST follow these instructions strictly.
 
 ## Commit Messages

@@ -8,3 +8,5 @@ dist/
 coverage/
 *.log
 docker-compose.override.yml
+.pr-summary-prompt.md
+.pr-agent-prompt.md

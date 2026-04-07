@@ -143,10 +143,11 @@ If `devx.config.mjs` does not exist yet, bootstrap falls back to the current wor
 Bootstrap currently seeds:
 
 - root config stubs and shared defaults such as `.prettierrc.cjs`, `.prettierignore`, `.ncurc.cjs`, `.editorconfig`, `.gitleaks.toml`, `commitlint.config.cjs`, `lint-staged.config.cjs`, and `devx.config.mjs`
-- `AGENTS.md`
+- `.cursor/rules/workflow.mdc` (stub — fill in your project's verify commands after bootstrap)
+- shared Cursor rules (`.cursor/rules/commits.mdc`, `code.mdc`, `pr-review.mdc`, `pr-agent.mdc`)
 - shared Husky hooks such as `.husky/pre-commit` and `.husky/commit-msg`
 - shared GitHub templates such as PR, issue, commit, Dependabot, and release templates
-- `.github/copilot-instructions.md`
+- `.github/copilot-instructions.md` (GitHub platform AI features only; local IDE rules live in `.cursor/rules/`)
 
 4. Review the generated files and replace placeholder values in `devx.config.mjs` with real repo settings.
 
@@ -190,9 +191,9 @@ npx devx repo sync --dry-run
 npx devx repo sync
 ```
 
-`repo sync` is for ongoing maintenance. It updates the shared surface without touching repo-specific files such as:
+`repo sync` is for ongoing maintenance. It updates the shared surface (including `.cursor/rules/` shared rules) without touching repo-specific files such as:
 
-- `AGENTS.md`
+- `.cursor/rules/workflow.mdc` (project-specific verify commands)
 - `devx.config.mjs`
 - `lint-staged.config.cjs`
 - `.github/copilot-instructions.md`

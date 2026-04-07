@@ -1,0 +1,28 @@
+---
+description: PR summary and pre-PR review instructions for agent
+globs: ["**/*"]
+alwaysApply: false
+---
+
+## PR Description
+
+Generate a pull request description using the repository template at:
+`.github/pull_request_template.md`
+
+### Requirements
+- Title must follow Conventional Commits
+- Base the explanation strictly on the git diff provided
+- Do NOT invent behavior or features not present in the diff
+- Fill every section of the PR template
+- Be technically precise and concise
+
+## Pre-PR Review
+
+Before writing the PR description, perform a brief review of the patch:
+
+- Identify the main change type: feature, bug fix, refactor, dependency update, or infrastructure/config
+- Call out obvious regression risks from changed signatures, return values, queries, or config defaults
+- Note whether changed logic appears covered by tests, especially on branches and failure paths
+- Mention tests that are present in the diff instead of saying they are missing; if coverage is still partial, clarify the remaining gap precisely
+- Mention any obvious security, production-safety, or performance concerns introduced by the diff
+- Keep this review focused on the current patch — avoid unrelated refactors
