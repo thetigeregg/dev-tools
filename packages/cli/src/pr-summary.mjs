@@ -32,7 +32,7 @@ function runGit(args, cwd) {
   }
 }
 
-export function buildSummaryPrompt(diff, files) {
+export function buildReviewPrompt(diff, files) {
   return `
 Changed files:
 ${files}
@@ -42,7 +42,7 @@ ${diff}
 `;
 }
 
-export async function runPrSummaryCli({ cwd = process.cwd() } = {}) {
+export async function runPrReviewCli({ cwd = process.cwd() } = {}) {
   const config = await loadDevxConfig({ cwd });
   const baseRef = config.pr.baseRef ?? `origin/${config.baseBranch}`;
   const diffRange = `${baseRef}...HEAD`;
@@ -64,12 +64,12 @@ export async function runPrSummaryCli({ cwd = process.cwd() } = {}) {
     ['diff', '--name-only', diffRange, '--', '.', ...excludedPaths],
     config.repoRoot
   );
-  const prompt = buildSummaryPrompt(diff, files);
+  const prompt = buildReviewPrompt(diff, files);
 
   fs.writeFileSync(outputFile, prompt);
 
   console.log(`
-PR summary prompt generated:
+PR review prompt generated:
 
 ${path.relative(config.repoRoot, outputFile) || outputFile}
 
@@ -88,5 +88,5 @@ export function isEntrypoint({ argv1 = process.argv[1], moduleUrl = import.meta.
 }
 
 if (isEntrypoint()) {
-  await runPrSummaryCli();
+  await runPrReviewCli();
 }

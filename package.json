@@ -23,7 +23,7 @@
     "repo:bootstrap": "devx repo bootstrap",
     "repo:sync": "devx repo sync",
     "repo:sync-templates": "devx repo sync-templates",
-    "pr:summary": "devx pr summary",
+    "pr:review": "devx pr review",
     "pr:agent": "devx pr agent",
     "commitlint": "commitlint --from=HEAD~1 --to=HEAD --verbose",
     "changeset": "changeset",
