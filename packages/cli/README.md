@@ -163,7 +163,9 @@ Use `--dry-run` to preview the target files without copying.
 
 Bootstrap includes:
 
+- `.cursorignore` with baseline ignore patterns for AI indexing safety
 - `.cursor/rules/workflow.mdc` (stub — fill in project verify commands)
+- shared Cursor workspace defaults (`.cursor/settings.json`)
 - `.prettierrc.cjs`
 - `.prettierignore`
 - `.ncurc.cjs`
@@ -181,6 +183,7 @@ Bootstrap includes:
 Sync updates the shared surface, including:
 
 - shared Cursor rules (`.cursor/rules/commits.mdc`, `code.mdc`, `pr-review.mdc`, `pr-agent.mdc`)
+- shared Cursor workspace defaults (`.cursor/settings.json`)
 - shared Husky hooks such as `.husky/pre-commit` and `.husky/commit-msg`
 - `.editorconfig`
 - `.prettierignore`

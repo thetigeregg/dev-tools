@@ -1,0 +1,16 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "files.exclude": {
+    "**/.tmp": true,
+    "**/dist": true,
+    "**/coverage": true,
+    "**/.pr-summary-prompt.md": true,
+    "**/.pr-agent-prompt.md": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/coverage": true
+  }
+}
