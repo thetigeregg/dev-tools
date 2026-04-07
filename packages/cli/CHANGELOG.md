@@ -1,5 +1,11 @@
 # @thetigeregg/dev-cli
 
+## 1.0.1
+
+### Patch Changes
+
+- d6bd8e0: embed pre-pr review instructions in summary prompt
+
 ## 1.0.0
 
 ### Major Changes
