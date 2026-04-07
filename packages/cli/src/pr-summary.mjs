@@ -34,35 +34,10 @@ function runGit(args, cwd) {
 
 export function buildSummaryPrompt(diff, files) {
   return `
-Generate a pull request description.
-
-Use the repository template located at:
-
-.github/pull_request_template.md
-
-Requirements:
-
-- Title must follow Conventional Commits
-- Base the explanation strictly on the git diff
-- Do NOT invent behavior or features
-- Fill every section of the PR template
-- Be technically precise and concise
-
-Before writing the PR description, do a brief pre-PR review of the patch:
-
-- identify the main change type: feature, bug fix, refactor, dependency update, or infrastructure/config
-- call out obvious regression risks from changed signatures, return values, queries, or config defaults
-- note whether changed logic appears covered by tests, especially on branches and failure paths
-- mention tests that are present in the diff instead of saying they are missing; if coverage is still partial, clarify the remaining gap precisely
-- mention any obvious security, production-safety, or performance concerns introduced by the diff
-- keep this review focused on the current patch and avoid unrelated refactors
-
 Changed files:
-
 ${files}
 
 Git diff:
-
 ${diff}
 `;
 }
