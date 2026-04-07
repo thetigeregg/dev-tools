@@ -1,5 +1,11 @@
 # @thetigeregg/dev-cli
 
+## 0.5.0
+
+### Minor Changes
+
+- 8dc913e: add the `devx github sarif pull` command
+
 ## 0.4.5
 
 ### Patch Changes

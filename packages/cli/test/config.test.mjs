@@ -55,11 +55,12 @@ test('loadDevxConfig defaults projectName to the repo directory name', async () 
   assert.equal(config.projectName, path.basename(repoRoot));
 });
 
-test('loadDevxConfig normalizes nullable pr and release sections', async () => {
+test('loadDevxConfig normalizes nullable github, pr, and release sections', async () => {
   const repoRoot = makeTempRepo();
   fs.writeFileSync(
     path.join(repoRoot, 'devx.config.mjs'),
     `export default {
+      github: null,
       pr: null,
       release: null
     };
@@ -69,6 +70,7 @@ test('loadDevxConfig normalizes nullable pr and release sections', async () => {
 
   const config = await loadDevxConfig({ cwd: repoRoot });
 
+  assert.deepEqual(config.github, {});
   assert.deepEqual(config.pr, {});
   assert.deepEqual(config.release, {});
 });
@@ -79,6 +81,7 @@ test('loadDevxConfig normalizes array config sections to plain objects', async (
     path.join(repoRoot, 'devx.config.mjs'),
     `export default {
       env: [],
+      github: [],
       pr: [],
       release: [],
       worktree: []
@@ -90,7 +93,26 @@ test('loadDevxConfig normalizes array config sections to plain objects', async (
   const config = await loadDevxConfig({ cwd: repoRoot });
 
   assert.deepEqual(config.env, {});
+  assert.deepEqual(config.github, {});
   assert.deepEqual(config.pr, {});
   assert.deepEqual(config.release, {});
   assert.deepEqual(config.worktree, {});
+});
+
+test('loadDevxConfig resolves github sarif output dir relative to repo root', async () => {
+  const repoRoot = makeTempRepo();
+  fs.writeFileSync(
+    path.join(repoRoot, 'devx.config.mjs'),
+    `export default {
+      github: {
+        sarifOutputDir: 'artifacts/sarif'
+      }
+    };
+    `,
+    'utf8'
+  );
+
+  const config = await loadDevxConfig({ cwd: repoRoot });
+
+  assert.equal(config.github.sarifOutputDirAbsolute, path.join(repoRoot, 'artifacts/sarif'));
 });
