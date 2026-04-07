@@ -257,8 +257,14 @@ test('shared cursor rule templates stay in sync with repository cursor rules', (
   ];
 
   for (const [canonicalPath, templatePath] of pairs) {
-    const canonicalFile = readFileSync(path.join(repoRoot, canonicalPath), 'utf8').trim();
-    const templateFile = readFileSync(path.join(repoRoot, templatePath), 'utf8').trim();
+    const canonicalFile = readFileSync(path.join(repoRoot, canonicalPath), 'utf8').replace(
+      /\r\n/g,
+      '\n'
+    );
+    const templateFile = readFileSync(path.join(repoRoot, templatePath), 'utf8').replace(
+      /\r\n/g,
+      '\n'
+    );
 
     assert.equal(templateFile, canonicalFile, `${templatePath} does not match ${canonicalPath}`);
   }
