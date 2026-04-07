@@ -29,6 +29,8 @@ When applying fixes:
 
 ## 2) Validate build and test health
 - Run repository-standard quality checks as available (for example: install, build, lint, test, format).
+- Only report outcomes for checks you actually executed in this environment.
+- If you could not run a check, state that it was not run and list the command(s) needed to run it.
 - If checks fail:
   - determine whether the patch introduced the issue
   - fix implementation problems when safe
