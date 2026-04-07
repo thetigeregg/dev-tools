@@ -91,6 +91,6 @@ if (isEntrypoint()) {
   await runPrSummaryCli();
 }
 
-// Backward compatibility for callers that still import the review-named API.
+// Forward-compatibility aliases: keep summary-named internals while exposing the new review-named API.
 export const buildReviewPrompt = buildSummaryPrompt;
 export const runPrReviewCli = runPrSummaryCli;

@@ -2,4 +2,4 @@
 '@thetigeregg/dev-cli': minor
 ---
 
-rename script
+Rename the CLI/config naming from `pr summary` to `pr review`.
