@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -33,6 +34,16 @@ export async function bootstrapWorktree({ worktreePath, config } = {}) {
   });
 }
 
+async function loadDevxConfigForPath(worktreePath) {
+  const configPath = path.resolve(worktreePath, 'devx.config.mjs');
+  if (!existsSync(configPath)) {
+    return undefined;
+  }
+
+  const configModule = await import(pathToFileURL(configPath).href);
+  return configModule?.default;
+}
+
 export async function runWorktreeDev(argv = []) {
   const [command] = argv;
 
@@ -57,7 +68,9 @@ if (isEntrypoint()) {
     }
 
     if (command === 'bootstrap') {
-      await bootstrapWorktree({ worktreePath: process.cwd() });
+      const worktreePath = process.cwd();
+      const config = await loadDevxConfigForPath(worktreePath);
+      await bootstrapWorktree({ worktreePath, config });
       process.exit(0);
     }
 
