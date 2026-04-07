@@ -51,7 +51,7 @@ export async function runPrSummaryCli({ cwd = process.cwd() } = {}) {
     ':(glob,exclude)**/dist/**',
   ];
   const outputFile =
-    config.pr.summaryOutputFileAbsolute ?? path.join(config.repoRoot, '.pr-review-prompt.md');
+    config.pr.reviewOutputFileAbsolute ?? path.join(config.repoRoot, '.pr-review-prompt.md');
 
   const diff = runGit(['diff', diffRange, '--', '.', ...excludedPaths], config.repoRoot);
 

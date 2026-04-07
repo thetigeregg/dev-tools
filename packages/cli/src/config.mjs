@@ -98,8 +98,8 @@ export async function loadDevxConfig({
     );
   }
 
-  if (config.pr.summaryOutputFile) {
-    config.pr.summaryOutputFileAbsolute = resolveConfigPath(repoRoot, config.pr.summaryOutputFile);
+  if (config.pr.reviewOutputFile) {
+    config.pr.reviewOutputFileAbsolute = resolveConfigPath(repoRoot, config.pr.reviewOutputFile);
   }
   if (config.pr.agentOutputFile) {
     config.pr.agentOutputFileAbsolute = resolveConfigPath(repoRoot, config.pr.agentOutputFile);
