@@ -268,12 +268,12 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
       process.exit(code);
     }
 
-    if (process.platform === 'darwin' && commandExists('code')) {
-      console.log('\nOpening VS Code...\n');
+    if (process.platform === 'darwin' && commandExists('cursor')) {
+      console.log('\nOpening Cursor...\n');
       try {
-        execFileSync('code', [worktreePath], { stdio: 'inherit' });
+        execFileSync('cursor', [worktreePath], { stdio: 'inherit' });
       } catch {
-        console.warn('\nCould not open VS Code automatically.\n');
+        console.warn('\nCould not open Cursor automatically.\n');
         console.warn(`Open the worktree manually: ${worktreePath}\n`);
       }
     } else {
