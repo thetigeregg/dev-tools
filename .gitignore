@@ -5,5 +5,5 @@ coverage/
 *.log
 .tmp/
 **/.tmp/
-.pr-summary-prompt.md
+.pr-review-prompt.md
 .pr-agent-prompt.md
