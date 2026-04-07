@@ -7,3 +7,4 @@ coverage/
 **/.tmp/
 .pr-review-prompt.md
 .pr-agent-prompt.md
+/worktrees/
