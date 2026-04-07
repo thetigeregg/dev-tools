@@ -1,5 +1,11 @@
 # @thetigeregg/dev-cli
 
+## 0.6.0
+
+### Minor Changes
+
+- a6326a4: switch to support Cursor
+
 ## 0.5.0
 
 ### Minor Changes
