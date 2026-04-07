@@ -20,7 +20,7 @@ Cursor is the recommended local IDE for repositories bootstrapped from this tool
 
 - Keep local agent behavior in `.cursor/rules/`
 - Use `@pr-review` and `@pr-agent` with the shared rules when preparing pull requests
-- Keep `.github/copilot-instructions.md` for GitHub platform AI features (for example github.com PR review flows)
+- Keep `.github/copilot-instructions.md` for GitHub platform AI features (for example GitHub.com PR review flows)
 
 Install the shared packages from your private registry:
 
