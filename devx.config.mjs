@@ -9,6 +9,9 @@ export default {
     'packages/ncu-config',
   ],
   worktree: {
+    bootstrap: {
+      installScript: 'deps:ci-all',
+    },
     adapterModule: './tools/devx/worktree-adapter.mjs',
   },
   pr: {

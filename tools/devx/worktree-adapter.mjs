@@ -24,9 +24,10 @@ export function isEntrypoint({ argv1 = process.argv[1], moduleUrl = import.meta.
   return pathToFileURL(path.resolve(argv1)).href === moduleUrl;
 }
 
-export async function bootstrapWorktree({ worktreePath }) {
-  console.log('\nInstalling dependencies with npm ci...\n');
-  execFileSync(getNpmCommand(), ['ci'], {
+export async function bootstrapWorktree({ worktreePath, config } = {}) {
+  const installScript = config?.worktree?.bootstrap?.installScript ?? 'deps:ci-all';
+  console.log(`\nInstalling dependencies with npm run ${installScript}...\n`);
+  execFileSync(getNpmCommand(), ['run', installScript], {
     stdio: 'inherit',
     cwd: worktreePath,
   });
