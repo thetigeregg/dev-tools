@@ -6,7 +6,7 @@ import { runEnvReconcileCli } from './env-reconcile.mjs';
 import { runGithubSarifPullCli } from './github-sarif-pull.mjs';
 import { runNcuAllCli } from './ncu-all.mjs';
 import { runPrAgentCli } from './pr-agent.mjs';
-import { runPrReviewCli } from './pr-summary.mjs';
+import { runPrSummaryCli } from './pr-summary.mjs';
 import {
   runRepoBootstrapCli,
   runRepoSyncCli,
@@ -88,7 +88,7 @@ if (group === 'deps' && command === 'ncu-all') {
 }
 
 if (group === 'pr' && command === 'review') {
-  await runPrReviewCli();
+  await runPrSummaryCli();
   process.exit(0);
 }
 

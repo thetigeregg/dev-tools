@@ -32,7 +32,7 @@ function runGit(args, cwd) {
   }
 }
 
-export function buildReviewPrompt(diff, files) {
+export function buildSummaryPrompt(diff, files) {
   return `
 Changed files:
 ${files}
@@ -42,7 +42,7 @@ ${diff}
 `;
 }
 
-export async function runPrReviewCli({ cwd = process.cwd() } = {}) {
+export async function runPrSummaryCli({ cwd = process.cwd() } = {}) {
   const config = await loadDevxConfig({ cwd });
   const baseRef = config.pr.baseRef ?? `origin/${config.baseBranch}`;
   const diffRange = `${baseRef}...HEAD`;
@@ -64,7 +64,7 @@ export async function runPrReviewCli({ cwd = process.cwd() } = {}) {
     ['diff', '--name-only', diffRange, '--', '.', ...excludedPaths],
     config.repoRoot
   );
-  const prompt = buildReviewPrompt(diff, files);
+  const prompt = buildSummaryPrompt(diff, files);
 
   fs.writeFileSync(outputFile, prompt);
 
@@ -88,5 +88,9 @@ export function isEntrypoint({ argv1 = process.argv[1], moduleUrl = import.meta.
 }
 
 if (isEntrypoint()) {
-  await runPrReviewCli();
+  await runPrSummaryCli();
 }
+
+// Backward compatibility for callers that still import the review-named API.
+export const buildReviewPrompt = buildSummaryPrompt;
+export const runPrReviewCli = runPrSummaryCli;
