@@ -1,0 +1,14 @@
+---
+description: Build, format, and test verification before commits
+globs: ["**/*"]
+alwaysApply: true
+---
+
+Before suggesting any commit:
+1. Run `<test-command>` to execute tests
+2. Run `<format-command>` to verify formatting
+3. Do not bypass pre-commit hooks
+4. If any step fails, fix the issue before proceeding
+
+# TODO: Replace <test-command> and <format-command> with
+# this project's actual commands from devx.config.mjs

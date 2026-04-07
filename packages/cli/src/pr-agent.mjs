@@ -51,8 +51,9 @@ export function parseArgs(args) {
   return options;
 }
 
-function maybeOpenInVSCode(filePath) {
-  const commands = process.platform === 'win32' ? ['code.cmd', 'code.exe', 'code'] : ['code'];
+function maybeOpenInCursor(filePath) {
+  const commands =
+    process.platform === 'win32' ? ['cursor.cmd', 'cursor.exe', 'cursor'] : ['cursor'];
 
   for (const command of commands) {
     const result = spawnSync(command, [filePath], { stdio: 'ignore' });
@@ -64,11 +65,11 @@ function maybeOpenInVSCode(filePath) {
     }
 
     const failureReason = result.error?.message || `exit code ${result.status}`;
-    console.warn(`VS Code CLI launch failed for ${filePath}: ${failureReason}`);
+    console.warn(`Cursor CLI launch failed for ${filePath}: ${failureReason}`);
     return;
   }
 
-  console.log('VS Code CLI code not found; skipping auto-open');
+  console.log('Cursor CLI not found; skipping auto-open');
 }
 
 function isAutomatedSecurityAuthor(authorLogin) {
@@ -1008,7 +1009,7 @@ export async function runPrAgentCli({ argv = process.argv.slice(2), cwd = proces
   );
 
   fs.writeFileSync(outputFile, prompt);
-  maybeOpenInVSCode(outputFile);
+  maybeOpenInCursor(outputFile);
 
   console.log(`
 Agent prompt generated: ${path.relative(config.repoRoot, outputFile) || outputFile}

@@ -14,6 +14,14 @@ This repository is a private monorepo for publishable internal packages. It cent
 
 ## Consumer Setup
 
+### Recommended IDE: Cursor
+
+Cursor is the recommended local IDE for repositories bootstrapped from this tooling.
+
+- Keep local agent behavior in `.cursor/rules/`
+- Use `@pr-review` and `@pr-agent` with the shared rules when preparing pull requests
+- Keep `.github/copilot-instructions.md` for GitHub platform AI features (for example GitHub.com PR review flows)
+
 Install the shared packages from your private registry:
 
 ```sh
@@ -47,6 +55,11 @@ export default {
   },
 };
 ```
+
+## Module Format (ESM vs CommonJS)
+
+- `@thetigeregg/dev-cli` is **ESM**. Consumer `devx.config.mjs` and any `worktree.adapterModule` are expected to be **ESM modules** (use `.mjs`, `export default`, and `import`).
+- The shared config packages (`@thetigeregg/prettier-config`, `@thetigeregg/commitlint-config`, `@thetigeregg/lint-staged-config`, `@thetigeregg/ncu-config`) are **CommonJS**. Re-export them from consumer `*.cjs` config files using `module.exports = require('...')`.
 
 ### Adapter Model
 
@@ -138,10 +151,13 @@ If `devx.config.mjs` does not exist yet, bootstrap falls back to the current wor
 Bootstrap currently seeds:
 
 - root config stubs and shared defaults such as `.prettierrc.cjs`, `.prettierignore`, `.ncurc.cjs`, `.editorconfig`, `.gitleaks.toml`, `commitlint.config.cjs`, `lint-staged.config.cjs`, and `devx.config.mjs`
-- `AGENTS.md`
+- `.cursorignore` with baseline patterns for secrets and generated outputs
+- `.cursor/rules/workflow.mdc` (stub — fill in your project's verify commands after bootstrap)
+- shared Cursor rules (`.cursor/rules/commits.mdc`, `code.mdc`, `pr-review.mdc`, `pr-agent.mdc`)
+- shared Cursor workspace defaults (`.cursor/settings.json`)
 - shared Husky hooks such as `.husky/pre-commit` and `.husky/commit-msg`
 - shared GitHub templates such as PR, issue, commit, Dependabot, and release templates
-- `.github/copilot-instructions.md`
+- `.github/copilot-instructions.md` (GitHub platform AI features only; local IDE rules live in `.cursor/rules/`)
 
 4. Review the generated files and replace placeholder values in `devx.config.mjs` with real repo settings.
 
@@ -185,9 +201,10 @@ npx devx repo sync --dry-run
 npx devx repo sync
 ```
 
-`repo sync` is for ongoing maintenance. It updates the shared surface without touching repo-specific files such as:
+`repo sync` is for ongoing maintenance. It updates the shared surface (including `.cursor/rules/` shared rules and `.cursor/settings.json`) without touching repo-specific files such as:
 
-- `AGENTS.md`
+- `.cursor/rules/workflow.mdc` (project-specific verify commands)
+- `.cursorignore`
 - `devx.config.mjs`
 - `lint-staged.config.cjs`
 - `.github/copilot-instructions.md`
@@ -204,6 +221,17 @@ npm test
 ```
 
 Also run the repo build if applicable.
+
+## Cursor Migration Checklist
+
+For existing repos moving from `AGENTS.md`/VS Code-first setup to Cursor-first setup:
+
+1. Remove legacy `AGENTS.md` if present.
+2. Run `npx devx repo bootstrap` (or `npx devx repo sync` if already bootstrapped).
+3. Confirm `.cursor/rules/` contains `workflow.mdc`, `commits.mdc`, `code.mdc`, `pr-review.mdc`, and `pr-agent.mdc`.
+4. Fill in project-specific verify commands in `.cursor/rules/workflow.mdc`.
+5. Confirm `.cursorignore` is present and includes project-sensitive patterns.
+6. Keep `.github/copilot-instructions.md` for GitHub platform-only AI usage.
 
 ## When To Use Bootstrap Vs Sync
 

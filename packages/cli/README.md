@@ -78,6 +78,8 @@ The CLI searches upward for `devx.config.mjs` and uses it to resolve:
 - release file locations
 - optional worktree adapter hooks
 
+Module format: `@thetigeregg/dev-cli` is ESM, so `devx.config.mjs` and any `worktree.adapterModule` should be authored as ESM modules (use `.mjs`, `export default`, and `import`).
+
 `worktree.adapterModule` powers repo-specific worktree commands. When present:
 
 - `runWorktreeDev(argv, options?)` powers `devx worktree ...`
@@ -193,7 +195,9 @@ Use `--dry-run` to preview the target files without copying.
 
 Bootstrap includes:
 
-- `AGENTS.md`
+- `.cursorignore` with baseline ignore patterns for AI indexing safety
+- `.cursor/rules/workflow.mdc` (stub — fill in project verify commands)
+- shared Cursor workspace defaults (`.cursor/settings.json`)
 - `.prettierrc.cjs`
 - `.prettierignore`
 - `.ncurc.cjs`
@@ -204,11 +208,14 @@ Bootstrap includes:
 - `lint-staged.config.cjs`
 - `.husky/pre-commit`
 - `.husky/commit-msg`
-- `.github/copilot-instructions.md`
+- `.github/copilot-instructions.md` (GitHub platform AI features only)
 - shared `.github` templates
+- shared Cursor rules (`.cursor/rules/commits.mdc`, `code.mdc`, `pr-review.mdc`, `pr-agent.mdc`)
 
-Sync updates the shared `.github` surface, including:
+Sync updates the shared surface, including:
 
+- shared Cursor rules (`.cursor/rules/commits.mdc`, `code.mdc`, `pr-review.mdc`, `pr-agent.mdc`)
+- shared Cursor workspace defaults (`.cursor/settings.json`)
 - shared Husky hooks such as `.husky/pre-commit` and `.husky/commit-msg`
 - `.editorconfig`
 - `.prettierignore`

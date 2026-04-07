@@ -1,0 +1,10 @@
+# Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
+.env
+.env.*
+**/secrets.*
+node_modules/
+dist/
+.next/
+coverage/
+*.log
+docker-compose.override.yml

@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   assertTemplateRootsExist,
@@ -35,6 +38,11 @@ test('buildTemplateSyncPlan maps shared github templates into repo .github paths
   assert.ok(plan.some((item) => item.relativeTargetPath === '.editorconfig'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.prettierignore'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.gitleaks.toml'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/rules/commits.mdc'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/rules/code.mdc'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/rules/pr-review.mdc'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/rules/pr-agent.mdc'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/settings.json'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/pull_request_template.md'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/ISSUE_TEMPLATE/bug.yml'));
   assert.ok(!plan.some((item) => item.relativeTargetPath === '.github/copilot-instructions.md'));
@@ -69,7 +77,9 @@ test('buildTemplateSyncPlan includes root stubs and defaults during bootstrap', 
     ],
   });
 
-  assert.ok(plan.some((item) => item.relativeTargetPath === 'AGENTS.md'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/rules/workflow.mdc'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.cursorignore'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/settings.json'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.prettierrc.cjs'));
   assert.ok(plan.some((item) => item.relativeTargetPath === 'devx.config.mjs'));
   assert.ok(plan.some((item) => item.relativeTargetPath === 'lint-staged.config.cjs'));
@@ -91,9 +101,9 @@ test('syncTemplates copies planned files, supports dry-run, and can skip existin
       relativeTargetPath: '.github/pull_request_template.md',
     },
     {
-      sourcePath: '/templates/root/AGENTS.md',
-      targetPath: '/repo/AGENTS.md',
-      relativeTargetPath: 'AGENTS.md',
+      sourcePath: '/templates/root/.cursor/rules/workflow.mdc',
+      targetPath: '/repo/.cursor/rules/workflow.mdc',
+      relativeTargetPath: '.cursor/rules/workflow.mdc',
     },
   ];
 
@@ -129,11 +139,13 @@ test('syncTemplates copies planned files, supports dry-run, and can skip existin
   });
 
   assert.deepEqual(result, { fileCount: 2, wroteFiles: true, skippedCount: 1 });
-  assert.deepEqual(mkdirs, [{ directoryPath: '/repo', options: { recursive: true } }]);
+  assert.deepEqual(mkdirs, [
+    { directoryPath: '/repo/.cursor/rules', options: { recursive: true } },
+  ]);
   assert.deepEqual(writes, [
     {
-      sourcePath: '/templates/root/AGENTS.md',
-      targetPath: '/repo/AGENTS.md',
+      sourcePath: '/templates/root/.cursor/rules/workflow.mdc',
+      targetPath: '/repo/.cursor/rules/workflow.mdc',
     },
   ]);
 });
@@ -142,9 +154,9 @@ test('syncTemplates reports wroteFiles false when every file is skipped', () => 
   const result = syncTemplates({
     plan: [
       {
-        sourcePath: '/templates/root/AGENTS.md',
-        targetPath: '/repo/AGENTS.md',
-        relativeTargetPath: 'AGENTS.md',
+        sourcePath: '/templates/root/.cursor/rules/workflow.mdc',
+        targetPath: '/repo/.cursor/rules/workflow.mdc',
+        relativeTargetPath: '.cursor/rules/workflow.mdc',
       },
     ],
     skipExisting: true,
@@ -202,7 +214,7 @@ test('runRepoBootstrapCli falls back to cwd when devx.config.mjs is missing', as
   assert.equal(result.fileCount > 0, true);
   assert.equal(result.wroteFiles, false);
   assert.match(calls[0], /Template sync dry run:/);
-  assert.ok(calls.some((message) => message === '- AGENTS.md'));
+  assert.ok(calls.some((message) => message === '- .cursor/rules/workflow.mdc'));
 });
 
 test('runRepoSyncCli honors --repo-root when devx.config.mjs is missing', async () => {
@@ -230,4 +242,30 @@ test('runRepoSyncCli honors --repo-root when devx.config.mjs is missing', async 
   assert.equal(result.fileCount > 0, true);
   assert.equal(result.wroteFiles, false);
   assert.ok(calls.some((message) => message === '- .github/pull_request_template.md'));
+});
+
+test('shared cursor rule templates stay in sync with repository cursor rules', () => {
+  const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
+  const pairs = [
+    ['.cursor/rules/commits.mdc', 'packages/cli/templates/root-shared/.cursor/rules/commits.mdc'],
+    ['.cursor/rules/code.mdc', 'packages/cli/templates/root-shared/.cursor/rules/code.mdc'],
+    [
+      '.cursor/rules/pr-review.mdc',
+      'packages/cli/templates/root-shared/.cursor/rules/pr-review.mdc',
+    ],
+    ['.cursor/rules/pr-agent.mdc', 'packages/cli/templates/root-shared/.cursor/rules/pr-agent.mdc'],
+  ];
+
+  for (const [canonicalPath, templatePath] of pairs) {
+    const canonicalFile = readFileSync(path.join(repoRoot, canonicalPath), 'utf8').replace(
+      /\r\n/g,
+      '\n'
+    );
+    const templateFile = readFileSync(path.join(repoRoot, templatePath), 'utf8').replace(
+      /\r\n/g,
+      '\n'
+    );
+
+    assert.equal(templateFile, canonicalFile, `${templatePath} does not match ${canonicalPath}`);
+  }
 });

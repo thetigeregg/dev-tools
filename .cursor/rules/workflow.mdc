@@ -1,0 +1,11 @@
+---
+description: Build, format, and test verification before commits
+globs: ["**/*"]
+alwaysApply: true
+---
+
+Before suggesting any commit:
+1. Run `npm test` from the root to execute all workspace tests via Node's built-in test runner
+2. Run `npm run format` to verify Prettier formatting passes
+3. Do not suggest bypassing `.husky/pre-commit` (lint-staged) or `.husky/commit-msg` (commitlint)
+4. If any step fails, fix the issue before proceeding to commit

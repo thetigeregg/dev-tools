@@ -1,0 +1,24 @@
+name: Cursor Template Parity
+
+on:
+  pull_request:
+    paths:
+      - ".cursor/rules/**"
+      - "packages/cli/templates/root-shared/.cursor/rules/**"
+      - "packages/cli/test/repo-sync-templates.test.mjs"
+
+permissions:
+  contents: read
+
+jobs:
+  cursor-template-parity:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Run cursor template parity test
+        run: node --test test/repo-sync-templates.test.mjs
+        working-directory: packages/cli
