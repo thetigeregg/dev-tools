@@ -1,5 +1,11 @@
 # @thetigeregg/dev-cli
 
+## 1.0.0
+
+### Major Changes
+
+- f5fdeea: Rename the CLI/config naming from `pr summary` to `pr review`.
+
 ## 0.6.0
 
 ### Minor Changes
