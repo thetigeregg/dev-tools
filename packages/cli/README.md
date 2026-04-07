@@ -13,7 +13,7 @@ devx deps install-all
 devx deps ci-all
 devx deps audit-all [--fix]
 devx deps ncu-all
-devx pr summary
+devx pr review
 devx pr agent <PR_NUMBER> [--copilot-only] [--include-coverage] [--debug]
 devx github sarif pull [--repo owner/name] [--out-dir <path>] [--ref <ref>] [--category <value>] [--limit <n>] [--force] [--dry-run] [--debug]
 devx release version [--dry-run]

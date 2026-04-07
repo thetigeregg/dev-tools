@@ -5,7 +5,7 @@
     "**/.tmp": true,
     "**/dist": true,
     "**/coverage": true,
-    "**/.pr-summary-prompt.md": true,
+    "**/.pr-review-prompt.md": true,
     "**/.pr-agent-prompt.md": true
   },
   "search.exclude": {

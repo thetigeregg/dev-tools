@@ -28,7 +28,7 @@ function printHelp() {
   console.log('  devx deps ci-all');
   console.log('  devx deps audit-all [--fix]');
   console.log('  devx deps ncu-all');
-  console.log('  devx pr summary');
+  console.log('  devx pr review');
   console.log('  devx pr agent <PR_NUMBER> [--copilot-only] [--include-coverage] [--debug]');
   console.log(
     '  devx github sarif pull [--repo owner/name] [--out-dir <path>] [--ref <ref>] [--category <value>] [--limit <n>] [--force] [--dry-run] [--debug]'
@@ -87,7 +87,7 @@ if (group === 'deps' && command === 'ncu-all') {
   process.exit(0);
 }
 
-if (group === 'pr' && command === 'summary') {
+if (group === 'pr' && command === 'review') {
   await runPrSummaryCli();
   process.exit(0);
 }

@@ -51,27 +51,6 @@ export function parseArgs(args) {
   return options;
 }
 
-function maybeOpenInCursor(filePath) {
-  const commands =
-    process.platform === 'win32' ? ['cursor.cmd', 'cursor.exe', 'cursor'] : ['cursor'];
-
-  for (const command of commands) {
-    const result = spawnSync(command, [filePath], { stdio: 'ignore' });
-    if (!result.error && result.status === 0) {
-      return;
-    }
-    if (result.error?.code === 'ENOENT') {
-      continue;
-    }
-
-    const failureReason = result.error?.message || `exit code ${result.status}`;
-    console.warn(`Cursor CLI launch failed for ${filePath}: ${failureReason}`);
-    return;
-  }
-
-  console.log('Cursor CLI not found; skipping auto-open');
-}
-
 function isAutomatedSecurityAuthor(authorLogin) {
   const normalizedAuthorLogin = String(authorLogin || '').toLowerCase();
   return (
@@ -1009,7 +988,6 @@ export async function runPrAgentCli({ argv = process.argv.slice(2), cwd = proces
   );
 
   fs.writeFileSync(outputFile, prompt);
-  maybeOpenInCursor(outputFile);
 
   console.log(`
 Agent prompt generated: ${path.relative(config.repoRoot, outputFile) || outputFile}

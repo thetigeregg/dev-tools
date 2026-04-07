@@ -51,7 +51,7 @@ export async function runPrSummaryCli({ cwd = process.cwd() } = {}) {
     ':(glob,exclude)**/dist/**',
   ];
   const outputFile =
-    config.pr.summaryOutputFileAbsolute ?? path.join(config.repoRoot, '.pr-summary-prompt.md');
+    config.pr.reviewOutputFileAbsolute ?? path.join(config.repoRoot, '.pr-review-prompt.md');
 
   const diff = runGit(['diff', diffRange, '--', '.', ...excludedPaths], config.repoRoot);
 
@@ -69,7 +69,7 @@ export async function runPrSummaryCli({ cwd = process.cwd() } = {}) {
   fs.writeFileSync(outputFile, prompt);
 
   console.log(`
-PR summary prompt generated:
+PR review prompt generated:
 
 ${path.relative(config.repoRoot, outputFile) || outputFile}
 
@@ -90,3 +90,7 @@ export function isEntrypoint({ argv1 = process.argv[1], moduleUrl = import.meta.
 if (isEntrypoint()) {
   await runPrSummaryCli();
 }
+
+// Forward-compatibility aliases: keep summary-named internals while exposing the new review-named API.
+export const buildReviewPrompt = buildSummaryPrompt;
+export const runPrReviewCli = runPrSummaryCli;
