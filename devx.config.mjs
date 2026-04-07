@@ -8,6 +8,9 @@ export default {
     'packages/lint-staged-config',
     'packages/ncu-config',
   ],
+  worktree: {
+    adapterModule: './tools/devx/worktree-adapter.mjs',
+  },
   pr: {
     baseRef: 'origin/main',
     reviewOutputFile: '.pr-review-prompt.md',
