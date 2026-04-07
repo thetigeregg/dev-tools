@@ -40,10 +40,10 @@ export async function runWorktreeDev(argv = []) {
     return;
   }
 
-  throw createCommandError(
-    `Unknown worktree command: ${command}\nNo repo-specific devx worktree commands are configured.`,
-    1
+  console.error(
+    `Unknown worktree command: ${command}\nNo repo-specific devx worktree commands are configured.`
   );
+  return;
 }
 
 if (isEntrypoint()) {
