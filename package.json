@@ -14,6 +14,8 @@
     "ci": "npm run test && npm run smoke",
     "format": "prettier . --check",
     "prepare": "husky",
+    "worktree:setup": "devx task start",
+    "worktree:cleanup": "devx worktree cleanup",
     "deps:install-all": "devx deps install-all",
     "deps:ci-all": "devx deps ci-all",
     "deps:audit": "devx deps audit-all",
