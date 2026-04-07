@@ -1,8 +1,4 @@
 ---
-alwaysApply: true
----
-
----
 description: PR summary and pre-PR review instructions for agent
 globs: ["**/*"]
 alwaysApply: false

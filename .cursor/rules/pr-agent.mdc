@@ -1,8 +1,4 @@
 ---
-alwaysApply: true
----
-
----
 description: Agent behaviour when working a PR agent prompt
 globs: ["**/*"]
 alwaysApply: false

@@ -1,8 +1,4 @@
 ---
-alwaysApply: true
----
-
----
 description: Code quality and architecture rules
 globs: ["**/*"]
 alwaysApply: true
