@@ -15,13 +15,17 @@ If a consumer repo also wants ESLint on staged files, it should extend this conf
 
 ## Extending this config
 
-You can import the shared config and add project-specific staged-file tasks.
+You can import the shared config and replace the shared TS/JS glob with
+project-specific staged-file tasks.
 
 ```js
 const baseConfig = require('@thetigeregg/lint-staged-config');
+const extendedConfig = { ...baseConfig };
+
+delete extendedConfig['*.{ts,tsx,js,jsx}'];
 
 module.exports = {
-  ...baseConfig,
+  ...extendedConfig,
   '*.{ts,tsx,js,jsx}': ['eslint --fix', 'prettier --write'],
 };
 ```
