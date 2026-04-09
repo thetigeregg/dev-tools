@@ -6,5 +6,4 @@ module.exports = {
 
     return 'latest';
   },
-  reject: (name) => name === 'typescript',
 };
