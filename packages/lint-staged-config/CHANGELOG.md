@@ -1,5 +1,11 @@
 # @thetigeregg/lint-staged-config
 
+## 0.2.5
+
+### Patch Changes
+
+- 14a9504: add docs, change ncu default
+
 ## 0.2.4
 
 ### Patch Changes

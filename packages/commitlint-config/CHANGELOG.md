@@ -1,5 +1,11 @@
 # @thetigeregg/commitlint-config
 
+## 0.4.5
+
+### Patch Changes
+
+- 14a9504: add docs, change ncu default
+
 ## 0.4.4
 
 ### Patch Changes
