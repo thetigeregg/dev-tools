@@ -251,10 +251,10 @@ The smoke check verifies that workspace package exports resolve and that the `de
 
 This repo also dogfoods its own shared tooling at the root:
 
-- [devx.config.mjs](/Users/sixtopia/projects/dev-tools/devx.config.mjs) configures `devx` against the workspace packages
-- [.prettierrc.cjs](/Users/sixtopia/projects/dev-tools/.prettierrc.cjs) re-exports `@thetigeregg/prettier-config`
-- [commitlint.config.cjs](/Users/sixtopia/projects/dev-tools/commitlint.config.cjs) extends `@thetigeregg/commitlint-config`
-- [.ncurc.cjs](/Users/sixtopia/projects/dev-tools/.ncurc.cjs) re-exports `@thetigeregg/ncu-config`
+- [devx.config.mjs](./devx.config.mjs) configures `devx` against the workspace packages
+- [.prettierrc.cjs](./.prettierrc.cjs) re-exports `@thetigeregg/prettier-config`
+- [commitlint.config.cjs](./commitlint.config.cjs) extends `@thetigeregg/commitlint-config`
+- [.ncurc.cjs](./.ncurc.cjs) re-exports `@thetigeregg/ncu-config`
 
 Useful root scripts:
 
