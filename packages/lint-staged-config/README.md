@@ -12,3 +12,20 @@ module.exports = require('@thetigeregg/lint-staged-config');
 
 The shared default is intentionally conservative and runs Prettier only.
 If a consumer repo also wants ESLint on staged files, it should extend this config locally.
+
+## Extending this config
+
+You can import the shared config and replace the shared default staged-file
+glob with project-specific staged-file tasks.
+
+```js
+const baseConfig = require('@thetigeregg/lint-staged-config');
+const extendedConfig = { ...baseConfig };
+
+delete extendedConfig['*.{ts,js,mjs,cjs,jsx,tsx,html,css,scss,md,mdx,json,yml,yaml}'];
+
+module.exports = {
+  ...extendedConfig,
+  '*.{ts,tsx,js,jsx}': ['eslint --fix', 'prettier --write'],
+};
+```
