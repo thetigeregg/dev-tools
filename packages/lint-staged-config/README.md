@@ -15,8 +15,8 @@ If a consumer repo also wants ESLint on staged files, it should extend this conf
 
 ## Extending this config
 
-You can import the shared config and replace the shared TS/JS glob with
-project-specific staged-file tasks.
+You can import the shared config and replace the shared default staged-file
+glob with project-specific staged-file tasks.
 
 ```js
 const baseConfig = require('@thetigeregg/lint-staged-config');
