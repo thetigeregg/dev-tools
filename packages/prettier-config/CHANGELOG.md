@@ -1,5 +1,11 @@
 # @thetigeregg/prettier-config
 
+## 0.3.5
+
+### Patch Changes
+
+- 14a9504: add docs, change ncu default
+
 ## 0.3.4
 
 ### Patch Changes

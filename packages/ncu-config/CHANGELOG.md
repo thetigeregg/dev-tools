@@ -1,5 +1,11 @@
 # @thetigeregg/ncu-config
 
+## 1.0.0
+
+### Major Changes
+
+- 14a9504: add docs, change ncu default
+
 ## 0.3.4
 
 ### Patch Changes
