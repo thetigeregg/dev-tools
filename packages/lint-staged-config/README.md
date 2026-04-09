@@ -22,7 +22,7 @@ project-specific staged-file tasks.
 const baseConfig = require('@thetigeregg/lint-staged-config');
 const extendedConfig = { ...baseConfig };
 
-delete extendedConfig['*.{ts,tsx,js,jsx}'];
+delete extendedConfig['*.{ts,js,mjs,cjs,jsx,tsx,html,css,scss,md,mdx,json,yml,yaml}'];
 
 module.exports = {
   ...extendedConfig,
