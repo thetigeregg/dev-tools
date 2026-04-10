@@ -1,6 +1,6 @@
 {
   "name": "@thetigeregg/commitlint-config",
-  "version": "0.4.5",
+  "version": "1.0.0",
   "description": "Shared commitlint configuration for thetigeregg projects.",
   "main": "index.cjs",
   "exports": {
