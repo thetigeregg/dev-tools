@@ -158,8 +158,16 @@ test('createWorktreeContext expands home-relative shared env paths from top-leve
 });
 
 test('buildNvmAwareInstallCommand wraps dependency install commands with nvm activation', () => {
-  assert.match(buildNvmAwareInstallCommand('npm run deps:ci-all'), /nvm use/);
-  assert.match(buildNvmAwareInstallCommand('npm run deps:ci-all'), /npm run deps:ci-all/);
+  const defaultInstall = 'npm ci --workspaces --include-workspace-root';
+  assert.match(buildNvmAwareInstallCommand(defaultInstall), /nvm use/);
+  assert.match(
+    buildNvmAwareInstallCommand(defaultInstall),
+    /npm ci --workspaces --include-workspace-root/
+  );
+  assert.match(
+    buildNvmAwareInstallCommand('npm run worktree:bootstrap'),
+    /npm run worktree:bootstrap/
+  );
 });
 
 test('resolveShellInvocation falls back to cmd.exe on Windows', () => {
