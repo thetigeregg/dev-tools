@@ -111,8 +111,9 @@ export default {
     bootstrap: {
       // Optional for npm workspace repos: root `package-lock.json` + `workspaces` in root package.json.
       // Omit to run `npm ci --workspaces --include-workspace-root` from repoRoot.
-      // Non-workspace repos run `npm ci` (and `npm --prefix <pkg> ci` per packageDir) instead; if that does
-      // not fit your layout, set `installScript` to an npm script name from root package.json (A–Z, a–z, 0–9, `:`, `_`, `-` only).
+      // Non-workspace repos run `npm ci` or `npm install` per packageDir (uses `ci` only when that folder has
+      // package-lock.json or npm-shrinkwrap.json); if that does not fit your layout, set `installScript` to
+      // an npm script name from root package.json (A–Z, a–z, 0–9, `:`, `_`, `-` only).
       // installScript: 'worktree:install',
     },
     runtime: {

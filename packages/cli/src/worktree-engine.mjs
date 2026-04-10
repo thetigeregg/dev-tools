@@ -406,8 +406,16 @@ function assertValidBootstrapInstallScript(name) {
   }
 }
 
+function packageDirHasNpmLockfile(absoluteDir) {
+  return (
+    existsSync(path.join(absoluteDir, 'package-lock.json')) ||
+    existsSync(path.join(absoluteDir, 'npm-shrinkwrap.json'))
+  );
+}
+
 function buildNonWorkspaceBootstrapInstallCommand(context) {
   const platform = context.platform ?? process.platform;
+  const repoRoot = context.config.repoRoot ?? context.cwd;
   const projects = (context.config.packageDirPaths ?? []).filter(
     (pkg) => pkg.path === '.' || packageHasDependencies(pkg.absolutePath)
   );
@@ -419,12 +427,16 @@ function buildNonWorkspaceBootstrapInstallCommand(context) {
   }
 
   const fragments = projects.map((pkg) => {
-    const projectPath = pkg.path === '.' ? '.' : (pkg.absolutePath ?? pkg.path);
-    if (projectPath === '.') {
-      return 'npm ci';
+    const absoluteDir =
+      pkg.absolutePath ?? (pkg.path === '.' ? repoRoot : path.resolve(repoRoot, pkg.path));
+    const npmSubcommand = packageDirHasNpmLockfile(absoluteDir) ? 'ci' : 'install';
+
+    if (pkg.path === '.') {
+      return `npm ${npmSubcommand}`;
     }
 
-    return `npm --prefix ${shellEscape(projectPath, platform)} ci`;
+    const projectPath = pkg.absolutePath ?? pkg.path;
+    return `npm --prefix ${shellEscape(projectPath, platform)} ${npmSubcommand}`;
   });
 
   return fragments.join(' && ');
@@ -464,12 +476,25 @@ export function ensureDependenciesInstalled(context, forceInstall = false) {
   }
 
   const repoRoot = context.config.repoRoot ?? context.cwd;
-  const configuredInstallScript = context.config.worktree?.bootstrap?.installScript;
+  const bootstrapConfig = context.config.worktree?.bootstrap;
+  const hasConfiguredInstallScript =
+    bootstrapConfig != null &&
+    Object.prototype.hasOwnProperty.call(bootstrapConfig, 'installScript');
+  const configuredInstallScript = bootstrapConfig?.installScript;
 
   let installCommand;
-  if (configuredInstallScript) {
-    assertValidBootstrapInstallScript(configuredInstallScript);
-    installCommand = `npm run ${configuredInstallScript}`;
+  if (hasConfiguredInstallScript) {
+    if (
+      typeof configuredInstallScript !== 'string' ||
+      configuredInstallScript.trim().length === 0
+    ) {
+      throw new Error(
+        'Invalid config: worktree.bootstrap.installScript must be a non-empty string.'
+      );
+    }
+    const scriptName = configuredInstallScript.trim();
+    assertValidBootstrapInstallScript(scriptName);
+    installCommand = `npm run ${scriptName}`;
   } else if (repoRoot && hasWorkspaceConfig(repoRoot)) {
     installCommand = 'npm ci --workspaces --include-workspace-root';
   } else {
