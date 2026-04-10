@@ -34,6 +34,7 @@ devx repo sync-templates [--dry-run]
 - `pr.agentOutputFile` -> `pr.feedbackOutputFile`
 - `prompts/pr-review-prompt.md` -> `prompts/pr-prep-prompt.md`
 - `prompts/pr-agent-prompt.md` -> `prompts/pr-feedback-prompt.md`
+- `DEBUG_PR_AGENT` -> `DEBUG_PR_FEEDBACK` (`DEBUG_PR_AGENT` remains supported as an alias)
 
 ## GitHub SARIF Pull
 

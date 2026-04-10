@@ -107,6 +107,20 @@ export async function loadDevxConfig({
       config.pr.feedbackOutputFile
     );
   }
+  if (config.pr.reviewOutputFile && !config.pr.prepOutputFile) {
+    config.pr.prepOutputFile = config.pr.reviewOutputFile;
+    config.pr.prepOutputFileAbsolute = resolveConfigPath(repoRoot, config.pr.reviewOutputFile);
+    console.warn(
+      '[devx] config.pr.reviewOutputFile is deprecated; use config.pr.prepOutputFile instead.'
+    );
+  }
+  if (config.pr.agentOutputFile && !config.pr.feedbackOutputFile) {
+    config.pr.feedbackOutputFile = config.pr.agentOutputFile;
+    config.pr.feedbackOutputFileAbsolute = resolveConfigPath(repoRoot, config.pr.agentOutputFile);
+    console.warn(
+      '[devx] config.pr.agentOutputFile is deprecated; use config.pr.feedbackOutputFile instead.'
+    );
+  }
 
   if (config.release.packageJsonFile) {
     config.release.packageJsonFileAbsolute = resolveConfigPath(

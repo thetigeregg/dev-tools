@@ -942,7 +942,8 @@ export function writePromptOutputFile(outputFile, contents) {
 export async function runPrFeedbackCli({ argv = process.argv.slice(2), cwd = process.cwd() } = {}) {
   const options = parseArgs(argv);
   const config = await loadDevxConfig({ cwd });
-  const debug = process.env.DEBUG_PR_FEEDBACK === '1' || options.debug;
+  const debug =
+    process.env.DEBUG_PR_FEEDBACK === '1' || process.env.DEBUG_PR_AGENT === '1' || options.debug;
   const prConfig = config.pr ?? {};
   const outputFile = resolveFeedbackPromptOutputFile(config);
   const workflowName = prConfig.ciWorkflowName ?? 'CI PR Checks';
