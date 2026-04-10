@@ -476,7 +476,7 @@ export function ensureDependenciesInstalled(context, forceInstall = false) {
     installCommand = buildNonWorkspaceBootstrapInstallCommand(context);
   }
 
-  console.log(`Installing workspace dependencies via: ${installCommand}`);
+  console.log(`Installing dependencies via: ${installCommand}`);
   context.runNvmAwareShell(
     buildNvmAwareInstallCommand(installCommand),
     installCommand,

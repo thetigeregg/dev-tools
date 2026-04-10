@@ -2,6 +2,8 @@
 '@thetigeregg/dev-cli': major
 ---
 
+**Semver major is intentional:** default worktree bootstrap install behavior and the `buildNvmAwareInstallCommand` parameter contract change in ways that require migration for some consumers (see below). The PR is labeled `fix` because it corrects bootstrap defaults; the breaking impact is still a major release per semver.
+
 Change worktree bootstrap dependency installation when `worktree.bootstrap.installScript` is omitted: run `npm ci --workspaces --include-workspace-root` instead of defaulting to `npm run deps:ci-all`. Optional `installScript` still runs `npm run <script>`.
 
 `buildNvmAwareInstallCommand` now takes a full shell install command (default `npm ci --workspaces --include-workspace-root`) instead of an npm script name wrapped with `npm run`.
