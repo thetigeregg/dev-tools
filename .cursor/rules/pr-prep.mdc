@@ -42,9 +42,16 @@ Only after Step 1 is complete, generate the PR description from the repository t
   - return `Title` followed by `Summary` in a single code block
   - include the Conventional Commit title line and full PR template body in that same block
 
+### Step 3: Changeset decision
+
+After generating the PR summary, decide whether a changeset is required for published package impact.
+
+- If published package behavior changes, run `changeset` and add a changeset file with the appropriate bump level.
+- If there is no published-package impact, explicitly state why no changeset is needed.
+
 ### Go/No-Go gate
 
 Do not generate the PR summary until one of the following is true:
 
-- All identified risks and test gaps are fixed in the patch, or
-- Remaining issues are explicitly documented as blockers with scope, impact, and concrete follow-up.
+- All identified risks and test gaps are fixed in the patch and the changeset requirement is satisfied, or
+- Remaining issues are explicitly documented as blockers with scope, impact, and concrete follow-up, including changeset rationale when no changeset is added.
