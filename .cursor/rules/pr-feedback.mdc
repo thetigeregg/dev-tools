@@ -24,3 +24,5 @@ and review feedback are resolved.
 
 Before finishing, verify locally using the commands listed
 in the generated prompt's Definition of Done section.
+
+Always output a Conventional Commit message for the final set of changes.
