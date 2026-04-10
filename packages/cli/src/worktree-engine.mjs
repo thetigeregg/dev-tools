@@ -394,7 +394,57 @@ export function listMissingDependencyDirs(context) {
     .filter((moduleDir) => !existsSync(moduleDir));
 }
 
-export function buildNvmAwareInstallCommand(installScript = 'i:all') {
+const NPM_BOOTSTRAP_SCRIPT_NAME_PATTERN = /^[A-Za-z0-9:_-]+$/;
+
+function assertValidBootstrapInstallScript(name) {
+  if (!NPM_BOOTSTRAP_SCRIPT_NAME_PATTERN.test(name)) {
+    throw new Error(
+      `worktree.bootstrap.installScript must be a non-empty npm script name (allowed characters: letters, digits, ":", "_", "-"). Received: ${JSON.stringify(
+        name
+      )}`
+    );
+  }
+}
+
+function packageDirHasNpmLockfile(absoluteDir) {
+  return (
+    existsSync(path.join(absoluteDir, 'package-lock.json')) ||
+    existsSync(path.join(absoluteDir, 'npm-shrinkwrap.json'))
+  );
+}
+
+function buildNonWorkspaceBootstrapInstallCommand(context) {
+  const platform = context.platform ?? process.platform;
+  const repoRoot = context.config.repoRoot ?? context.cwd;
+  const projects = (context.config.packageDirPaths ?? []).filter(
+    (pkg) => pkg.path === '.' || packageHasDependencies(pkg.absolutePath)
+  );
+
+  if (projects.length === 0) {
+    throw new Error(
+      'worktree bootstrap: no npm workspaces layout was detected at repoRoot, and packageDirs did not yield any installable packages. Configure npm workspaces with a root package-lock.json, or set worktree.bootstrap.installScript in devx.config.mjs to run a custom install.'
+    );
+  }
+
+  const fragments = projects.map((pkg) => {
+    const absoluteDir =
+      pkg.absolutePath ?? (pkg.path === '.' ? repoRoot : path.resolve(repoRoot, pkg.path));
+    const npmSubcommand = packageDirHasNpmLockfile(absoluteDir) ? 'ci' : 'install';
+
+    if (pkg.path === '.') {
+      return `npm ${npmSubcommand}`;
+    }
+
+    const projectPath = pkg.absolutePath ?? pkg.path;
+    return `npm --prefix ${shellEscape(projectPath, platform)} ${npmSubcommand}`;
+  });
+
+  return fragments.join(' && ');
+}
+
+export function buildNvmAwareInstallCommand(
+  installCommand = 'npm ci --workspaces --include-workspace-root'
+) {
   return [
     'if [ -f .nvmrc ]',
     'then',
@@ -407,7 +457,7 @@ export function buildNvmAwareInstallCommand(installScript = 'i:all') {
     '    echo "Warning: .nvmrc found but nvm.sh was not found; continuing with current Node."',
     '  fi',
     'fi',
-    `npm run ${installScript}`,
+    installCommand,
   ].join('\n');
 }
 
@@ -425,11 +475,36 @@ export function ensureDependenciesInstalled(context, forceInstall = false) {
     }
   }
 
-  const installScript = context.config.worktree.bootstrap?.installScript ?? 'deps:ci-all';
-  console.log(`Installing workspace dependencies via: npm run ${installScript}`);
+  const repoRoot = context.config.repoRoot ?? context.cwd;
+  const bootstrapConfig = context.config.worktree?.bootstrap;
+  const hasConfiguredInstallScript =
+    bootstrapConfig != null &&
+    Object.prototype.hasOwnProperty.call(bootstrapConfig, 'installScript');
+  const configuredInstallScript = bootstrapConfig?.installScript;
+
+  let installCommand;
+  if (hasConfiguredInstallScript) {
+    if (
+      typeof configuredInstallScript !== 'string' ||
+      configuredInstallScript.trim().length === 0
+    ) {
+      throw new Error(
+        'Invalid config: worktree.bootstrap.installScript must be a non-empty string.'
+      );
+    }
+    const scriptName = configuredInstallScript.trim();
+    assertValidBootstrapInstallScript(scriptName);
+    installCommand = `npm run ${scriptName}`;
+  } else if (repoRoot && hasWorkspaceConfig(repoRoot)) {
+    installCommand = 'npm ci --workspaces --include-workspace-root';
+  } else {
+    installCommand = buildNonWorkspaceBootstrapInstallCommand(context);
+  }
+
+  console.log(`Installing dependencies via: ${installCommand}`);
   context.runNvmAwareShell(
-    buildNvmAwareInstallCommand(installScript),
-    `npm run ${installScript}`,
+    buildNvmAwareInstallCommand(installCommand),
+    installCommand,
     context.createSharedEnv()
   );
 }

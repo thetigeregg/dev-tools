@@ -22,6 +22,9 @@ import {
   servePwaRootCertificate,
 } from '../src/api.mjs';
 
+/** Monorepo root when tests run from packages/cli (contains npm workspaces). */
+const monorepoRootForTests = path.resolve(import.meta.dirname, '../../..');
+
 const config = {
   repoRoot: '/repo/worktrees/feat/example',
   projectName: 'game-shelf',
@@ -157,9 +160,17 @@ test('createWorktreeContext expands home-relative shared env paths from top-leve
   );
 });
 
-test('buildNvmAwareInstallCommand wraps npm scripts with nvm activation', () => {
-  assert.match(buildNvmAwareInstallCommand('deps:ci-all'), /nvm use/);
-  assert.match(buildNvmAwareInstallCommand('deps:ci-all'), /npm run deps:ci-all/);
+test('buildNvmAwareInstallCommand wraps dependency install commands with nvm activation', () => {
+  const defaultInstall = 'npm ci --workspaces --include-workspace-root';
+  assert.match(buildNvmAwareInstallCommand(defaultInstall), /nvm use/);
+  assert.match(
+    buildNvmAwareInstallCommand(defaultInstall),
+    /npm ci --workspaces --include-workspace-root/
+  );
+  assert.match(
+    buildNvmAwareInstallCommand('npm run worktree:bootstrap'),
+    /npm run worktree:bootstrap/
+  );
 });
 
 test('resolveShellInvocation falls back to cmd.exe on Windows', () => {
@@ -333,13 +344,15 @@ test('createWorktreeContext run helpers throw typed errors instead of exiting th
 });
 
 test('runWorktreeBootstrap passes force through to dependency installation', () => {
-  const repoRoot = process.cwd();
+  const repoRoot = monorepoRootForTests;
   const localEnvPath = path.join(os.tmpdir(), `devx-bootstrap-${process.pid}.env`);
   const calls = [];
   const context = {
+    cwd: repoRoot,
     localEnvPath,
     sharedEnvFilePath: path.join(repoRoot, 'package.json'),
     config: {
+      repoRoot,
       packageDirPaths: [],
       worktree: {},
     },
@@ -354,8 +367,211 @@ test('runWorktreeBootstrap passes force through to dependency installation', () 
   runWorktreeBootstrap(context, { force: true, printInfo: false });
 
   assert.equal(calls.length, 1);
+  assert.match(calls[0].command, /npm ci --workspaces --include-workspace-root/);
+  assert.equal(calls[0].fallbackCommand, 'npm ci --workspaces --include-workspace-root');
+});
+
+test('runWorktreeBootstrap uses worktree.bootstrap.installScript when configured', () => {
+  const repoRoot = process.cwd();
+  const localEnvPath = path.join(os.tmpdir(), `devx-bootstrap-script-${process.pid}.env`);
+  const calls = [];
+  const context = {
+    cwd: repoRoot,
+    localEnvPath,
+    sharedEnvFilePath: path.join(repoRoot, 'package.json'),
+    config: {
+      packageDirPaths: [],
+      worktree: {
+        bootstrap: {
+          installScript: 'deps:ci-all',
+        },
+      },
+    },
+    createSharedEnv() {
+      return {};
+    },
+    runNvmAwareShell(command, fallbackCommand, env) {
+      calls.push({ command, fallbackCommand, env });
+    },
+  };
+
+  runWorktreeBootstrap(context, { force: true, printInfo: false });
+
+  assert.equal(calls.length, 1);
   assert.match(calls[0].command, /npm run deps:ci-all/);
   assert.equal(calls[0].fallbackCommand, 'npm run deps:ci-all');
+});
+
+test('runWorktreeBootstrap rejects empty worktree.bootstrap.installScript when key is set', () => {
+  const localEnvPath = path.join(os.tmpdir(), `devx-bootstrap-emptyscript-${process.pid}.env`);
+  const sharedEnvFilePath = path.join(os.tmpdir(), `devx-shared-empty-${process.pid}.env`);
+  writeFileSync(sharedEnvFilePath, 'KEY=value\n');
+  const context = {
+    localEnvPath,
+    sharedEnvFilePath,
+    config: {
+      packageDirPaths: [],
+      worktree: {
+        bootstrap: {
+          installScript: '',
+        },
+      },
+    },
+    createSharedEnv() {
+      return {};
+    },
+    runNvmAwareShell() {
+      assert.fail('runNvmAwareShell should not run when installScript is empty');
+    },
+  };
+
+  assert.throws(
+    () => runWorktreeBootstrap(context, { force: true, printInfo: false }),
+    /Invalid config: worktree\.bootstrap\.installScript must be a non-empty string/
+  );
+});
+
+test('runWorktreeBootstrap rejects non-string worktree.bootstrap.installScript', () => {
+  const localEnvPath = path.join(os.tmpdir(), `devx-bootstrap-badtype-${process.pid}.env`);
+  const sharedEnvFilePath = path.join(os.tmpdir(), `devx-shared-badtype-${process.pid}.env`);
+  writeFileSync(sharedEnvFilePath, 'KEY=value\n');
+  const context = {
+    localEnvPath,
+    sharedEnvFilePath,
+    config: {
+      packageDirPaths: [],
+      worktree: {
+        bootstrap: {
+          installScript: 123,
+        },
+      },
+    },
+    createSharedEnv() {
+      return {};
+    },
+    runNvmAwareShell() {
+      assert.fail('runNvmAwareShell should not run when installScript is not a string');
+    },
+  };
+
+  assert.throws(
+    () => runWorktreeBootstrap(context, { force: true, printInfo: false }),
+    /Invalid config: worktree\.bootstrap\.installScript must be a non-empty string/
+  );
+});
+
+test('runWorktreeBootstrap rejects invalid worktree.bootstrap.installScript', () => {
+  const localEnvPath = path.join(os.tmpdir(), `devx-bootstrap-badscript-${process.pid}.env`);
+  const sharedEnvFilePath = path.join(os.tmpdir(), `devx-shared-${process.pid}.env`);
+  writeFileSync(sharedEnvFilePath, 'KEY=value\n');
+  const context = {
+    localEnvPath,
+    sharedEnvFilePath,
+    config: {
+      packageDirPaths: [],
+      worktree: {
+        bootstrap: {
+          installScript: 'evil; injection',
+        },
+      },
+    },
+    createSharedEnv() {
+      return {};
+    },
+    runNvmAwareShell() {
+      assert.fail('runNvmAwareShell should not run when installScript is invalid');
+    },
+  };
+
+  assert.throws(
+    () => runWorktreeBootstrap(context, { force: true, printInfo: false }),
+    /worktree\.bootstrap\.installScript/
+  );
+});
+
+test('runWorktreeBootstrap uses lockfile-aware npm ci or install per packageDir when repo is not a workspace', () => {
+  const tmpDir = path.join(os.tmpdir(), `devx-bootstrap-nonws-${process.pid}-${Date.now()}`);
+  mkdirSync(path.join(tmpDir, 'server'), { recursive: true });
+  writeFileSync(
+    path.join(tmpDir, 'package.json'),
+    JSON.stringify({
+      name: 'tmp-nonws-root',
+      version: '1.0.0',
+      dependencies: { lodash: '1.0.0' },
+    })
+  );
+  writeFileSync(path.join(tmpDir, 'package-lock.json'), '{"lockfileVersion":3,"packages":{}}');
+  writeFileSync(
+    path.join(tmpDir, 'server', 'package.json'),
+    JSON.stringify({
+      name: 'tmp-nonws-server',
+      version: '1.0.0',
+      dependencies: { express: '1.0.0' },
+    })
+  );
+
+  const localEnvPath = path.join(os.tmpdir(), `devx-bootstrap-nonws-env-${process.pid}.env`);
+  const calls = [];
+  const context = {
+    cwd: tmpDir,
+    localEnvPath,
+    sharedEnvFilePath: path.join(tmpDir, 'package.json'),
+    config: {
+      repoRoot: tmpDir,
+      packageDirPaths: [
+        { path: '.', absolutePath: tmpDir, name: 'root' },
+        { path: 'server', absolutePath: path.join(tmpDir, 'server'), name: 'server' },
+      ],
+      worktree: {},
+    },
+    createSharedEnv() {
+      return {};
+    },
+    runNvmAwareShell(command, fallbackCommand, env) {
+      calls.push({ command, fallbackCommand, env });
+    },
+  };
+
+  runWorktreeBootstrap(context, { force: true, printInfo: false });
+
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].fallbackCommand, /^npm ci && npm --prefix /);
+  assert.match(calls[0].fallbackCommand, /server/);
+  assert.match(calls[0].fallbackCommand, / install$/);
+});
+
+test('runWorktreeBootstrap fails fast when non-workspace repo has no installable packageDirs', () => {
+  const tmpDir = path.join(os.tmpdir(), `devx-bootstrap-empty-${process.pid}-${Date.now()}`);
+  mkdirSync(tmpDir, { recursive: true });
+  writeFileSync(
+    path.join(tmpDir, 'package.json'),
+    JSON.stringify({ name: 'tmp-empty', version: '1.0.0' })
+  );
+  writeFileSync(path.join(tmpDir, 'package-lock.json'), '{"lockfileVersion":3,"packages":{}}');
+
+  const context = {
+    cwd: tmpDir,
+    localEnvPath: path.join(os.tmpdir(), `devx-bootstrap-empty-env-${process.pid}.env`),
+    sharedEnvFilePath: path.join(tmpDir, 'package.json'),
+    config: {
+      repoRoot: tmpDir,
+      packageDirPaths: [],
+      worktree: {},
+    },
+    createSharedEnv() {
+      return {};
+    },
+    runNvmAwareShell() {
+      assert.fail(
+        'runNvmAwareShell should not run when bootstrap cannot resolve an install command'
+      );
+    },
+  };
+
+  assert.throws(
+    () => runWorktreeBootstrap(context, { force: true, printInfo: false }),
+    /worktree bootstrap/
+  );
 });
 
 test('ensureLocalEnvFromSharedTemplate throws a clear error when force bootstrapping without a template path', () => {
