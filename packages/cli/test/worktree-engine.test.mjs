@@ -157,9 +157,9 @@ test('createWorktreeContext expands home-relative shared env paths from top-leve
   );
 });
 
-test('buildNvmAwareInstallCommand wraps npm scripts with nvm activation', () => {
-  assert.match(buildNvmAwareInstallCommand('deps:ci-all'), /nvm use/);
-  assert.match(buildNvmAwareInstallCommand('deps:ci-all'), /npm run deps:ci-all/);
+test('buildNvmAwareInstallCommand wraps dependency install commands with nvm activation', () => {
+  assert.match(buildNvmAwareInstallCommand('npm run deps:ci-all'), /nvm use/);
+  assert.match(buildNvmAwareInstallCommand('npm run deps:ci-all'), /npm run deps:ci-all/);
 });
 
 test('resolveShellInvocation falls back to cmd.exe on Windows', () => {
@@ -354,8 +354,8 @@ test('runWorktreeBootstrap passes force through to dependency installation', () 
   runWorktreeBootstrap(context, { force: true, printInfo: false });
 
   assert.equal(calls.length, 1);
-  assert.match(calls[0].command, /npm run deps:ci-all/);
-  assert.equal(calls[0].fallbackCommand, 'npm run deps:ci-all');
+  assert.match(calls[0].command, /npm ci --workspaces --include-workspace-root/);
+  assert.equal(calls[0].fallbackCommand, 'npm ci --workspaces --include-workspace-root');
 });
 
 test('ensureLocalEnvFromSharedTemplate throws a clear error when force bootstrapping without a template path', () => {

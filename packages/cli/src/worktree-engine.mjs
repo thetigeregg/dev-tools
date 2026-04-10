@@ -394,7 +394,9 @@ export function listMissingDependencyDirs(context) {
     .filter((moduleDir) => !existsSync(moduleDir));
 }
 
-export function buildNvmAwareInstallCommand(installScript = 'i:all') {
+export function buildNvmAwareInstallCommand(
+  installCommand = 'npm ci --workspaces --include-workspace-root'
+) {
   return [
     'if [ -f .nvmrc ]',
     'then',
@@ -407,7 +409,7 @@ export function buildNvmAwareInstallCommand(installScript = 'i:all') {
     '    echo "Warning: .nvmrc found but nvm.sh was not found; continuing with current Node."',
     '  fi',
     'fi',
-    `npm run ${installScript}`,
+    installCommand,
   ].join('\n');
 }
 
@@ -425,11 +427,14 @@ export function ensureDependenciesInstalled(context, forceInstall = false) {
     }
   }
 
-  const installScript = context.config.worktree.bootstrap?.installScript ?? 'deps:ci-all';
-  console.log(`Installing workspace dependencies via: npm run ${installScript}`);
+  const configuredInstallScript = context.config.worktree.bootstrap?.installScript;
+  const installCommand = configuredInstallScript
+    ? `npm run ${configuredInstallScript}`
+    : 'npm ci --workspaces --include-workspace-root';
+  console.log(`Installing workspace dependencies via: ${installCommand}`);
   context.runNvmAwareShell(
-    buildNvmAwareInstallCommand(installScript),
-    `npm run ${installScript}`,
+    buildNvmAwareInstallCommand(installCommand),
+    installCommand,
     context.createSharedEnv()
   );
 }

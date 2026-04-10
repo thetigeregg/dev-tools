@@ -109,6 +109,7 @@ export default {
   worktree: {
     adapterModule: 'scripts/worktree-dev.mjs',
     bootstrap: {
+      // Optional: defaults to `npm ci --workspaces --include-workspace-root`
       installScript: 'deps:ci-all',
     },
     runtime: {
