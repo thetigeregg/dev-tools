@@ -366,6 +366,36 @@ test('runWorktreeBootstrap passes force through to dependency installation', () 
   assert.equal(calls[0].fallbackCommand, 'npm ci --workspaces --include-workspace-root');
 });
 
+test('runWorktreeBootstrap uses worktree.bootstrap.installScript when configured', () => {
+  const repoRoot = process.cwd();
+  const localEnvPath = path.join(os.tmpdir(), `devx-bootstrap-script-${process.pid}.env`);
+  const calls = [];
+  const context = {
+    localEnvPath,
+    sharedEnvFilePath: path.join(repoRoot, 'package.json'),
+    config: {
+      packageDirPaths: [],
+      worktree: {
+        bootstrap: {
+          installScript: 'deps:ci-all',
+        },
+      },
+    },
+    createSharedEnv() {
+      return {};
+    },
+    runNvmAwareShell(command, fallbackCommand, env) {
+      calls.push({ command, fallbackCommand, env });
+    },
+  };
+
+  runWorktreeBootstrap(context, { force: true, printInfo: false });
+
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].command, /npm run deps:ci-all/);
+  assert.equal(calls[0].fallbackCommand, 'npm run deps:ci-all');
+});
+
 test('ensureLocalEnvFromSharedTemplate throws a clear error when force bootstrapping without a template path', () => {
   assert.throws(
     () =>
