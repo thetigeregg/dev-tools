@@ -1,5 +1,13 @@
 # @thetigeregg/prettier-config
 
+## 1.0.0
+
+### Major Changes
+
+- ae2c667: Raise the minimum supported Node.js version to 24.14.0 (`engines.node`). Update the optional root `.nvmrc` template to `24.14.0` so bootstrapped repos can pin the same runtime.
+
+  **Migration:** Use Node 24.14 or newer locally and in CI (for example `nvm use` with a root `.nvmrc` containing `24.14.0`).
+
 ## 0.3.5
 
 ### Patch Changes
