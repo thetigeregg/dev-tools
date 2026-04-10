@@ -5,6 +5,5 @@ coverage/
 *.log
 .tmp/
 **/.tmp/
-.pr-review-prompt.md
-.pr-agent-prompt.md
+prompts/
 /worktrees/

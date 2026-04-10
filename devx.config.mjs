@@ -13,8 +13,8 @@ export default {
   },
   pr: {
     baseRef: 'origin/main',
-    reviewOutputFile: '.pr-review-prompt.md',
-    agentOutputFile: '.pr-agent-prompt.md',
+    reviewOutputFile: 'prompts/pr-review-prompt.md',
+    agentOutputFile: 'prompts/pr-agent-prompt.md',
     excludedDiffPaths: [':(glob,exclude)**/package-lock.json', ':(glob,exclude)**/dist/**'],
     ciWorkflowName: 'CI',
     coverageArtifactName: 'coverage-reports',

@@ -932,7 +932,7 @@ export async function runPrAgentCli({ argv = process.argv.slice(2), cwd = proces
   const debug = process.env.DEBUG_PR_AGENT === '1' || options.debug;
   const prConfig = config.pr ?? {};
   const outputFile =
-    prConfig.agentOutputFileAbsolute ?? path.join(config.repoRoot, '.pr-agent-prompt.md');
+    prConfig.agentOutputFileAbsolute ?? path.join(config.repoRoot, 'prompts', 'pr-agent-prompt.md');
   const workflowName = prConfig.ciWorkflowName ?? 'CI PR Checks';
   const coverageArtifactName = prConfig.coverageArtifactName ?? 'coverage-reports';
   const maxDiffChars = prConfig.maxDiffChars ?? DEFAULT_MAX_DIFF_CHARS;
@@ -987,6 +987,7 @@ export async function runPrAgentCli({ argv = process.argv.slice(2), cwd = proces
     config
   );
 
+  fs.mkdirSync(path.dirname(outputFile), { recursive: true });
   fs.writeFileSync(outputFile, prompt);
 
   console.log(`
