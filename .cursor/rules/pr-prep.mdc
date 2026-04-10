@@ -31,9 +31,16 @@ Complete prep in this order before writing the PR description:
 6. Check for security, production-safety, and performance impact from the patch. Mitigate issues in code/config now when feasible; otherwise record a blocker with concrete follow-up.
 7. Keep all prep work scoped to the current patch and avoid unrelated refactors.
 
-### Step 2: PR summary generation
+### Step 2: Changeset decision
 
-Only after Step 1 is complete, generate the PR description from the repository template.
+After Step 1 is complete, decide whether a changeset is required for published package impact.
+
+- If published package behavior changes, run `changeset` and add a changeset file with the appropriate bump level.
+- If there is no published-package impact, explicitly state why no changeset is needed.
+
+### Step 3: PR summary generation
+
+Only after Step 1 and Step 2 are complete, generate the PR description from the repository template.
 
 - Use the post-fix diff as source of truth.
 - Reflect the primary change type in both the Conventional Commit title and `Type of change` checkboxes.
@@ -41,13 +48,6 @@ Only after Step 1 is complete, generate the PR description from the repository t
 - Format output for easy copy/paste:
   - return `Title` followed by `Summary` in a single code block
   - include the Conventional Commit title line and full PR template body in that same block
-
-### Step 3: Changeset decision
-
-After generating the PR summary, decide whether a changeset is required for published package impact.
-
-- If published package behavior changes, run `changeset` and add a changeset file with the appropriate bump level.
-- If there is no published-package impact, explicitly state why no changeset is needed.
 
 ### Go/No-Go gate
 
