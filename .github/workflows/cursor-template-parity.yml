@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version-file: ".nvmrc"
       - name: Run cursor template parity test
         run: node --test test/repo-sync-templates.test.mjs
         working-directory: packages/cli

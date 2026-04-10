@@ -125,7 +125,7 @@ Example scripts:
 
 Use this flow when you are adopting `dev-tools` in a brand-new repository.
 
-The bootstrap flow below assumes a modern Node release. If you install the latest `lint-staged`, use Node `>=20.17` so local installs and Husky hooks match `lint-staged`'s supported engine range.
+The bootstrap flow below assumes a modern Node release. This repo uses Node `>=24.14.0`; use the root `.nvmrc` with `nvm use` (or install that version another way) so local installs and Husky hooks match the declared engine range.
 
 1. Install the shared packages:
 
