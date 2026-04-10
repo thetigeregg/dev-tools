@@ -5,8 +5,8 @@ import { main as runCleanupCli } from './dev-cleanup.mjs';
 import { runEnvReconcileCli } from './env-reconcile.mjs';
 import { runGithubSarifPullCli } from './github-sarif-pull.mjs';
 import { runNcuAllCli } from './ncu-all.mjs';
-import { runPrAgentCli } from './pr-agent.mjs';
-import { runPrSummaryCli } from './pr-summary.mjs';
+import { runPrFeedbackCli } from './pr-agent.mjs';
+import { runPrPrepCli } from './pr-summary.mjs';
 import {
   runRepoBootstrapCli,
   runRepoSyncCli,
@@ -28,8 +28,8 @@ function printHelp() {
   console.log('  devx deps ci-all');
   console.log('  devx deps audit-all [--fix]');
   console.log('  devx deps ncu-all');
-  console.log('  devx pr review');
-  console.log('  devx pr agent <PR_NUMBER> [--copilot-only] [--include-coverage] [--debug]');
+  console.log('  devx pr prep');
+  console.log('  devx pr feedback <PR_NUMBER> [--copilot-only] [--include-coverage] [--debug]');
   console.log(
     '  devx github sarif pull [--repo owner/name] [--out-dir <path>] [--ref <ref>] [--category <value>] [--limit <n>] [--force] [--dry-run] [--debug]'
   );
@@ -87,13 +87,13 @@ if (group === 'deps' && command === 'ncu-all') {
   process.exit(0);
 }
 
-if (group === 'pr' && command === 'review') {
-  await runPrSummaryCli();
+if (group === 'pr' && command === 'prep') {
+  await runPrPrepCli();
   process.exit(0);
 }
 
-if (group === 'pr' && command === 'agent') {
-  await runPrAgentCli({ argv: rest });
+if (group === 'pr' && command === 'feedback') {
+  await runPrFeedbackCli({ argv: rest });
   process.exit(0);
 }
 

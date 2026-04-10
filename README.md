@@ -19,7 +19,7 @@ This repository is a private monorepo for publishable internal packages. It cent
 Cursor is the recommended local IDE for repositories bootstrapped from this tooling.
 
 - Keep local agent behavior in `.cursor/rules/`
-- Use `@pr-review` and `@pr-agent` with the shared rules when preparing pull requests; `devx pr review` / `devx pr agent` write prompts under `prompts/` by default (configure or gitignore as needed)
+- Use `@pr-prep` and `@pr-feedback` with the shared rules when preparing pull requests; `devx pr prep` / `devx pr feedback` write prompts under `prompts/` by default (configure or gitignore as needed)
 - Keep `.github/copilot-instructions.md` for GitHub platform AI features (for example GitHub.com PR review flows)
 
 Install the shared packages from your private registry:
@@ -153,7 +153,7 @@ Bootstrap currently seeds:
 - root config stubs and shared defaults such as `.prettierrc.cjs`, `.prettierignore`, `.ncurc.cjs`, `.editorconfig`, `.gitleaks.toml`, `commitlint.config.cjs`, `lint-staged.config.cjs`, and `devx.config.mjs`
 - `.cursorignore` with baseline patterns for secrets and generated outputs
 - `.cursor/rules/workflow.mdc` (stub — fill in your project's verify commands after bootstrap)
-- shared Cursor rules (`.cursor/rules/commits.mdc`, `code.mdc`, `pr-review.mdc`, `pr-agent.mdc`)
+- shared Cursor rules (`.cursor/rules/commits.mdc`, `code.mdc`, `pr-prep.mdc`, `pr-feedback.mdc`)
 - shared Cursor workspace defaults (`.cursor/settings.json`)
 - shared Husky hooks such as `.husky/pre-commit` and `.husky/commit-msg`
 - shared GitHub templates such as PR, issue, commit, Dependabot, and release templates
@@ -228,7 +228,7 @@ For existing repos moving from `AGENTS.md`/VS Code-first setup to Cursor-first s
 
 1. Remove legacy `AGENTS.md` if present.
 2. Run `npx devx repo bootstrap` (or `npx devx repo sync` if already bootstrapped).
-3. Confirm `.cursor/rules/` contains `workflow.mdc`, `commits.mdc`, `code.mdc`, `pr-review.mdc`, and `pr-agent.mdc`.
+3. Confirm `.cursor/rules/` contains `workflow.mdc`, `commits.mdc`, `code.mdc`, `pr-prep.mdc`, and `pr-feedback.mdc`.
 4. Fill in project-specific verify commands in `.cursor/rules/workflow.mdc`.
 5. Confirm `.cursorignore` is present and includes project-sensitive patterns.
 6. Keep `.github/copilot-instructions.md` for GitHub platform-only AI usage.

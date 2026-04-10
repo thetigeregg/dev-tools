@@ -43,7 +43,7 @@ export function parseArgs(args) {
 
   if (!options.prNumber || !/^\d+$/.test(options.prNumber)) {
     console.error(
-      'Usage: devx pr agent <PR_NUMBER> [--copilot-only] [--include-coverage] [--debug]'
+      'Usage: devx pr feedback <PR_NUMBER> [--copilot-only] [--include-coverage] [--debug]'
     );
     process.exit(1);
   }
@@ -796,7 +796,7 @@ function buildPrompt(data, config) {
   const additionalVerifyCommands = config.pr.additionalVerifyCommands ?? [];
 
   const sections = [];
-  sections.push(`# Pull Request Agent Task\n\nPR: #${data.pr}\nTitle: ${data.title}`);
+  sections.push(`# Pull Request Feedback Task\n\nPR: #${data.pr}\nTitle: ${data.title}`);
   sections.push(buildCurrentStatus(data));
   sections.push(
     [
@@ -926,10 +926,11 @@ function buildPrompt(data, config) {
   return sections.join('\n\n---\n\n').trim() + '\n';
 }
 
-export function resolveAgentPromptOutputFile(config) {
+export function resolveFeedbackPromptOutputFile(config) {
   const prConfig = config.pr ?? {};
   return (
-    prConfig.agentOutputFileAbsolute ?? path.join(config.repoRoot, 'prompts', 'pr-agent-prompt.md')
+    prConfig.feedbackOutputFileAbsolute ??
+    path.join(config.repoRoot, 'prompts', 'pr-feedback-prompt.md')
   );
 }
 
@@ -938,12 +939,13 @@ export function writePromptOutputFile(outputFile, contents) {
   fs.writeFileSync(outputFile, contents);
 }
 
-export async function runPrAgentCli({ argv = process.argv.slice(2), cwd = process.cwd() } = {}) {
+export async function runPrFeedbackCli({ argv = process.argv.slice(2), cwd = process.cwd() } = {}) {
   const options = parseArgs(argv);
   const config = await loadDevxConfig({ cwd });
-  const debug = process.env.DEBUG_PR_AGENT === '1' || options.debug;
+  const debug =
+    process.env.DEBUG_PR_FEEDBACK === '1' || process.env.DEBUG_PR_AGENT === '1' || options.debug;
   const prConfig = config.pr ?? {};
-  const outputFile = resolveAgentPromptOutputFile(config);
+  const outputFile = resolveFeedbackPromptOutputFile(config);
   const workflowName = prConfig.ciWorkflowName ?? 'CI PR Checks';
   const coverageArtifactName = prConfig.coverageArtifactName ?? 'coverage-reports';
   const maxDiffChars = prConfig.maxDiffChars ?? DEFAULT_MAX_DIFF_CHARS;
@@ -951,7 +953,7 @@ export async function runPrAgentCli({ argv = process.argv.slice(2), cwd = proces
     String(term).toLowerCase()
   );
 
-  console.log(`Generating agent prompt for PR #${options.prNumber}`);
+  console.log(`Generating feedback prompt for PR #${options.prNumber}`);
 
   const repoInfo = getRepoInfo(debug);
   const prData = {
@@ -1001,7 +1003,7 @@ export async function runPrAgentCli({ argv = process.argv.slice(2), cwd = proces
   writePromptOutputFile(outputFile, prompt);
 
   console.log(`
-Agent prompt generated: ${path.relative(config.repoRoot, outputFile) || outputFile}
+Feedback prompt generated: ${path.relative(config.repoRoot, outputFile) || outputFile}
 
 CI failure tasks: ${ciData.tasks.length}
 Coverage tasks: ${coverageData.tasks.length}
@@ -1023,5 +1025,5 @@ export function isEntrypoint({ argv1 = process.argv[1], moduleUrl = import.meta.
 }
 
 if (isEntrypoint()) {
-  await runPrAgentCli();
+  await runPrFeedbackCli();
 }

@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { loadDevxConfig } from './config.mjs';
 
 const GIT_MAX_BUFFER_BYTES = 1024 * 1024 * 50;
-const PRE_PR_REVIEW_INSTRUCTIONS = `# Pre-PR Automated Code Review Prompt (Agent Optimized)
+const PRE_PR_PREP_INSTRUCTIONS = `# Pre-PR Automated Code Prep Prompt (Agent Optimized)
 
 You are an automated pre-pull-request cleanup and PR summary agent.
 
@@ -138,9 +138,9 @@ function runGit(args, cwd) {
   }
 }
 
-export function buildSummaryPrompt(diff, files) {
+export function buildPrepPrompt(diff, files) {
   return `
-${PRE_PR_REVIEW_INSTRUCTIONS}
+${PRE_PR_PREP_INSTRUCTIONS}
 
 Changed files:
 ${files}
@@ -150,7 +150,7 @@ ${diff}
 `;
 }
 
-export async function runPrSummaryCli({ cwd = process.cwd() } = {}) {
+export async function runPrPrepCli({ cwd = process.cwd() } = {}) {
   const config = await loadDevxConfig({ cwd });
   const baseRef = config.pr.baseRef ?? `origin/${config.baseBranch}`;
   const diffRange = `${baseRef}...HEAD`;
@@ -159,8 +159,7 @@ export async function runPrSummaryCli({ cwd = process.cwd() } = {}) {
     ':(glob,exclude)**/dist/**',
   ];
   const outputFile =
-    config.pr.reviewOutputFileAbsolute ??
-    path.join(config.repoRoot, 'prompts', 'pr-review-prompt.md');
+    config.pr.prepOutputFileAbsolute ?? path.join(config.repoRoot, 'prompts', 'pr-prep-prompt.md');
 
   const diff = runGit(['diff', diffRange, '--', '.', ...excludedPaths], config.repoRoot);
 
@@ -173,13 +172,13 @@ export async function runPrSummaryCli({ cwd = process.cwd() } = {}) {
     ['diff', '--name-only', diffRange, '--', '.', ...excludedPaths],
     config.repoRoot
   );
-  const prompt = buildSummaryPrompt(diff, files);
+  const prompt = buildPrepPrompt(diff, files);
 
   fs.mkdirSync(path.dirname(outputFile), { recursive: true });
   fs.writeFileSync(outputFile, prompt);
 
   console.log(`
-PR review prompt generated:
+PR prep prompt generated:
 
 ${path.relative(config.repoRoot, outputFile) || outputFile}
 
@@ -198,9 +197,5 @@ export function isEntrypoint({ argv1 = process.argv[1], moduleUrl = import.meta.
 }
 
 if (isEntrypoint()) {
-  await runPrSummaryCli();
+  await runPrPrepCli();
 }
-
-// Forward-compatibility aliases: keep summary-named internals while exposing the new review-named API.
-export const buildReviewPrompt = buildSummaryPrompt;
-export const runPrReviewCli = runPrSummaryCli;

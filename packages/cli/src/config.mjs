@@ -98,11 +98,28 @@ export async function loadDevxConfig({
     );
   }
 
-  if (config.pr.reviewOutputFile) {
-    config.pr.reviewOutputFileAbsolute = resolveConfigPath(repoRoot, config.pr.reviewOutputFile);
+  if (config.pr.prepOutputFile) {
+    config.pr.prepOutputFileAbsolute = resolveConfigPath(repoRoot, config.pr.prepOutputFile);
   }
-  if (config.pr.agentOutputFile) {
-    config.pr.agentOutputFileAbsolute = resolveConfigPath(repoRoot, config.pr.agentOutputFile);
+  if (config.pr.feedbackOutputFile) {
+    config.pr.feedbackOutputFileAbsolute = resolveConfigPath(
+      repoRoot,
+      config.pr.feedbackOutputFile
+    );
+  }
+  if (config.pr.reviewOutputFile && !config.pr.prepOutputFile) {
+    config.pr.prepOutputFile = config.pr.reviewOutputFile;
+    config.pr.prepOutputFileAbsolute = resolveConfigPath(repoRoot, config.pr.reviewOutputFile);
+    console.warn(
+      '[devx] config.pr.reviewOutputFile is deprecated; use config.pr.prepOutputFile instead.'
+    );
+  }
+  if (config.pr.agentOutputFile && !config.pr.feedbackOutputFile) {
+    config.pr.feedbackOutputFile = config.pr.agentOutputFile;
+    config.pr.feedbackOutputFileAbsolute = resolveConfigPath(repoRoot, config.pr.agentOutputFile);
+    console.warn(
+      '[devx] config.pr.agentOutputFile is deprecated; use config.pr.feedbackOutputFile instead.'
+    );
   }
 
   if (config.release.packageJsonFile) {
