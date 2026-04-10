@@ -5,19 +5,19 @@ import assert from 'node:assert/strict';
 import os from 'node:os';
 import path from 'node:path';
 
-import { buildSummaryPrompt, runPrSummaryCli } from '../src/pr-summary.mjs';
+import { buildPrepPrompt, runPrPrepCli } from '../src/pr-summary.mjs';
 
 function runGit(args, cwd) {
   execFileSync('git', args, { cwd, encoding: 'utf8', stdio: 'pipe' });
 }
 
-test('buildSummaryPrompt includes changed files and diff context', () => {
-  const prompt = buildSummaryPrompt('diff --git a/file b/file', 'src/file.ts');
-  const instructionsIndex = prompt.indexOf('Pre-PR Automated Code Review Prompt');
+test('buildPrepPrompt includes changed files and diff context', () => {
+  const prompt = buildPrepPrompt('diff --git a/file b/file', 'src/file.ts');
+  const instructionsIndex = prompt.indexOf('Pre-PR Automated Code Prep Prompt');
   const changedFilesIndex = prompt.indexOf('Changed files:');
   const gitDiffIndex = prompt.indexOf('Git diff:');
 
-  assert.match(prompt, /Pre-PR Automated Code Review Prompt/);
+  assert.match(prompt, /Pre-PR Automated Code Prep Prompt/);
   assert.match(prompt, /Run repository-standard quality checks/);
   assert.match(prompt, /Only report outcomes for checks you actually executed/);
   assert.match(prompt, /Final output format/);
@@ -32,10 +32,10 @@ test('buildSummaryPrompt includes changed files and diff context', () => {
   assert.ok(changedFilesIndex < gitDiffIndex);
 });
 
-test('runPrSummaryCli writes prompts/pr-review-prompt.md and creates prompts/', async () => {
+test('runPrPrepCli writes prompts/pr-prep-prompt.md and creates prompts/', async () => {
   const repoRoot = mkdtempSync(path.join(os.tmpdir(), 'dev-cli-pr-summary-'));
   const promptsDir = path.join(repoRoot, 'prompts');
-  const outputPath = path.join(promptsDir, 'pr-review-prompt.md');
+  const outputPath = path.join(promptsDir, 'pr-prep-prompt.md');
 
   writeFileSync(
     path.join(repoRoot, 'devx.config.mjs'),
@@ -57,13 +57,13 @@ test('runPrSummaryCli writes prompts/pr-review-prompt.md and creates prompts/', 
 
   assert.equal(existsSync(promptsDir), false);
 
-  const result = await runPrSummaryCli({ cwd: repoRoot });
+  const result = await runPrPrepCli({ cwd: repoRoot });
 
   assert.equal(result.outputFile, outputPath);
   assert.equal(result.wroteFile, true);
   assert.ok(existsSync(promptsDir));
   assert.ok(existsSync(outputPath));
   const body = readFileSync(outputPath, 'utf8');
-  assert.match(body, /Pre-PR Automated Code Review Prompt/);
+  assert.match(body, /Pre-PR Automated Code Prep Prompt/);
   assert.match(body, /v2/);
 });

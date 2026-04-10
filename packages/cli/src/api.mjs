@@ -40,8 +40,8 @@ export { main as runWorktreeCleanupCli } from './dev-cleanup.mjs';
 export { runEnvReconcileCli } from './env-reconcile.mjs';
 export { runGithubSarifPullCli } from './github-sarif-pull.mjs';
 export { runNcuAllCli } from './ncu-all.mjs';
-export { runPrAgentCli } from './pr-agent.mjs';
-export { runPrSummaryCli, runPrReviewCli } from './pr-summary.mjs';
+export { runPrFeedbackCli } from './pr-agent.mjs';
+export { runPrPrepCli } from './pr-summary.mjs';
 export {
   buildTemplateSyncPlan,
   runRepoBootstrapCli,

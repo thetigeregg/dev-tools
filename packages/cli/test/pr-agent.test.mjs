@@ -10,7 +10,7 @@ import {
   extractSnippet,
   isCopilotReviewAuthor,
   parseArgs,
-  resolveAgentPromptOutputFile,
+  resolveFeedbackPromptOutputFile,
   writePromptOutputFile,
 } from '../src/pr-agent.mjs';
 
@@ -110,7 +110,7 @@ test('parseArgs rejects non-numeric PR numbers with the usage error', () => {
   try {
     assert.throws(() => parseArgs(['abc', '--debug']), /process\.exit:1/);
     assert.deepEqual(consoleMessages, [
-      'Usage: devx pr agent <PR_NUMBER> [--copilot-only] [--include-coverage] [--debug]',
+      'Usage: devx pr feedback <PR_NUMBER> [--copilot-only] [--include-coverage] [--debug]',
     ]);
   } finally {
     process.exit = originalExit;
@@ -118,22 +118,22 @@ test('parseArgs rejects non-numeric PR numbers with the usage error', () => {
   }
 });
 
-test('resolveAgentPromptOutputFile defaults to prompts/pr-agent-prompt.md under repo root', () => {
+test('resolveFeedbackPromptOutputFile defaults to prompts/pr-feedback-prompt.md under repo root', () => {
   const repoRoot = mkdtempSync(path.join(os.tmpdir(), 'dev-cli-pr-agent-output-'));
-  const resolved = resolveAgentPromptOutputFile({
+  const resolved = resolveFeedbackPromptOutputFile({
     repoRoot,
     pr: {},
   });
 
-  assert.equal(resolved, path.join(repoRoot, 'prompts', 'pr-agent-prompt.md'));
+  assert.equal(resolved, path.join(repoRoot, 'prompts', 'pr-feedback-prompt.md'));
 });
 
-test('resolveAgentPromptOutputFile prefers agentOutputFileAbsolute when set', () => {
+test('resolveFeedbackPromptOutputFile prefers feedbackOutputFileAbsolute when set', () => {
   const repoRoot = mkdtempSync(path.join(os.tmpdir(), 'dev-cli-pr-agent-output-abs-'));
   const custom = path.join(repoRoot, 'custom', 'out.md');
-  const resolved = resolveAgentPromptOutputFile({
+  const resolved = resolveFeedbackPromptOutputFile({
     repoRoot,
-    pr: { agentOutputFileAbsolute: custom },
+    pr: { feedbackOutputFileAbsolute: custom },
   });
 
   assert.equal(resolved, custom);
@@ -141,7 +141,7 @@ test('resolveAgentPromptOutputFile prefers agentOutputFileAbsolute when set', ()
 
 test('writePromptOutputFile creates parent directories and writes UTF-8 content', () => {
   const repoRoot = mkdtempSync(path.join(os.tmpdir(), 'dev-cli-pr-agent-write-'));
-  const outputFile = path.join(repoRoot, 'prompts', 'nested', 'pr-agent-prompt.md');
+  const outputFile = path.join(repoRoot, 'prompts', 'nested', 'pr-feedback-prompt.md');
 
   assert.equal(existsSync(path.dirname(outputFile)), false);
 

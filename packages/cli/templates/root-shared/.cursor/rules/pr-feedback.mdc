@@ -1,5 +1,5 @@
 ---
-description: Agent behaviour when working a PR agent prompt
+description: Agent behavior when working a PR feedback prompt
 globs: ["**/*"]
 alwaysApply: false
 ---

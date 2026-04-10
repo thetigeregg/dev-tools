@@ -13,8 +13,8 @@ devx deps install-all
 devx deps ci-all
 devx deps audit-all [--fix]
 devx deps ncu-all
-devx pr review
-devx pr agent <PR_NUMBER> [--copilot-only] [--include-coverage] [--debug]
+devx pr prep
+devx pr feedback <PR_NUMBER> [--copilot-only] [--include-coverage] [--debug]
 devx github sarif pull [--repo owner/name] [--out-dir <path>] [--ref <ref>] [--category <value>] [--limit <n>] [--force] [--dry-run] [--debug]
 devx release version [--dry-run]
 devx repo bootstrap [--dry-run]
@@ -24,7 +24,16 @@ devx repo sync-templates [--dry-run]
 
 ## PR prompts
 
-`devx pr review` and `devx pr agent` write generated Markdown prompts under `prompts/` by default (`prompts/pr-review-prompt.md` and `prompts/pr-agent-prompt.md`). The CLI creates `prompts/` when needed. Override paths with `pr.reviewOutputFile` and `pr.agentOutputFile` in `devx.config.mjs` (paths are resolved relative to the repository root). Ignore `prompts/` in `.gitignore` if you do not want those files tracked.
+`devx pr prep` and `devx pr feedback` write generated Markdown prompts under `prompts/` by default (`prompts/pr-prep-prompt.md` and `prompts/pr-feedback-prompt.md`). The CLI creates `prompts/` when needed. Override paths with `pr.prepOutputFile` and `pr.feedbackOutputFile` in `devx.config.mjs` (paths are resolved relative to the repository root). Ignore `prompts/` in `.gitignore` if you do not want those files tracked.
+
+### Migration from `review`/`agent`
+
+- `devx pr review` -> `devx pr prep`
+- `devx pr agent` -> `devx pr feedback`
+- `pr.reviewOutputFile` -> `pr.prepOutputFile`
+- `pr.agentOutputFile` -> `pr.feedbackOutputFile`
+- `prompts/pr-review-prompt.md` -> `prompts/pr-prep-prompt.md`
+- `prompts/pr-agent-prompt.md` -> `prompts/pr-feedback-prompt.md`
 
 ## GitHub SARIF Pull
 
@@ -214,11 +223,11 @@ Bootstrap includes:
 - `.husky/commit-msg`
 - `.github/copilot-instructions.md` (GitHub platform AI features only)
 - shared `.github` templates
-- shared Cursor rules (`.cursor/rules/commits.mdc`, `code.mdc`, `pr-review.mdc`, `pr-agent.mdc`)
+- shared Cursor rules (`.cursor/rules/commits.mdc`, `code.mdc`, `pr-prep.mdc`, `pr-feedback.mdc`)
 
 Sync updates the shared surface, including:
 
-- shared Cursor rules (`.cursor/rules/commits.mdc`, `code.mdc`, `pr-review.mdc`, `pr-agent.mdc`)
+- shared Cursor rules (`.cursor/rules/commits.mdc`, `code.mdc`, `pr-prep.mdc`, `pr-feedback.mdc`)
 - shared Cursor workspace defaults (`.cursor/settings.json`)
 - shared Husky hooks such as `.husky/pre-commit` and `.husky/commit-msg`
 - `.editorconfig`

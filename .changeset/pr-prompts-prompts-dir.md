@@ -1,5 +1,19 @@
 ---
-'@thetigeregg/dev-cli': minor
+'@thetigeregg/dev-cli': major
 ---
 
-Default output paths for `devx pr review` and `devx pr agent` are now `prompts/pr-review-prompt.md` and `prompts/pr-agent-prompt.md`. The CLI creates the `prompts/` directory when missing. Override with `pr.reviewOutputFile` and `pr.agentOutputFile` in `devx.config.mjs`. Repositories should add `prompts/` to `.gitignore` and may remove legacy `.pr-review-prompt.md` / `.pr-agent-prompt.md` ignore rules.
+Renamed PR prompt workflows: `devx pr prep` now writes `prompts/pr-prep-prompt.md` and
+`devx pr feedback` now writes `prompts/pr-feedback-prompt.md`. The CLI creates the
+`prompts/` directory when missing. Override with `pr.prepOutputFile` and
+`pr.feedbackOutputFile` in `devx.config.mjs`.
+
+Migration notes:
+
+- Replace `devx pr review` with `devx pr prep`
+- Replace `devx pr agent` with `devx pr feedback`
+- Rename config keys:
+  - `pr.reviewOutputFile` -> `pr.prepOutputFile`
+  - `pr.agentOutputFile` -> `pr.feedbackOutputFile`
+- If referenced directly, rename generated prompt paths:
+  - `prompts/pr-review-prompt.md` -> `prompts/pr-prep-prompt.md`
+  - `prompts/pr-agent-prompt.md` -> `prompts/pr-feedback-prompt.md`
