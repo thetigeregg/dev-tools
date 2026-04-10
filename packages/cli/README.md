@@ -109,8 +109,10 @@ export default {
   worktree: {
     adapterModule: 'scripts/worktree-dev.mjs',
     bootstrap: {
-      // Optional. Omit to use `npm ci --workspaces --include-workspace-root`.
-      // Set `installScript` to an npm script name that exists in your root package.json.
+      // Optional for npm workspace repos: root `package-lock.json` + `workspaces` in root package.json.
+      // Omit to run `npm ci --workspaces --include-workspace-root` from repoRoot.
+      // Non-workspace repos run `npm ci` (and `npm --prefix <pkg> ci` per packageDir) instead; if that does
+      // not fit your layout, set `installScript` to an npm script name from root package.json (A–Z, a–z, 0–9, `:`, `_`, `-` only).
       // installScript: 'worktree:install',
     },
     runtime: {
