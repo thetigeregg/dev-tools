@@ -1,5 +1,11 @@
 # @thetigeregg/dev-cli
 
+## 2.0.1
+
+### Patch Changes
+
+- 05e4d05: Sync generated repository templates with current commit workflow guidance by adding the `commit-message-output` rule and updating Husky hooks to remove deprecated bootstrap lines.
+
 ## 2.0.0
 
 ### Major Changes
