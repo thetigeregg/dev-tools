@@ -15,6 +15,7 @@ Generate a pull request description using the repository template at:
 - Do NOT invent behavior or features not present in the diff
 - Fill every section of the PR template
 - Be technically precise and concise
+- Output the final PR title and PR summary body in one combined code block for copy/paste
 
 ## Pre-PR Prep
 
@@ -37,6 +38,9 @@ Only after Step 1 is complete, generate the PR description from the repository t
 - Use the post-fix diff as source of truth.
 - Reflect the primary change type in both the Conventional Commit title and `Type of change` checkboxes.
 - In `Testing performed`, list what was actually run and what changed tests cover.
+- Format output for easy copy/paste:
+  - return `Title` followed by `Summary` in a single code block
+  - include the Conventional Commit title line and full PR template body in that same block
 
 ### Go/No-Go gate
 
