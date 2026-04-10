@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -10,6 +10,8 @@ import {
   extractSnippet,
   isCopilotReviewAuthor,
   parseArgs,
+  resolveAgentPromptOutputFile,
+  writePromptOutputFile,
 } from '../src/pr-agent.mjs';
 
 test('collectDiscussionReviewItems keeps general PR discussion comments', () => {
@@ -114,6 +116,39 @@ test('parseArgs rejects non-numeric PR numbers with the usage error', () => {
     process.exit = originalExit;
     console.error = originalConsoleError;
   }
+});
+
+test('resolveAgentPromptOutputFile defaults to prompts/pr-agent-prompt.md under repo root', () => {
+  const repoRoot = mkdtempSync(path.join(os.tmpdir(), 'dev-cli-pr-agent-output-'));
+  const resolved = resolveAgentPromptOutputFile({
+    repoRoot,
+    pr: {},
+  });
+
+  assert.equal(resolved, path.join(repoRoot, 'prompts', 'pr-agent-prompt.md'));
+});
+
+test('resolveAgentPromptOutputFile prefers agentOutputFileAbsolute when set', () => {
+  const repoRoot = mkdtempSync(path.join(os.tmpdir(), 'dev-cli-pr-agent-output-abs-'));
+  const custom = path.join(repoRoot, 'custom', 'out.md');
+  const resolved = resolveAgentPromptOutputFile({
+    repoRoot,
+    pr: { agentOutputFileAbsolute: custom },
+  });
+
+  assert.equal(resolved, custom);
+});
+
+test('writePromptOutputFile creates parent directories and writes UTF-8 content', () => {
+  const repoRoot = mkdtempSync(path.join(os.tmpdir(), 'dev-cli-pr-agent-write-'));
+  const outputFile = path.join(repoRoot, 'prompts', 'nested', 'pr-agent-prompt.md');
+
+  assert.equal(existsSync(path.dirname(outputFile)), false);
+
+  writePromptOutputFile(outputFile, 'hello\n');
+
+  assert.ok(existsSync(path.dirname(outputFile)));
+  assert.equal(readFileSync(outputFile, 'utf8'), 'hello\n');
 });
 
 test('analyzeChecks treats completed non-success conclusions as failures', () => {

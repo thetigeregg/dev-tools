@@ -22,6 +22,10 @@ devx repo sync [--dry-run]
 devx repo sync-templates [--dry-run]
 ```
 
+## PR prompts
+
+`devx pr review` and `devx pr agent` write generated Markdown prompts under `prompts/` by default (`prompts/pr-review-prompt.md` and `prompts/pr-agent-prompt.md`). The CLI creates `prompts/` when needed. Override paths with `pr.reviewOutputFile` and `pr.agentOutputFile` in `devx.config.mjs` (paths are resolved relative to the repository root). Ignore `prompts/` in `.gitignore` if you do not want those files tracked.
+
 ## GitHub SARIF Pull
 
 Download GitHub code scanning SARIF analyses for the current repository:

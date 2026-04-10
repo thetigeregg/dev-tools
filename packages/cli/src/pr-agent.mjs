@@ -926,13 +926,24 @@ function buildPrompt(data, config) {
   return sections.join('\n\n---\n\n').trim() + '\n';
 }
 
+export function resolveAgentPromptOutputFile(config) {
+  const prConfig = config.pr ?? {};
+  return (
+    prConfig.agentOutputFileAbsolute ?? path.join(config.repoRoot, 'prompts', 'pr-agent-prompt.md')
+  );
+}
+
+export function writePromptOutputFile(outputFile, contents) {
+  fs.mkdirSync(path.dirname(outputFile), { recursive: true });
+  fs.writeFileSync(outputFile, contents);
+}
+
 export async function runPrAgentCli({ argv = process.argv.slice(2), cwd = process.cwd() } = {}) {
   const options = parseArgs(argv);
   const config = await loadDevxConfig({ cwd });
   const debug = process.env.DEBUG_PR_AGENT === '1' || options.debug;
   const prConfig = config.pr ?? {};
-  const outputFile =
-    prConfig.agentOutputFileAbsolute ?? path.join(config.repoRoot, '.pr-agent-prompt.md');
+  const outputFile = resolveAgentPromptOutputFile(config);
   const workflowName = prConfig.ciWorkflowName ?? 'CI PR Checks';
   const coverageArtifactName = prConfig.coverageArtifactName ?? 'coverage-reports';
   const maxDiffChars = prConfig.maxDiffChars ?? DEFAULT_MAX_DIFF_CHARS;
@@ -987,7 +998,7 @@ export async function runPrAgentCli({ argv = process.argv.slice(2), cwd = proces
     config
   );
 
-  fs.writeFileSync(outputFile, prompt);
+  writePromptOutputFile(outputFile, prompt);
 
   console.log(`
 Agent prompt generated: ${path.relative(config.repoRoot, outputFile) || outputFile}

@@ -159,7 +159,8 @@ export async function runPrSummaryCli({ cwd = process.cwd() } = {}) {
     ':(glob,exclude)**/dist/**',
   ];
   const outputFile =
-    config.pr.reviewOutputFileAbsolute ?? path.join(config.repoRoot, '.pr-review-prompt.md');
+    config.pr.reviewOutputFileAbsolute ??
+    path.join(config.repoRoot, 'prompts', 'pr-review-prompt.md');
 
   const diff = runGit(['diff', diffRange, '--', '.', ...excludedPaths], config.repoRoot);
 
@@ -174,6 +175,7 @@ export async function runPrSummaryCli({ cwd = process.cwd() } = {}) {
   );
   const prompt = buildSummaryPrompt(diff, files);
 
+  fs.mkdirSync(path.dirname(outputFile), { recursive: true });
   fs.writeFileSync(outputFile, prompt);
 
   console.log(`

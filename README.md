@@ -19,7 +19,7 @@ This repository is a private monorepo for publishable internal packages. It cent
 Cursor is the recommended local IDE for repositories bootstrapped from this tooling.
 
 - Keep local agent behavior in `.cursor/rules/`
-- Use `@pr-review` and `@pr-agent` with the shared rules when preparing pull requests
+- Use `@pr-review` and `@pr-agent` with the shared rules when preparing pull requests; `devx pr review` / `devx pr agent` write prompts under `prompts/` by default (configure or gitignore as needed)
 - Keep `.github/copilot-instructions.md` for GitHub platform AI features (for example GitHub.com PR review flows)
 
 Install the shared packages from your private registry:

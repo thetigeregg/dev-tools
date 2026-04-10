@@ -4,9 +4,7 @@
   "files.exclude": {
     "**/.tmp": true,
     "**/dist": true,
-    "**/coverage": true,
-    "**/.pr-review-prompt.md": true,
-    "**/.pr-agent-prompt.md": true
+    "**/coverage": true
   },
   "search.exclude": {
     "**/node_modules": true,
