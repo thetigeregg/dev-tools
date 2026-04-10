@@ -1,0 +1,13 @@
+---
+description: Require Conventional Commit message output after settled code changes
+globs: ["**/*"]
+alwaysApply: true
+---
+
+When code changes were made and the task is complete:
+- Always include a suggested Conventional Commit message in the final response.
+- Follow the format from `.cursor/rules/commits.mdc`: `type(scope): description`.
+- If no code changes were made, do not include a commit message.
+- Do not run `git commit` unless the user explicitly asks.
+
+Before suggesting a commit message, follow `.cursor/rules/workflow.mdc` verification requirements.

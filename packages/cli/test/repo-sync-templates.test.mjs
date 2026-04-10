@@ -40,6 +40,9 @@ test('buildTemplateSyncPlan maps shared github templates into repo .github paths
   assert.ok(plan.some((item) => item.relativeTargetPath === '.gitleaks.toml'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/rules/commits.mdc'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/rules/code.mdc'));
+  assert.ok(
+    plan.some((item) => item.relativeTargetPath === '.cursor/rules/commit-message-output.mdc')
+  );
   assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/rules/pr-prep.mdc'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/rules/pr-feedback.mdc'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/settings.json'));
@@ -249,6 +252,10 @@ test('shared cursor rule templates stay in sync with repository cursor rules', (
   const pairs = [
     ['.cursor/rules/commits.mdc', 'packages/cli/templates/root-shared/.cursor/rules/commits.mdc'],
     ['.cursor/rules/code.mdc', 'packages/cli/templates/root-shared/.cursor/rules/code.mdc'],
+    [
+      '.cursor/rules/commit-message-output.mdc',
+      'packages/cli/templates/root-shared/.cursor/rules/commit-message-output.mdc',
+    ],
     ['.cursor/rules/pr-prep.mdc', 'packages/cli/templates/root-shared/.cursor/rules/pr-prep.mdc'],
     [
       '.cursor/rules/pr-feedback.mdc',
