@@ -27,3 +27,27 @@ module.exports = {
   },
 };
 ```
+
+## npm-check-updates v21 migration notes
+
+`npm-check-updates` v21 requires:
+
+- Node `^20.19.0 || ^22.12.0 || >=24.0.0`
+- npm `>=10`
+- This package declares Node `>=24.14.0` in `engines`, so consumer repos should
+  run that version floor when installing `@thetigeregg/ncu-config`
+
+This package and its `.ncurc.cjs` usage are already aligned with v21.
+If your repo already uses `.ncurc.cjs` and a compatible Node/npm toolchain, no
+config changes are required.
+
+### Downstream checklist
+
+- If your repo has `.ncurc.js` with `module.exports`, rename it to `.ncurc.cjs`
+  (or convert to ESM `export default`).
+- If you import `npm-check-updates` in ESM scripts, replace the old default
+  import with one of the supported v21 forms:
+  - Before: `import ncu from 'npm-check-updates'`
+  - After: `import * as ncu from 'npm-check-updates'` or
+    `import { run } from 'npm-check-updates'`
+- Update CI/local runtime to Node/npm versions that satisfy the v21 minimums.

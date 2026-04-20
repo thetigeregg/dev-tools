@@ -61,6 +61,26 @@ export default {
 - `@thetigeregg/dev-cli` is **ESM**. Consumer `devx.config.mjs` and any `worktree.adapterModule` are expected to be **ESM modules** (use `.mjs`, `export default`, and `import`).
 - The shared config packages (`@thetigeregg/prettier-config`, `@thetigeregg/commitlint-config`, `@thetigeregg/lint-staged-config`, `@thetigeregg/ncu-config`) are **CommonJS**. Re-export them from consumer `*.cjs` config files using `module.exports = require('...')`.
 
+## npm-check-updates v21 migration
+
+`npm-check-updates` v21 requires Node `^20.19.0 || ^22.12.0 || >=24.0.0` and
+npm `>=10`.
+
+This monorepo and the published `@thetigeregg/*` packages declare a stricter
+engine floor of Node `>=24.14.0`; use that range for local dev/CI when adopting
+the shared packages.
+
+No mandatory changes are required for repos already using this toolchain and the
+shared `.ncurc.cjs` template (`module.exports = require('@thetigeregg/ncu-config')`).
+
+Downstream repos should update if they still use older patterns:
+
+- Rename CommonJS `.ncurc.js` files to `.ncurc.cjs` (or migrate to ESM config).
+- In ESM scripts, replace `import ncu from 'npm-check-updates'` with either
+  `import * as ncu from 'npm-check-updates'` or
+  `import { run } from 'npm-check-updates'`.
+- Ensure CI/local Node and npm versions satisfy the v21 minimums.
+
 ### Adapter Model
 
 `devx.config.mjs` is the contract between the shared CLI and a consumer repo.

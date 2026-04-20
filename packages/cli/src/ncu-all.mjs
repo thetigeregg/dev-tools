@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { loadDevxConfig } from './config.mjs';
 
 const NPM_COMMAND = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const NCU_FORMAT = 'group,repo';
 
 export function formatCommand(command, args) {
   return [command, ...args].join(' ');
@@ -39,6 +40,14 @@ export function run(command, args, cwd) {
   }
 }
 
+export function buildNcuArgs(packageFile) {
+  return ['-i', '--packageFile', packageFile, '--format', NCU_FORMAT];
+}
+
+export function buildInstallArgs(projectAbsolutePath) {
+  return ['--prefix', projectAbsolutePath, 'install'];
+}
+
 export async function runNcuAllCli({ cwd = process.cwd() } = {}) {
   const config = await loadDevxConfig({ cwd });
   const ncuCommand = path.resolve(
@@ -56,12 +65,8 @@ export async function runNcuAllCli({ cwd = process.cwd() } = {}) {
     console.log(`==============================`);
 
     try {
-      run(
-        ncuCommand,
-        ['-i', '--packageFile', packageFile, '--format', 'group,repo'],
-        config.repoRoot
-      );
-      run(NPM_COMMAND, ['--prefix', project.absolutePath, 'install'], config.repoRoot);
+      run(ncuCommand, buildNcuArgs(packageFile), config.repoRoot);
+      run(NPM_COMMAND, buildInstallArgs(project.absolutePath), config.repoRoot);
     } catch (error) {
       const commandString =
         error &&
