@@ -40,6 +40,6 @@ test('getExitCode prefers status, then code, then defaults to 1', () => {
   assert.equal(getExitCode(new Error('boom')), 1);
 });
 
-test('isEntrypoint returns false when argv1 is missing', () => {
-  assert.equal(isEntrypoint({ argv1: undefined }), false);
+test('isEntrypoint returns false when argv1 is falsy', () => {
+  assert.equal(isEntrypoint({ argv1: null }), false);
 });
