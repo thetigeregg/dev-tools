@@ -50,7 +50,8 @@ function commandExists(command) {
 }
 
 function resolveEditorCommand(config) {
-  if (config.editor?.command) return config.editor.command;
+  const configured = config.editor?.command;
+  if (typeof configured === 'string' && configured.trim().length > 0) return configured.trim();
   if (commandExists('cursor')) return 'cursor';
   if (commandExists('code')) return 'code';
   return null;

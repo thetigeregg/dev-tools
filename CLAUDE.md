@@ -4,8 +4,9 @@ Before suggesting any commit:
 
 1. Run `npm test` to execute tests
 2. Run `npm run smoke` to run smoke tests
-3. Do not bypass pre-commit hooks
-4. If any step fails, fix the issue before proceeding
+3. Run `npm run format` to verify formatting
+4. Do not bypass pre-commit hooks
+5. If any step fails, fix the issue before proceeding
 
 # Code Quality
 
