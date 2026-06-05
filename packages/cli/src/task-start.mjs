@@ -38,7 +38,10 @@ function commandExists(command) {
     if (process.platform === 'win32') {
       execFileSync('where', [command], { stdio: 'ignore' });
     } else {
-      execFileSync('which', [command], { stdio: 'ignore' });
+      // Use the POSIX built-in `command -v` via sh to avoid depending on `which`,
+      // which may be absent in minimal environments. Pass the command as $1 to
+      // prevent any shell injection.
+      execFileSync('sh', ['-c', 'command -v "$1"', '--', command], { stdio: 'ignore' });
     }
     return true;
   } catch {

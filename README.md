@@ -32,7 +32,7 @@ By default, `task start` auto-detects your editor (tries `cursor`, then `code`).
 
 ```js
 export default {
-  editor: { command: 'windsurf' }, // or 'cursor', 'code', 'zed', etc.
+  editor: { command: 'windsurf' }, // single executable name or path — no inline args/flags
   // ...
 };
 ```
