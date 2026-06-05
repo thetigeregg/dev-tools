@@ -23,6 +23,7 @@ test('buildTemplateSyncPlan maps shared github templates into repo .github paths
         targetRoot: (repoRoot) => repoRoot,
         modes: ['bootstrap', 'sync'],
         syncExcludes: new Set(['lint-staged.config.cjs']),
+        syncSkipExisting: new Set(['CLAUDE.md']),
       },
       {
         name: 'github',
@@ -46,10 +47,15 @@ test('buildTemplateSyncPlan maps shared github templates into repo .github paths
   assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/rules/pr-prep.mdc'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/rules/pr-feedback.mdc'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/settings.json'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.claude/commands/pr-prep.md'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.claude/commands/pr-feedback.md'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/pull_request_template.md'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/ISSUE_TEMPLATE/bug.yml'));
   assert.ok(!plan.some((item) => item.relativeTargetPath === '.github/copilot-instructions.md'));
   assert.ok(!plan.some((item) => item.relativeTargetPath === 'lint-staged.config.cjs'));
+  assert.ok(
+    plan.some((item) => item.relativeTargetPath === 'CLAUDE.md' && item.skipIfExisting === true)
+  );
 });
 
 test('buildTemplateSyncPlan includes root stubs and defaults during bootstrap', () => {
@@ -91,6 +97,9 @@ test('buildTemplateSyncPlan includes root stubs and defaults during bootstrap', 
   assert.ok(plan.some((item) => item.relativeTargetPath === '.prettierignore'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.gitleaks.toml'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/copilot-instructions.md'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === 'CLAUDE.md'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.claude/commands/pr-prep.md'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.claude/commands/pr-feedback.md'));
 });
 
 test('syncTemplates copies planned files, supports dry-run, and can skip existing files', () => {
@@ -151,6 +160,38 @@ test('syncTemplates copies planned files, supports dry-run, and can skip existin
       targetPath: '/repo/.cursor/rules/workflow.mdc',
     },
   ]);
+});
+
+test('syncTemplates skips item with skipIfExisting even when global skipExisting is false', () => {
+  const writes = [];
+  const result = syncTemplates({
+    plan: [
+      {
+        sourcePath: '/templates/root/CLAUDE.md',
+        targetPath: '/repo/CLAUDE.md',
+        relativeTargetPath: 'CLAUDE.md',
+        skipIfExisting: true,
+      },
+      {
+        sourcePath: '/templates/root/.cursor/rules/workflow.mdc',
+        targetPath: '/repo/.cursor/rules/workflow.mdc',
+        relativeTargetPath: '.cursor/rules/workflow.mdc',
+        skipIfExisting: false,
+      },
+    ],
+    skipExisting: false,
+    log() {},
+    exists(p) {
+      return p === '/repo/CLAUDE.md';
+    },
+    mkdir() {},
+    copyFile(src, dest) {
+      writes.push(dest);
+    },
+  });
+
+  assert.deepEqual(result, { fileCount: 2, wroteFiles: true, skippedCount: 1 });
+  assert.deepEqual(writes, ['/repo/.cursor/rules/workflow.mdc']);
 });
 
 test('syncTemplates reports wroteFiles false when every file is skipped', () => {
@@ -260,6 +301,14 @@ test('shared cursor rule templates stay in sync with repository cursor rules', (
     [
       '.cursor/rules/pr-feedback.mdc',
       'packages/cli/templates/root-shared/.cursor/rules/pr-feedback.mdc',
+    ],
+    [
+      '.claude/commands/pr-prep.md',
+      'packages/cli/templates/root-shared/.claude/commands/pr-prep.md',
+    ],
+    [
+      '.claude/commands/pr-feedback.md',
+      'packages/cli/templates/root-shared/.claude/commands/pr-feedback.md',
     ],
   ];
 

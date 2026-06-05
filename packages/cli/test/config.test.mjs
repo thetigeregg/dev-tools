@@ -55,11 +55,12 @@ test('loadDevxConfig defaults projectName to the repo directory name', async () 
   assert.equal(config.projectName, path.basename(repoRoot));
 });
 
-test('loadDevxConfig normalizes nullable github, pr, and release sections', async () => {
+test('loadDevxConfig normalizes nullable editor, github, pr, and release sections', async () => {
   const repoRoot = makeTempRepo();
   fs.writeFileSync(
     path.join(repoRoot, 'devx.config.mjs'),
     `export default {
+      editor: null,
       github: null,
       pr: null,
       release: null
@@ -70,6 +71,7 @@ test('loadDevxConfig normalizes nullable github, pr, and release sections', asyn
 
   const config = await loadDevxConfig({ cwd: repoRoot });
 
+  assert.deepEqual(config.editor, {});
   assert.deepEqual(config.github, {});
   assert.deepEqual(config.pr, {});
   assert.deepEqual(config.release, {});
@@ -80,6 +82,7 @@ test('loadDevxConfig normalizes array config sections to plain objects', async (
   fs.writeFileSync(
     path.join(repoRoot, 'devx.config.mjs'),
     `export default {
+      editor: [],
       env: [],
       github: [],
       pr: [],
@@ -92,11 +95,28 @@ test('loadDevxConfig normalizes array config sections to plain objects', async (
 
   const config = await loadDevxConfig({ cwd: repoRoot });
 
+  assert.deepEqual(config.editor, {});
   assert.deepEqual(config.env, {});
   assert.deepEqual(config.github, {});
   assert.deepEqual(config.pr, {});
   assert.deepEqual(config.release, {});
   assert.deepEqual(config.worktree, {});
+});
+
+test('loadDevxConfig preserves editor.command when set', async () => {
+  const repoRoot = makeTempRepo();
+  fs.writeFileSync(
+    path.join(repoRoot, 'devx.config.mjs'),
+    `export default {
+      editor: { command: 'windsurf' }
+    };
+    `,
+    'utf8'
+  );
+
+  const config = await loadDevxConfig({ cwd: repoRoot });
+
+  assert.equal(config.editor.command, 'windsurf');
 });
 
 test('loadDevxConfig resolves github sarif output dir relative to repo root', async () => {

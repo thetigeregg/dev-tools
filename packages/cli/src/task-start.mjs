@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { execSync, execFileSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -35,11 +35,27 @@ function validateBranchName(branchName, label) {
 
 function commandExists(command) {
   try {
-    execSync(`command -v ${command}`, { stdio: 'ignore' });
+    if (process.platform === 'win32') {
+      execFileSync('where', [command], { stdio: 'ignore' });
+    } else {
+      // Use the POSIX built-in `command -v` via sh to avoid depending on `which`,
+      // which may be absent in minimal environments. Pass the command as $1 to
+      // prevent any shell injection. Use `sh` via PATH rather than `/bin/sh` so
+      // Nix-based environments and containers that locate sh elsewhere still work.
+      execFileSync('sh', ['-c', 'command -v "$1"', '--', command], { stdio: 'ignore' });
+    }
     return true;
   } catch {
     return false;
   }
+}
+
+function resolveEditorCommand(config) {
+  const configured = config.editor?.command;
+  if (typeof configured === 'string' && configured.trim().length > 0) return configured.trim();
+  if (commandExists('cursor')) return 'cursor';
+  if (commandExists('code')) return 'code';
+  return null;
 }
 
 function getWorktreePathForBranch(branchName, { cwd }) {
@@ -268,12 +284,19 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
       process.exit(code);
     }
 
-    if (process.platform === 'darwin' && commandExists('cursor')) {
-      console.log('\nOpening Cursor...\n');
+    const editorCommand = resolveEditorCommand(config);
+    if (editorCommand) {
+      console.log(`\nOpening ${editorCommand}...\n`);
       try {
-        execFileSync('cursor', [worktreePath], { stdio: 'inherit' });
-      } catch {
-        console.warn('\nCould not open Cursor automatically.\n');
+        execFileSync(editorCommand, [worktreePath], { stdio: 'inherit', cwd: config.repoRoot });
+      } catch (err) {
+        const detail = err?.message ?? String(err);
+        console.warn(`\nCould not open ${editorCommand} automatically: ${detail}\n`);
+        if (/\s-/.test(config.editor?.command ?? '')) {
+          console.warn(
+            `Hint: editor.command must be a single executable name or path — inline args/flags (e.g. "code --reuse-window") are not supported. Pass them via a wrapper script instead.\n`
+          );
+        }
         console.warn(`Open the worktree manually: ${worktreePath}\n`);
       }
     } else {

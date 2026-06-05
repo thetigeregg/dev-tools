@@ -24,6 +24,7 @@ const TEMPLATE_GROUPS = [
     targetRoot: (repoRoot) => repoRoot,
     modes: ['bootstrap', 'sync'],
     syncExcludes: new Set(['lint-staged.config.cjs']),
+    syncSkipExisting: new Set(['CLAUDE.md']),
   },
   {
     name: 'github',
@@ -150,6 +151,7 @@ export function buildTemplateSyncPlan({ repoRoot, mode = 'sync', groups = TEMPLA
     const targetRoot =
       typeof group.targetRoot === 'function' ? group.targetRoot(repoRoot) : group.targetRoot;
     const syncExcludes = group.syncExcludes ?? new Set();
+    const syncSkipExisting = group.syncSkipExisting ?? new Set();
 
     for (const template of collectTemplateFiles(normalizedSourceRoot)) {
       if (mode === 'sync' && syncExcludes.has(template.relativePath)) {
@@ -161,7 +163,8 @@ export function buildTemplateSyncPlan({ repoRoot, mode = 'sync', groups = TEMPLA
         group: group.name,
         sourcePath: template.absolutePath,
         targetPath,
-        relativeTargetPath: path.relative(repoRoot, targetPath),
+        relativeTargetPath: path.relative(repoRoot, targetPath).split(path.sep).join('/'),
+        skipIfExisting: mode === 'sync' && syncSkipExisting.has(template.relativePath),
       });
     }
   }
@@ -193,7 +196,7 @@ export function syncTemplates({
   let skippedCount = 0;
 
   for (const item of plan) {
-    if (skipExisting && exists(item.targetPath)) {
+    if ((skipExisting || item.skipIfExisting) && exists(item.targetPath)) {
       skippedCount += 1;
       log(`- ${item.relativeTargetPath} (skipped existing)`);
       continue;
