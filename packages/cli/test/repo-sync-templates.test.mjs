@@ -162,6 +162,38 @@ test('syncTemplates copies planned files, supports dry-run, and can skip existin
   ]);
 });
 
+test('syncTemplates skips item with skipIfExisting even when global skipExisting is false', () => {
+  const writes = [];
+  const result = syncTemplates({
+    plan: [
+      {
+        sourcePath: '/templates/root/CLAUDE.md',
+        targetPath: '/repo/CLAUDE.md',
+        relativeTargetPath: 'CLAUDE.md',
+        skipIfExisting: true,
+      },
+      {
+        sourcePath: '/templates/root/.cursor/rules/workflow.mdc',
+        targetPath: '/repo/.cursor/rules/workflow.mdc',
+        relativeTargetPath: '.cursor/rules/workflow.mdc',
+        skipIfExisting: false,
+      },
+    ],
+    skipExisting: false,
+    log() {},
+    exists(p) {
+      return p === '/repo/CLAUDE.md';
+    },
+    mkdir() {},
+    copyFile(src, dest) {
+      writes.push(dest);
+    },
+  });
+
+  assert.deepEqual(result, { fileCount: 2, wroteFiles: true, skippedCount: 1 });
+  assert.deepEqual(writes, ['/repo/.cursor/rules/workflow.mdc']);
+});
+
 test('syncTemplates reports wroteFiles false when every file is skipped', () => {
   const result = syncTemplates({
     plan: [
