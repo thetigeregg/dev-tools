@@ -54,6 +54,7 @@ export async function loadDevxConfig({
     baseBranch: 'main',
     worktreeRoot: 'worktrees',
     packageDirs: ['.'],
+    editor: {},
     env: {},
     github: {},
     pr: {},
@@ -62,6 +63,7 @@ export async function loadDevxConfig({
     ...rawConfig,
   };
 
+  config.editor = normalizeObjectSection(config.editor);
   config.env = normalizeObjectSection(config.env);
   config.github = normalizeObjectSection(config.github);
   config.pr = normalizeObjectSection(config.pr);
