@@ -22,7 +22,7 @@ test('buildTemplateSyncPlan maps shared github templates into repo .github paths
         sourceRoot: new URL('../templates/root-shared', import.meta.url),
         targetRoot: (repoRoot) => repoRoot,
         modes: ['bootstrap', 'sync'],
-        syncExcludes: new Set(['lint-staged.config.cjs']),
+        syncExcludes: new Set(['lint-staged.config.cjs', 'CLAUDE.md']),
       },
       {
         name: 'github',
@@ -50,6 +50,7 @@ test('buildTemplateSyncPlan maps shared github templates into repo .github paths
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/ISSUE_TEMPLATE/bug.yml'));
   assert.ok(!plan.some((item) => item.relativeTargetPath === '.github/copilot-instructions.md'));
   assert.ok(!plan.some((item) => item.relativeTargetPath === 'lint-staged.config.cjs'));
+  assert.ok(!plan.some((item) => item.relativeTargetPath === 'CLAUDE.md'));
 });
 
 test('buildTemplateSyncPlan includes root stubs and defaults during bootstrap', () => {
@@ -91,6 +92,7 @@ test('buildTemplateSyncPlan includes root stubs and defaults during bootstrap', 
   assert.ok(plan.some((item) => item.relativeTargetPath === '.prettierignore'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.gitleaks.toml'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/copilot-instructions.md'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === 'CLAUDE.md'));
 });
 
 test('syncTemplates copies planned files, supports dry-run, and can skip existing files', () => {

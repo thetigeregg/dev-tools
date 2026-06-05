@@ -23,7 +23,7 @@ const TEMPLATE_GROUPS = [
     sourceRoot: path.join(TEMPLATES_ROOT, 'root-shared'),
     targetRoot: (repoRoot) => repoRoot,
     modes: ['bootstrap', 'sync'],
-    syncExcludes: new Set(['lint-staged.config.cjs']),
+    syncExcludes: new Set(['lint-staged.config.cjs', 'CLAUDE.md']),
   },
   {
     name: 'github',
