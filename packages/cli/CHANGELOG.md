@@ -1,5 +1,11 @@
 # @thetigeregg/dev-cli
 
+## 4.1.2
+
+### Patch Changes
+
+- 17963b0: Sync 72-character header-max-length commit rule to root-shared CLAUDE.md template
+
 ## 4.1.1
 
 ### Patch Changes
