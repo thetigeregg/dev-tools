@@ -289,8 +289,8 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
       console.log(`\nOpening ${editorCommand}...\n`);
       try {
         execFileSync(editorCommand, [worktreePath], { stdio: 'inherit', cwd: config.repoRoot });
-      } catch {
-        console.warn(`\nCould not open ${editorCommand} automatically.\n`);
+      } catch (err) {
+        console.warn(`\nCould not open ${editorCommand} automatically: ${err.message}\n`);
         console.warn(`Open the worktree manually: ${worktreePath}\n`);
       }
     } else {
