@@ -46,6 +46,8 @@ test('buildTemplateSyncPlan maps shared github templates into repo .github paths
   assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/rules/pr-prep.mdc'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/rules/pr-feedback.mdc'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/settings.json'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.claude/commands/pr-prep.md'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.claude/commands/pr-feedback.md'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/pull_request_template.md'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/ISSUE_TEMPLATE/bug.yml'));
   assert.ok(!plan.some((item) => item.relativeTargetPath === '.github/copilot-instructions.md'));
@@ -93,6 +95,8 @@ test('buildTemplateSyncPlan includes root stubs and defaults during bootstrap', 
   assert.ok(plan.some((item) => item.relativeTargetPath === '.gitleaks.toml'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/copilot-instructions.md'));
   assert.ok(plan.some((item) => item.relativeTargetPath === 'CLAUDE.md'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.claude/commands/pr-prep.md'));
+  assert.ok(plan.some((item) => item.relativeTargetPath === '.claude/commands/pr-feedback.md'));
 });
 
 test('syncTemplates copies planned files, supports dry-run, and can skip existing files', () => {
@@ -262,6 +266,14 @@ test('shared cursor rule templates stay in sync with repository cursor rules', (
     [
       '.cursor/rules/pr-feedback.mdc',
       'packages/cli/templates/root-shared/.cursor/rules/pr-feedback.mdc',
+    ],
+    [
+      '.claude/commands/pr-prep.md',
+      'packages/cli/templates/root-shared/.claude/commands/pr-prep.md',
+    ],
+    [
+      '.claude/commands/pr-feedback.md',
+      'packages/cli/templates/root-shared/.claude/commands/pr-feedback.md',
     ],
   ];
 

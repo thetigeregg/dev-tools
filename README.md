@@ -24,7 +24,7 @@ This tooling is IDE-agnostic. Cursor and Claude Code are the primary supported a
 
 `devx repo bootstrap` seeds both `.cursor/rules/` and `CLAUDE.md` so whichever agent you use, the shared rules are in place.
 
-`devx pr prep` and `devx pr feedback` generate prompt files under `prompts/` that work with any agent — open the file and paste it in, or `@` it in Cursor.
+`devx pr prep` and `devx pr feedback` generate prompt files under `prompts/` that work with any agent — open the file and paste it in, or `@` it in Cursor. In Claude Code, use `/pr-prep` and `/pr-feedback <PR_NUMBER>` (custom commands seeded by bootstrap).
 
 #### Configuring the editor opened by `devx task start`
 
@@ -191,6 +191,7 @@ Bootstrap currently seeds:
 - shared Cursor rules (`.cursor/rules/commits.mdc`, `code.mdc`, `pr-prep.mdc`, `pr-feedback.mdc`)
 - shared Cursor workspace defaults (`.cursor/settings.json`)
 - `CLAUDE.md` (stub — fill in your project's verify commands; not overwritten by `repo sync`)
+- `.claude/commands/pr-prep.md` and `.claude/commands/pr-feedback.md` (Claude Code slash commands)
 - shared Husky hooks such as `.husky/pre-commit` and `.husky/commit-msg`
 - shared GitHub templates such as PR, issue, commit, Dependabot, and release templates
 - `.github/copilot-instructions.md` (GitHub platform AI features only; local IDE rules live in `.cursor/rules/` and `CLAUDE.md`)

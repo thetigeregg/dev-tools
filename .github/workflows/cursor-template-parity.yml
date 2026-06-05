@@ -5,8 +5,10 @@ on:
     paths:
       - "CLAUDE.md"
       - ".cursor/rules/**"
+      - ".claude/commands/**"
       - "packages/cli/templates/root-shared/CLAUDE.md"
       - "packages/cli/templates/root-shared/.cursor/rules/**"
+      - "packages/cli/templates/root-shared/.claude/commands/**"
       - "packages/cli/test/repo-sync-templates.test.mjs"
 
 permissions:
