@@ -24,7 +24,7 @@
     "node": ">=24.14.0"
   },
   "dependencies": {
-    "@commitlint/config-conventional": "^21.0.1"
+    "@commitlint/config-conventional": "^21.0.2"
   },
   "scripts": {
     "test": "node --test test/*.test.cjs"

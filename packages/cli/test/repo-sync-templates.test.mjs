@@ -23,7 +23,7 @@ test('buildTemplateSyncPlan maps shared github templates into repo .github paths
         targetRoot: (repoRoot) => repoRoot,
         modes: ['bootstrap', 'sync'],
         syncExcludes: new Set(['lint-staged.config.cjs']),
-        syncSkipExisting: new Set(['CLAUDE.md']),
+        syncSkipExisting: new Set(['CLAUDE.md', '.cursor/rules/pr-prep.mdc']),
       },
       {
         name: 'github',
@@ -44,7 +44,12 @@ test('buildTemplateSyncPlan maps shared github templates into repo .github paths
   assert.ok(
     plan.some((item) => item.relativeTargetPath === '.cursor/rules/commit-message-output.mdc')
   );
-  assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/rules/pr-prep.mdc'));
+  assert.ok(
+    plan.some(
+      (item) =>
+        item.relativeTargetPath === '.cursor/rules/pr-prep.mdc' && item.skipIfExisting === true
+    )
+  );
   assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/rules/pr-feedback.mdc'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.cursor/settings.json'));
   assert.ok(plan.some((item) => item.relativeTargetPath === '.claude/commands/pr-prep.md'));
@@ -297,7 +302,6 @@ test('shared cursor rule templates stay in sync with repository cursor rules', (
       '.cursor/rules/commit-message-output.mdc',
       'packages/cli/templates/root-shared/.cursor/rules/commit-message-output.mdc',
     ],
-    ['.cursor/rules/pr-prep.mdc', 'packages/cli/templates/root-shared/.cursor/rules/pr-prep.mdc'],
     [
       '.cursor/rules/pr-feedback.mdc',
       'packages/cli/templates/root-shared/.cursor/rules/pr-feedback.mdc',

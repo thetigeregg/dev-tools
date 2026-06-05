@@ -89,9 +89,38 @@ Complete prep in this order before writing the PR description:
 6. Check for security, production-safety, and performance impact from the patch. Mitigate issues in code/config now when feasible; otherwise record a blocker with concrete follow-up.
 7. Keep all prep work scoped to the current patch and avoid unrelated refactors.
 
-### Step 2: PR summary generation
+### Step 2: Changeset check
 
-Only after Step 1 is complete, generate the PR description from the repository template.
+Determine whether a changeset is required and create one if missing.
+
+**Required when all of the following are true:**
+
+- The branch is not a `changeset-release/` branch
+- At least one file under `packages/` changed
+- Those package changes include files outside `README.md`, `CHANGELOG.md`, and `test/` directories
+- No `.changeset/*.md` file exists in the diff
+
+**How to check:**
+
+```sh
+# Files changed vs the base branch
+git diff --name-only "$(git merge-base HEAD main)" HEAD
+```
+
+- If no `packages/` files changed → no changeset needed, continue.
+- If only `packages/**/README.md`, `packages/**/CHANGELOG.md`, or `packages/**/test/**` changed → no changeset needed, continue.
+- If a `.changeset/*.md` file already exists in the diff → changeset present, continue.
+- Otherwise → **a changeset is required**.
+
+**Creating a changeset:**
+
+Run `npm run changeset` and follow the prompts to select the affected packages and bump type (`patch` / `minor` / `major`). Commit the generated `.changeset/*.md` file before writing the PR description.
+
+If the PR intentionally ships no package release, apply the `no-release` label instead of creating a changeset (do not skip silently — document the reason).
+
+### Step 3: PR summary generation
+
+Only after Steps 1 and 2 are complete, generate the PR description from the repository template.
 
 - Use the post-fix diff as source of truth.
 - Reflect the primary change type in both the Conventional Commit title and `Type of change` checkboxes.
@@ -104,7 +133,7 @@ Only after Step 1 is complete, generate the PR description from the repository t
 
 Do not generate the PR summary until one of the following is true:
 
-- All identified risks and test gaps are fixed in the patch, or
+- All identified risks and test gaps are fixed in the patch, and changeset requirement is satisfied (changeset present, not needed, or `no-release` label documented), or
 - Remaining issues are explicitly documented as blockers with scope, impact, and concrete follow-up.
 
 # PR Feedback
