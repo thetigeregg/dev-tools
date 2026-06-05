@@ -16,6 +16,8 @@ Examples:
 
 Rules:
 - Avoid vague commit messages
+- Keep the subject line under 72 characters (commitlint enforces `header-max-length: 72`)
+- Prefer tight, precise wording over completeness — cut words, not meaning
 - Commit messages are validated by commitlint via `.husky/commit-msg`
 - commitlint config is in `commitlint.config.cjs`
 
