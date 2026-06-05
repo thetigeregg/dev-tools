@@ -24,7 +24,7 @@ const TEMPLATE_GROUPS = [
     targetRoot: (repoRoot) => repoRoot,
     modes: ['bootstrap', 'sync'],
     syncExcludes: new Set(['lint-staged.config.cjs']),
-    syncSkipExisting: new Set(['CLAUDE.md']),
+    syncSkipExisting: new Set(['CLAUDE.md', '.cursor/rules/pr-prep.mdc']),
   },
   {
     name: 'github',
