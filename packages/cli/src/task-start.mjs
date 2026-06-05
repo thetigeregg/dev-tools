@@ -292,7 +292,7 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
       } catch (err) {
         const detail = err?.message ?? String(err);
         console.warn(`\nCould not open ${editorCommand} automatically: ${detail}\n`);
-        if (config.editor?.command?.includes(' ')) {
+        if (/\s-/.test(config.editor?.command ?? '')) {
           console.warn(
             `Hint: editor.command must be a single executable name or path — inline args/flags (e.g. "code --reuse-window") are not supported. Pass them via a wrapper script instead.\n`
           );
