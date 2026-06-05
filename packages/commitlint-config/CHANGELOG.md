@@ -1,5 +1,11 @@
 # @thetigeregg/commitlint-config
 
+## 1.0.2
+
+### Patch Changes
+
+- 384f10c: Sync pr-prep cursor rule template with repo; update @commitlint/config-conventional to ^21.0.2
+
 ## 1.0.1
 
 ### Patch Changes

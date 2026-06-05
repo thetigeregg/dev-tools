@@ -1,5 +1,11 @@
 # @thetigeregg/dev-cli
 
+## 4.1.1
+
+### Patch Changes
+
+- 384f10c: Sync pr-prep cursor rule template with repo; update @commitlint/config-conventional to ^21.0.2
+
 ## 4.1.0
 
 ### Minor Changes
