@@ -290,7 +290,13 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
       try {
         execFileSync(editorCommand, [worktreePath], { stdio: 'inherit', cwd: config.repoRoot });
       } catch (err) {
-        console.warn(`\nCould not open ${editorCommand} automatically: ${err.message}\n`);
+        const detail = err?.message ?? String(err);
+        console.warn(`\nCould not open ${editorCommand} automatically: ${detail}\n`);
+        if (config.editor?.command?.includes(' ')) {
+          console.warn(
+            `Hint: editor.command must be a single executable name or path — inline args/flags (e.g. "code --reuse-window") are not supported. Pass them via a wrapper script instead.\n`
+          );
+        }
         console.warn(`Open the worktree manually: ${worktreePath}\n`);
       }
     } else {

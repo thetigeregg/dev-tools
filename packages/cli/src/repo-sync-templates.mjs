@@ -163,7 +163,7 @@ export function buildTemplateSyncPlan({ repoRoot, mode = 'sync', groups = TEMPLA
         group: group.name,
         sourcePath: template.absolutePath,
         targetPath,
-        relativeTargetPath: path.relative(repoRoot, targetPath),
+        relativeTargetPath: path.relative(repoRoot, targetPath).split(path.sep).join('/'),
         skipIfExisting: mode === 'sync' && syncSkipExisting.has(template.relativePath),
       });
     }
