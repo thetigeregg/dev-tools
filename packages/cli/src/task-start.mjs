@@ -42,6 +42,13 @@ function commandExists(command) {
   }
 }
 
+function resolveEditorCommand(config) {
+  if (config.editor?.command) return config.editor.command;
+  if (commandExists('cursor')) return 'cursor';
+  if (commandExists('code')) return 'code';
+  return null;
+}
+
 function getWorktreePathForBranch(branchName, { cwd }) {
   const output = runGit(['worktree', 'list', '--porcelain'], {
     encoding: 'utf8',
@@ -268,12 +275,13 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
       process.exit(code);
     }
 
-    if (process.platform === 'darwin' && commandExists('cursor')) {
-      console.log('\nOpening Cursor...\n');
+    const editorCommand = resolveEditorCommand(config);
+    if (process.platform === 'darwin' && editorCommand) {
+      console.log(`\nOpening ${editorCommand}...\n`);
       try {
-        execFileSync('cursor', [worktreePath], { stdio: 'inherit' });
+        execFileSync(editorCommand, [worktreePath], { stdio: 'inherit' });
       } catch {
-        console.warn('\nCould not open Cursor automatically.\n');
+        console.warn(`\nCould not open ${editorCommand} automatically.\n`);
         console.warn(`Open the worktree manually: ${worktreePath}\n`);
       }
     } else {
