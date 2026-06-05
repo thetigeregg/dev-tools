@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { execSync, execFileSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -35,7 +35,11 @@ function validateBranchName(branchName, label) {
 
 function commandExists(command) {
   try {
-    execSync(`command -v ${command}`, { stdio: 'ignore' });
+    if (process.platform === 'win32') {
+      execFileSync('where', [command], { stdio: 'ignore' });
+    } else {
+      execFileSync('which', [command], { stdio: 'ignore' });
+    }
     return true;
   } catch {
     return false;
