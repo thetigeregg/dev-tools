@@ -14,13 +14,28 @@ This repository is a private monorepo for publishable internal packages. It cent
 
 ## Consumer Setup
 
-### Recommended IDE: Cursor
+### IDE Support
 
-Cursor is the recommended local IDE for repositories bootstrapped from this tooling.
+This tooling is IDE-agnostic. Cursor and Claude Code are the primary supported agents, but any editor with an AI assistant can use the distributed rules.
 
-- Keep local agent behavior in `.cursor/rules/`
-- Use `@pr-prep` and `@pr-feedback` with the shared rules when preparing pull requests; `devx pr prep` / `devx pr feedback` write prompts under `prompts/` by default (configure or gitignore as needed)
-- Keep `.github/copilot-instructions.md` for GitHub platform AI features (for example GitHub.com PR review flows)
+- **Cursor**: agent rules live in `.cursor/rules/`; use `@pr-prep` and `@pr-feedback` to pull the rule files into context directly
+- **Claude Code**: agent rules live in `CLAUDE.md`, which is always in context
+- **GitHub Copilot**: keep `.github/copilot-instructions.md` for GitHub platform AI features (for example GitHub.com PR review flows)
+
+`devx repo bootstrap` seeds both `.cursor/rules/` and `CLAUDE.md` so whichever agent you use, the shared rules are in place.
+
+`devx pr prep` and `devx pr feedback` generate prompt files under `prompts/` that work with any agent — open the file and paste it in, or `@` it in Cursor.
+
+#### Configuring the editor opened by `devx task start`
+
+By default, `task start` auto-detects your editor (tries `cursor`, then `code`). Override it in `devx.config.mjs`:
+
+```js
+export default {
+  editor: { command: 'windsurf' }, // or 'cursor', 'code', 'zed', etc.
+  // ...
+};
+```
 
 Install the shared packages from your private registry:
 
@@ -175,9 +190,10 @@ Bootstrap currently seeds:
 - `.cursor/rules/workflow.mdc` (stub — fill in your project's verify commands after bootstrap)
 - shared Cursor rules (`.cursor/rules/commits.mdc`, `code.mdc`, `pr-prep.mdc`, `pr-feedback.mdc`)
 - shared Cursor workspace defaults (`.cursor/settings.json`)
+- `CLAUDE.md` (stub — fill in your project's verify commands; not overwritten by `repo sync`)
 - shared Husky hooks such as `.husky/pre-commit` and `.husky/commit-msg`
 - shared GitHub templates such as PR, issue, commit, Dependabot, and release templates
-- `.github/copilot-instructions.md` (GitHub platform AI features only; local IDE rules live in `.cursor/rules/`)
+- `.github/copilot-instructions.md` (GitHub platform AI features only; local IDE rules live in `.cursor/rules/` and `CLAUDE.md`)
 
 4. Review the generated files and replace placeholder values in `devx.config.mjs` with real repo settings.
 
@@ -225,6 +241,7 @@ npx devx repo sync
 
 - `.cursor/rules/workflow.mdc` (project-specific verify commands)
 - `.cursorignore`
+- `CLAUDE.md` (project-specific; fill in verify commands, then customize freely)
 - `devx.config.mjs`
 - `lint-staged.config.cjs`
 - `.github/copilot-instructions.md`
@@ -242,16 +259,15 @@ npm test
 
 Also run the repo build if applicable.
 
-## Cursor Migration Checklist
+## IDE Migration Checklist
 
-For existing repos moving from `AGENTS.md`/VS Code-first setup to Cursor-first setup:
+For existing repos adding Cursor and/or Claude Code support:
 
-1. Remove legacy `AGENTS.md` if present.
-2. Run `npx devx repo bootstrap` (or `npx devx repo sync` if already bootstrapped).
-3. Confirm `.cursor/rules/` contains `workflow.mdc`, `commits.mdc`, `code.mdc`, `pr-prep.mdc`, and `pr-feedback.mdc`.
-4. Fill in project-specific verify commands in `.cursor/rules/workflow.mdc`.
-5. Confirm `.cursorignore` is present and includes project-sensitive patterns.
-6. Keep `.github/copilot-instructions.md` for GitHub platform-only AI usage.
+1. Run `npx devx repo bootstrap` (or `npx devx repo sync` if already bootstrapped).
+2. **Cursor**: confirm `.cursor/rules/` contains `workflow.mdc`, `commits.mdc`, `code.mdc`, `pr-prep.mdc`, and `pr-feedback.mdc`. Fill in project-specific verify commands in `.cursor/rules/workflow.mdc`. Confirm `.cursorignore` is present.
+3. **Claude Code**: confirm `CLAUDE.md` exists at the repo root. Fill in the `<test-command>` and `<format-command>` placeholders in the Workflow section with this project's actual commands.
+4. Set `editor.command` in `devx.config.mjs` if you want `devx task start` to open a specific editor instead of auto-detecting.
+5. Keep `.github/copilot-instructions.md` for GitHub platform-only AI usage.
 
 ## When To Use Bootstrap Vs Sync
 
