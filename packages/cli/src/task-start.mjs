@@ -276,7 +276,7 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
     }
 
     const editorCommand = resolveEditorCommand(config);
-    if (process.platform === 'darwin' && editorCommand) {
+    if (editorCommand) {
       console.log(`\nOpening ${editorCommand}...\n`);
       try {
         execFileSync(editorCommand, [worktreePath], { stdio: 'inherit' });

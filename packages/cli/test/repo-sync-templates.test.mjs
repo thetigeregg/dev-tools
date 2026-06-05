@@ -22,7 +22,8 @@ test('buildTemplateSyncPlan maps shared github templates into repo .github paths
         sourceRoot: new URL('../templates/root-shared', import.meta.url),
         targetRoot: (repoRoot) => repoRoot,
         modes: ['bootstrap', 'sync'],
-        syncExcludes: new Set(['lint-staged.config.cjs', 'CLAUDE.md']),
+        syncExcludes: new Set(['lint-staged.config.cjs']),
+        syncSkipExisting: new Set(['CLAUDE.md']),
       },
       {
         name: 'github',
@@ -52,7 +53,9 @@ test('buildTemplateSyncPlan maps shared github templates into repo .github paths
   assert.ok(plan.some((item) => item.relativeTargetPath === '.github/ISSUE_TEMPLATE/bug.yml'));
   assert.ok(!plan.some((item) => item.relativeTargetPath === '.github/copilot-instructions.md'));
   assert.ok(!plan.some((item) => item.relativeTargetPath === 'lint-staged.config.cjs'));
-  assert.ok(!plan.some((item) => item.relativeTargetPath === 'CLAUDE.md'));
+  assert.ok(
+    plan.some((item) => item.relativeTargetPath === 'CLAUDE.md' && item.skipIfExisting === true)
+  );
 });
 
 test('buildTemplateSyncPlan includes root stubs and defaults during bootstrap', () => {
