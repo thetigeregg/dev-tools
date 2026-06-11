@@ -1,5 +1,11 @@
 # @thetigeregg/dev-cli
 
+## 4.2.0
+
+### Minor Changes
+
+- 337c905: Add `editor.args` config for passing flags to the editor opened by `devx task start` (for example VS Code `--profile`).
+
 ## 4.1.2
 
 ### Patch Changes
