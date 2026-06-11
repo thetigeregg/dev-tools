@@ -32,10 +32,15 @@ By default, `task start` auto-detects your editor (tries `cursor`, then `code`).
 
 ```js
 export default {
-  editor: { command: 'windsurf' }, // single executable name or path — no inline args/flags
+  editor: {
+    command: 'code', // single executable name or path
+    args: ['--profile', 'work-profile'], // optional flags passed before the worktree path
+  },
   // ...
 };
 ```
+
+`editor.command` must be a single executable name or path. Put flags in `editor.args`, not inline in `editor.command`.
 
 Install the shared packages from your private registry:
 

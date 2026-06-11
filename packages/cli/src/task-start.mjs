@@ -50,12 +50,40 @@ function commandExists(command) {
   }
 }
 
+export function normalizeEditorArgs(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((arg) => typeof arg === 'string');
+}
+
 function resolveEditorCommand(config) {
   const configured = config.editor?.command;
   if (typeof configured === 'string' && configured.trim().length > 0) return configured.trim();
   if (commandExists('cursor')) return 'cursor';
   if (commandExists('code')) return 'code';
   return null;
+}
+
+export function resolveEditorInvocation(config) {
+  const command = resolveEditorCommand(config);
+  if (!command) {
+    return null;
+  }
+
+  return {
+    command,
+    args: normalizeEditorArgs(config.editor?.args),
+  };
+}
+
+function formatEditorInvocationLabel({ command, args }) {
+  if (args.length === 0) {
+    return command;
+  }
+
+  return [command, ...args].join(' ');
 }
 
 function getWorktreePathForBranch(branchName, { cwd }) {
@@ -284,17 +312,21 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
       process.exit(code);
     }
 
-    const editorCommand = resolveEditorCommand(config);
-    if (editorCommand) {
-      console.log(`\nOpening ${editorCommand}...\n`);
+    const editorInvocation = resolveEditorInvocation(config);
+    if (editorInvocation) {
+      const editorLabel = formatEditorInvocationLabel(editorInvocation);
+      console.log(`\nOpening ${editorLabel}...\n`);
       try {
-        execFileSync(editorCommand, [worktreePath], { stdio: 'inherit', cwd: config.repoRoot });
+        execFileSync(editorInvocation.command, [...editorInvocation.args, worktreePath], {
+          stdio: 'inherit',
+          cwd: config.repoRoot,
+        });
       } catch (err) {
         const detail = err?.message ?? String(err);
-        console.warn(`\nCould not open ${editorCommand} automatically: ${detail}\n`);
+        console.warn(`\nCould not open ${editorLabel} automatically: ${detail}\n`);
         if (/\s-/.test(config.editor?.command ?? '')) {
           console.warn(
-            `Hint: editor.command must be a single executable name or path — inline args/flags (e.g. "code --reuse-window") are not supported. Pass them via a wrapper script instead.\n`
+            `Hint: editor.command must be a single executable name or path — put flags in editor.args instead (e.g. args: ['--reuse-window']).\n`
           );
         }
         console.warn(`Open the worktree manually: ${worktreePath}\n`);

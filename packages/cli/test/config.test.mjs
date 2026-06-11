@@ -119,6 +119,26 @@ test('loadDevxConfig preserves editor.command when set', async () => {
   assert.equal(config.editor.command, 'windsurf');
 });
 
+test('loadDevxConfig preserves editor.args when set', async () => {
+  const repoRoot = makeTempRepo();
+  fs.writeFileSync(
+    path.join(repoRoot, 'devx.config.mjs'),
+    `export default {
+      editor: {
+        command: 'code',
+        args: ['--profile', 'work-profile']
+      }
+    };
+    `,
+    'utf8'
+  );
+
+  const config = await loadDevxConfig({ cwd: repoRoot });
+
+  assert.equal(config.editor.command, 'code');
+  assert.deepEqual(config.editor.args, ['--profile', 'work-profile']);
+});
+
 test('loadDevxConfig resolves github sarif output dir relative to repo root', async () => {
   const repoRoot = makeTempRepo();
   fs.writeFileSync(

@@ -5,7 +5,12 @@ import { existsSync, mkdtempSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { isPathWithinParent, runTaskStartCli } from '../src/task-start.mjs';
+import {
+  isPathWithinParent,
+  normalizeEditorArgs,
+  resolveEditorInvocation,
+  runTaskStartCli,
+} from '../src/task-start.mjs';
 
 function runCommand(command, args, options = {}) {
   return execFileSync(command, args, {
@@ -181,6 +186,30 @@ test('runTaskStartCli rejects an invalid branch name produced by branchPrefix co
   assert.match(
     errors.join('\n'),
     /Invalid branch name\. Dot segments and empty path segments are not allowed\./
+  );
+});
+
+test('normalizeEditorArgs returns an empty array for non-array values', () => {
+  assert.deepEqual(normalizeEditorArgs(undefined), []);
+  assert.deepEqual(normalizeEditorArgs('not-an-array'), []);
+  assert.deepEqual(normalizeEditorArgs({}), []);
+});
+
+test('normalizeEditorArgs keeps only string entries', () => {
+  assert.deepEqual(normalizeEditorArgs(['--profile', 123, '--flag']), ['--profile', '--flag']);
+});
+
+test('resolveEditorInvocation returns command and args from config', () => {
+  assert.deepEqual(resolveEditorInvocation({ editor: { command: 'code' } }), {
+    command: 'code',
+    args: [],
+  });
+  assert.deepEqual(
+    resolveEditorInvocation({ editor: { command: 'code', args: ['--profile', 'work'] } }),
+    {
+      command: 'code',
+      args: ['--profile', 'work'],
+    }
   );
 });
 
