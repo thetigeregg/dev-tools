@@ -1,6 +1,6 @@
 export default {
   projectName: 'dev-tools',
-  editor: { command: 'code' },
+  editor: { command: 'cursor' },
   packageDirs: [
     '.',
     'packages/cli',
