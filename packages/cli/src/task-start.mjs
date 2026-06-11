@@ -75,9 +75,12 @@ export function resolveEditorInvocation(config) {
     return null;
   }
 
+  const configured = config.editor?.command;
+  const hasExplicitCommand = typeof configured === 'string' && configured.trim().length > 0;
+
   return {
     command,
-    args: normalizeEditorArgs(config.editor?.args),
+    args: hasExplicitCommand ? normalizeEditorArgs(config.editor?.args) : [],
   };
 }
 

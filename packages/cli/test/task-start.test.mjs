@@ -217,6 +217,12 @@ test('resolveEditorInvocation returns command and args from config', () => {
   );
 });
 
+test('resolveEditorInvocation ignores args when editor.command is not explicitly set', () => {
+  const result = resolveEditorInvocation({ editor: { args: ['--profile', 'work'] } });
+  assert.ok(result);
+  assert.deepEqual(result.args, []);
+});
+
 test('isPathWithinParent accepts paths when worktree root ends with a separator', () => {
   const worktreeRoot = path.join(os.tmpdir(), 'dev-cli-worktrees') + path.sep;
   const worktreePath = path.join(worktreeRoot, 'feat', 'example-task');
