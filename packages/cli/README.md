@@ -246,10 +246,12 @@ Bootstrap includes:
 - `.github/copilot-instructions.md` (GitHub platform AI features only)
 - shared `.github` templates
 - shared Cursor rules (`.cursor/rules/commits.mdc`, `code.mdc`, `pr-prep.mdc`, `pr-feedback.mdc`)
+- shared Cursor skills (`.cursor/skills/pr-prep/SKILL.md`, `pr-feedback/SKILL.md`)
 
 Sync updates the shared surface, including:
 
 - shared Cursor rules (`.cursor/rules/commits.mdc`, `code.mdc`, `pr-prep.mdc`, `pr-feedback.mdc`)
+- shared Cursor skills (`.cursor/skills/pr-prep/SKILL.md`, `pr-feedback/SKILL.md`)
 - shared Cursor workspace defaults (`.cursor/settings.json`)
 - shared Husky hooks such as `.husky/pre-commit` and `.husky/commit-msg`
 - `.editorconfig`
