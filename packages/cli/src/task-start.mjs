@@ -61,6 +61,11 @@ export function normalizeEditorArgs(value) {
     .filter((arg) => arg.length > 0);
 }
 
+export function hasExplicitEditorCommand(config) {
+  const configured = config.editor?.command;
+  return typeof configured === 'string' && configured.trim().length > 0;
+}
+
 function resolveEditorCommand(config) {
   const configured = config.editor?.command;
   if (typeof configured === 'string' && configured.trim().length > 0) return configured.trim();
@@ -75,12 +80,9 @@ export function resolveEditorInvocation(config) {
     return null;
   }
 
-  const configured = config.editor?.command;
-  const hasExplicitCommand = typeof configured === 'string' && configured.trim().length > 0;
-
   return {
     command,
-    args: hasExplicitCommand ? normalizeEditorArgs(config.editor?.args) : [],
+    args: hasExplicitEditorCommand(config) ? normalizeEditorArgs(config.editor?.args) : [],
   };
 }
 

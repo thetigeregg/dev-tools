@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import {
+  hasExplicitEditorCommand,
   isPathWithinParent,
   normalizeEditorArgs,
   resolveEditorInvocation,
@@ -217,10 +218,17 @@ test('resolveEditorInvocation returns command and args from config', () => {
   );
 });
 
-test('resolveEditorInvocation ignores args when editor.command is not explicitly set', () => {
-  const result = resolveEditorInvocation({ editor: { args: ['--profile', 'work'] } });
-  assert.ok(result);
-  assert.deepEqual(result.args, []);
+test('hasExplicitEditorCommand is false when editor.command is missing or blank', () => {
+  assert.equal(hasExplicitEditorCommand({}), false);
+  assert.equal(hasExplicitEditorCommand({ editor: {} }), false);
+  assert.equal(hasExplicitEditorCommand({ editor: { command: '' } }), false);
+  assert.equal(hasExplicitEditorCommand({ editor: { command: '   ' } }), false);
+  assert.equal(hasExplicitEditorCommand({ editor: { args: ['--profile'] } }), false);
+});
+
+test('hasExplicitEditorCommand is true for a non-empty editor.command', () => {
+  assert.equal(hasExplicitEditorCommand({ editor: { command: 'code' } }), true);
+  assert.equal(hasExplicitEditorCommand({ editor: { command: '  code  ' } }), true);
 });
 
 test('isPathWithinParent accepts paths when worktree root ends with a separator', () => {
