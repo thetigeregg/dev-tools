@@ -195,8 +195,12 @@ test('normalizeEditorArgs returns an empty array for non-array values', () => {
   assert.deepEqual(normalizeEditorArgs({}), []);
 });
 
-test('normalizeEditorArgs keeps only string entries', () => {
+test('normalizeEditorArgs keeps only non-empty string entries', () => {
   assert.deepEqual(normalizeEditorArgs(['--profile', 123, '--flag']), ['--profile', '--flag']);
+  assert.deepEqual(normalizeEditorArgs(['', '  ', '--reuse-window', '  --profile  ']), [
+    '--reuse-window',
+    '--profile',
+  ]);
 });
 
 test('resolveEditorInvocation returns command and args from config', () => {

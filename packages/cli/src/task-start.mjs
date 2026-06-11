@@ -55,7 +55,10 @@ export function normalizeEditorArgs(value) {
     return [];
   }
 
-  return value.filter((arg) => typeof arg === 'string');
+  return value
+    .filter((arg) => typeof arg === 'string')
+    .map((arg) => arg.trim())
+    .filter((arg) => arg.length > 0);
 }
 
 function resolveEditorCommand(config) {
