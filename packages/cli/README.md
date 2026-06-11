@@ -91,8 +91,24 @@ The CLI searches upward for `devx.config.mjs` and uses it to resolve:
 - env file locations
 - release file locations
 - optional worktree adapter hooks
+- optional editor command and args for `devx task start`
 
 Module format: `@thetigeregg/dev-cli` is ESM, so `devx.config.mjs` and any `worktree.adapterModule` should be authored as ESM modules (use `.mjs`, `export default`, and `import`).
+
+### Editor config
+
+`devx task start` auto-detects `cursor`, then `code`, and opens the new worktree. Override in `devx.config.mjs`:
+
+```js
+export default {
+  editor: {
+    command: 'code',
+    args: ['--profile', 'work-profile'],
+  },
+};
+```
+
+`editor.command` must be a single executable name or path. Put flags in `editor.args`, not inline in `editor.command`.
 
 `worktree.adapterModule` powers repo-specific worktree commands. When present:
 
@@ -230,10 +246,12 @@ Bootstrap includes:
 - `.github/copilot-instructions.md` (GitHub platform AI features only)
 - shared `.github` templates
 - shared Cursor rules (`.cursor/rules/commits.mdc`, `code.mdc`, `pr-prep.mdc`, `pr-feedback.mdc`)
+- shared Cursor skills (`.cursor/skills/pr-prep/SKILL.md`, `.cursor/skills/pr-feedback/SKILL.md`)
 
 Sync updates the shared surface, including:
 
 - shared Cursor rules (`.cursor/rules/commits.mdc`, `code.mdc`, `pr-prep.mdc`, `pr-feedback.mdc`)
+- shared Cursor skills (`.cursor/skills/pr-prep/SKILL.md`, `.cursor/skills/pr-feedback/SKILL.md`)
 - shared Cursor workspace defaults (`.cursor/settings.json`)
 - shared Husky hooks such as `.husky/pre-commit` and `.husky/commit-msg`
 - `.editorconfig`
