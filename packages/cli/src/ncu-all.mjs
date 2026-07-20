@@ -79,9 +79,10 @@ export function runWorkspaceNcuStep({
     return { name: 'workspaces', exitCode: 1 };
   }
 
-  if (typeof ncuResult.status === 'number' && ncuResult.status !== 0) {
+  if (ncuResult.status !== 0) {
     errorLog(`❌ Failed in workspaces`);
-    return { name: 'workspaces', exitCode: ncuResult.status };
+    const exitCode = typeof ncuResult.status === 'number' ? ncuResult.status : 1;
+    return { name: 'workspaces', exitCode };
   }
 
   const installArgs = buildWorkspaceInstallArgs();
@@ -94,7 +95,7 @@ export function runWorkspaceNcuStep({
     return { name: 'workspaces', exitCode: 1 };
   }
 
-  const exitCode = typeof installResult.status === 'number' ? installResult.status : 0;
+  const exitCode = typeof installResult.status === 'number' ? installResult.status : 1;
 
   if (exitCode !== 0) {
     errorLog(`❌ Failed in workspaces`);

@@ -99,3 +99,40 @@ test('runWorkspaceNcuStep stops after ncu failure and skips the install step', (
   assert.equal(result.exitCode, 2);
   assert.equal(calls.length, 1);
 });
+
+test('runWorkspaceNcuStep treats a signal-killed ncu process as a failure', () => {
+  const calls = [];
+  const result = runWorkspaceNcuStep({
+    repoRoot: '/repo',
+    ncuCommand: '/repo/node_modules/.bin/ncu',
+    spawn(command, args, options) {
+      calls.push({ command, args, options });
+      return { status: null, signal: 'SIGTERM' };
+    },
+    log() {},
+    errorLog() {},
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.equal(calls.length, 1);
+});
+
+test('runWorkspaceNcuStep treats a signal-killed install process as a failure', () => {
+  const calls = [];
+  const result = runWorkspaceNcuStep({
+    repoRoot: '/repo',
+    ncuCommand: '/repo/node_modules/.bin/ncu',
+    spawn(command, args, options) {
+      calls.push({ command, args, options });
+      if (calls.length === 1) {
+        return { status: 0 };
+      }
+      return { status: null, signal: 'SIGTERM' };
+    },
+    log() {},
+    errorLog() {},
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.equal(calls.length, 2);
+});
