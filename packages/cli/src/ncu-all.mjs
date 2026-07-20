@@ -54,7 +54,7 @@ export function buildWorkspaceNcuArgs() {
 }
 
 export function buildWorkspaceInstallArgs() {
-  return ['install'];
+  return ['install', '--workspaces', '--include-workspace-root'];
 }
 
 export function runWorkspaceNcuStep({

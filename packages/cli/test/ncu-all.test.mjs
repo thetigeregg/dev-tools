@@ -51,8 +51,12 @@ test('buildWorkspaceNcuArgs checks and updates all workspaces in one pass', () =
   assert.deepEqual(buildWorkspaceNcuArgs(), ['-i', '--workspaces', '--format', 'group,repo']);
 });
 
-test('buildWorkspaceInstallArgs installs from the workspace root without --prefix', () => {
-  assert.deepEqual(buildWorkspaceInstallArgs(), ['install']);
+test('buildWorkspaceInstallArgs installs the workspace root and all workspaces together', () => {
+  assert.deepEqual(buildWorkspaceInstallArgs(), [
+    'install',
+    '--workspaces',
+    '--include-workspace-root',
+  ]);
 });
 
 test('runWorkspaceNcuStep runs a single ncu + install pass at the repo root', () => {
@@ -77,7 +81,7 @@ test('runWorkspaceNcuStep runs a single ncu + install pass at the repo root', ()
     },
     {
       command: process.platform === 'win32' ? 'npm.cmd' : 'npm',
-      args: ['install'],
+      args: ['install', '--workspaces', '--include-workspace-root'],
       options: { cwd: '/repo', stdio: 'inherit' },
     },
   ]);
