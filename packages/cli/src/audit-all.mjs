@@ -136,7 +136,7 @@ export function runAudits({
   log = console.log,
   errorLog = console.error,
 } = {}) {
-  if (hasWorkspaceConfig(repoRoot)) {
+  if (repoRoot && hasWorkspaceConfig(repoRoot)) {
     const result = runWorkspaceAuditStep({
       repoRoot,
       npmCommand,
@@ -147,11 +147,11 @@ export function runAudits({
     });
 
     if (result.exitCode === 0) {
-      log(`\n✅ All audit${shouldFix ? ' fixes' : ''} completed successfully`);
+      log(`\n✅ All audit${shouldFix ? ' fixes' : 's'} completed successfully`);
       return { failures: [], exitCode: 0 };
     }
 
-    errorLog(`\n⚠️ Audit${shouldFix ? ' fixes' : ''} completed with remaining failures:`);
+    errorLog(`\n⚠️ Audit${shouldFix ? ' fixes' : 's'} completed with remaining failures:`);
     errorLog(`- ${result.name} (exit code ${result.exitCode})`);
     return { failures: [result], exitCode: 1 };
   }
