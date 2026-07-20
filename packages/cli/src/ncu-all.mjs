@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { hasWorkspaceConfig } from './deps-install.mjs';
 import { loadDevxConfig } from './config.mjs';
 
 const NPM_COMMAND = process.platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -48,6 +49,60 @@ export function buildInstallArgs(projectAbsolutePath) {
   return ['--prefix', projectAbsolutePath, 'install'];
 }
 
+export function buildWorkspaceNcuArgs() {
+  return ['-i', '--workspaces', '--format', NCU_FORMAT];
+}
+
+export function buildWorkspaceInstallArgs() {
+  return ['install'];
+}
+
+export function runWorkspaceNcuStep({
+  repoRoot,
+  ncuCommand,
+  npmCommand = NPM_COMMAND,
+  spawn = spawnSync,
+  log = console.log,
+  errorLog = console.error,
+}) {
+  log(`\n==============================`);
+  log(`📦 Updating workspaces`);
+  log(`==============================`);
+
+  const ncuArgs = buildWorkspaceNcuArgs();
+  log(`Running: ${formatCommand(ncuCommand, ncuArgs)}`);
+  const ncuResult = spawn(ncuCommand, ncuArgs, { cwd: repoRoot, stdio: 'inherit' });
+
+  if (ncuResult.error) {
+    errorLog(`❌ Failed in workspaces`);
+    errorLog(ncuResult.error.message);
+    return { name: 'workspaces', exitCode: 1 };
+  }
+
+  if (typeof ncuResult.status === 'number' && ncuResult.status !== 0) {
+    errorLog(`❌ Failed in workspaces`);
+    return { name: 'workspaces', exitCode: ncuResult.status };
+  }
+
+  const installArgs = buildWorkspaceInstallArgs();
+  log(`Running: ${formatCommand(npmCommand, installArgs)}`);
+  const installResult = spawn(npmCommand, installArgs, { cwd: repoRoot, stdio: 'inherit' });
+
+  if (installResult.error) {
+    errorLog(`❌ Failed in workspaces`);
+    errorLog(installResult.error.message);
+    return { name: 'workspaces', exitCode: 1 };
+  }
+
+  const exitCode = typeof installResult.status === 'number' ? installResult.status : 0;
+
+  if (exitCode !== 0) {
+    errorLog(`❌ Failed in workspaces`);
+  }
+
+  return { name: 'workspaces', exitCode };
+}
+
 export async function runNcuAllCli({ cwd = process.cwd() } = {}) {
   const config = await loadDevxConfig({ cwd });
   const ncuCommand = path.resolve(
@@ -56,6 +111,17 @@ export async function runNcuAllCli({ cwd = process.cwd() } = {}) {
     '.bin',
     process.platform === 'win32' ? 'ncu.cmd' : 'ncu'
   );
+
+  if (hasWorkspaceConfig(config.repoRoot)) {
+    const result = runWorkspaceNcuStep({ repoRoot: config.repoRoot, ncuCommand });
+
+    if (result.exitCode !== 0) {
+      process.exit(result.exitCode);
+    }
+
+    console.log('\n✅ All projects updated successfully');
+    return;
+  }
 
   for (const project of config.packageDirPaths) {
     const packageFile = path.resolve(project.absolutePath, 'package.json');

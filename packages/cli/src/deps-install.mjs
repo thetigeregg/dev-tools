@@ -53,17 +53,22 @@ export function buildWorkspaceCiArgs() {
   return ['ci', '--workspaces', '--include-workspace-root'];
 }
 
-export function runWorkspaceCiStep({
+export function buildWorkspaceInstallArgs() {
+  return ['install', '--workspaces', '--include-workspace-root'];
+}
+
+export function runWorkspaceInstallStep({
   repoRoot,
   npmCommand = NPM_COMMAND,
+  mode = 'install',
   spawn = spawnSync,
   log = console.log,
   errorLog = console.error,
 }) {
-  const args = buildWorkspaceCiArgs();
+  const args = mode === 'ci' ? buildWorkspaceCiArgs() : buildWorkspaceInstallArgs();
 
   log(`\n==============================`);
-  log(`📦 Installing workspace dependencies (ci)`);
+  log(`📦 Installing workspace dependencies (${mode})`);
   log(`==============================`);
   log(`Running: ${[npmCommand, ...args].join(' ')}`);
 
@@ -81,9 +86,9 @@ export function runWorkspaceCiStep({
   const exitCode = typeof result.status === 'number' ? result.status : 1;
 
   if (exitCode === 0) {
-    log(`✅ workspace ci completed`);
+    log(`✅ workspace ${mode} completed`);
   } else {
-    errorLog(`⚠️ workspace ci exited with code ${exitCode}`);
+    errorLog(`⚠️ workspace ${mode} exited with code ${exitCode}`);
   }
 
   return { name: 'workspaces', exitCode };
@@ -139,10 +144,11 @@ export function runInstallAll({
   log = console.log,
   errorLog = console.error,
 } = {}) {
-  if (mode === 'ci' && hasWorkspaceConfig(repoRoot)) {
-    const result = runWorkspaceCiStep({
+  if (hasWorkspaceConfig(repoRoot)) {
+    const result = runWorkspaceInstallStep({
       repoRoot,
       npmCommand,
+      mode,
       spawn,
       log,
       errorLog,

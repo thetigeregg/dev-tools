@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { hasWorkspaceConfig } from './deps-install.mjs';
 import { loadDevxConfig } from './config.mjs';
 
 const NPM_COMMAND = process.platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -28,6 +29,55 @@ export function buildAuditArgs(projectPath, shouldFix = false, repoRoot) {
 
   const prefixPath = repoRoot ? path.resolve(repoRoot, projectPath) : projectPath;
   return ['--prefix', prefixPath, ...auditArgs];
+}
+
+export function buildWorkspaceAuditArgs(shouldFix = false) {
+  const auditArgs = shouldFix ? ['audit', 'fix'] : ['audit'];
+  return [...auditArgs, '--workspaces', '--include-workspace-root'];
+}
+
+export function runWorkspaceAuditStep({
+  repoRoot,
+  npmCommand = NPM_COMMAND,
+  shouldFix = false,
+  spawn = spawnSync,
+  log = console.log,
+  errorLog = console.error,
+}) {
+  const args = buildWorkspaceAuditArgs(shouldFix);
+
+  log(`\n==============================`);
+  log(`🔎 Auditing workspaces`);
+  log(`==============================`);
+  log(`Running: ${formatCommand(npmCommand, args)}`);
+
+  const result = spawn(npmCommand, args, {
+    cwd: repoRoot,
+    stdio: 'inherit',
+  });
+
+  if (result.error) {
+    errorLog(`❌ workspaces failed to run`);
+    errorLog(result.error.message);
+
+    return {
+      name: 'workspaces',
+      exitCode: 1,
+    };
+  }
+
+  const exitCode = getExitCode(result);
+
+  if (exitCode === 0) {
+    log(`✅ workspaces audit${shouldFix ? ' fix' : ''} completed`);
+  } else {
+    errorLog(`⚠️ workspaces audit${shouldFix ? ' fix' : ''} exited with code ${exitCode}`);
+  }
+
+  return {
+    name: 'workspaces',
+    exitCode,
+  };
 }
 
 export function runAudit(
@@ -86,6 +136,26 @@ export function runAudits({
   log = console.log,
   errorLog = console.error,
 } = {}) {
+  if (hasWorkspaceConfig(repoRoot)) {
+    const result = runWorkspaceAuditStep({
+      repoRoot,
+      npmCommand,
+      shouldFix,
+      spawn,
+      log,
+      errorLog,
+    });
+
+    if (result.exitCode === 0) {
+      log(`\n✅ All audit${shouldFix ? ' fixes' : ''} completed successfully`);
+      return { failures: [], exitCode: 0 };
+    }
+
+    errorLog(`\n⚠️ Audit${shouldFix ? ' fixes' : ''} completed with remaining failures:`);
+    errorLog(`- ${result.name} (exit code ${result.exitCode})`);
+    return { failures: [result], exitCode: 1 };
+  }
+
   const failures = [];
 
   for (const project of projects) {
