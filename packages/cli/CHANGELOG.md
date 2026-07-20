@@ -1,5 +1,17 @@
 # @thetigeregg/dev-cli
 
+## 5.0.0
+
+### Major Changes
+
+- f802bec: Raise the minimum supported Node.js version to 24.15.0 (`engines.node`). Update the optional root `.nvmrc` template to `24.15.0` so bootstrapped repos can pin the same runtime.
+
+  **Migration:** Use Node 24.15 or newer locally and in CI (for example `nvm use` with a root `.nvmrc` containing `24.15.0`).
+
+### Patch Changes
+
+- d69f68c: Fix `devx deps ncu-all`, `devx deps install-all`, and `devx deps audit-all` breaking on npm workspace members: per-directory `npm --prefix <dir>` commands can't resolve workspace-linked local packages and fail trying to fetch them from the registry. These commands now detect npm workspaces and run a single root-level `--workspaces` pass instead of looping per directory.
+
 ## 4.2.0
 
 ### Minor Changes
