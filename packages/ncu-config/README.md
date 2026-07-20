@@ -34,7 +34,7 @@ module.exports = {
 
 - Node `^20.19.0 || ^22.12.0 || >=24.0.0`
 - npm `>=10`
-- This package declares Node `>=24.14.0` in `engines`, so consumer repos should
+- This package declares Node `>=24.15.0` in `engines`, so consumer repos should
   run that version floor when installing `@thetigeregg/ncu-config`
 
 This package and its `.ncurc.cjs` usage are already aligned with v21.
