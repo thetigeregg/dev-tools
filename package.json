@@ -20,7 +20,7 @@
     "release": "changeset publish"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.31.0",
+    "@changesets/cli": "^2.31.1",
     "@commitlint/cli": "^21.1.0",
     "@thetigeregg/commitlint-config": "workspace:*",
     "@thetigeregg/dev-cli": "workspace:*",
