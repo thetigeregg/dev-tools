@@ -87,7 +87,7 @@ export default {
 npm `>=10`.
 
 This monorepo and the published `@thetigeregg/*` packages declare a stricter
-engine floor of Node `>=24.14.0`; use that range for local dev/CI when adopting
+engine floor of Node `>=24.15.0`; use that range for local dev/CI when adopting
 the shared packages.
 
 No mandatory changes are required for repos already using this toolchain and the
@@ -165,7 +165,7 @@ Example scripts:
 
 Use this flow when you are adopting `dev-tools` in a brand-new repository.
 
-The bootstrap flow below assumes a modern Node release. This repo uses Node `>=24.14.0`; use the root `.nvmrc` with `nvm use` (or install that version another way) so local installs and Husky hooks match the declared engine range.
+The bootstrap flow below assumes a modern Node release. This repo uses Node `>=24.15.0`; use the root `.nvmrc` with `nvm use` (or install that version another way) so local installs and Husky hooks match the declared engine range.
 
 1. Install the shared packages:
 
