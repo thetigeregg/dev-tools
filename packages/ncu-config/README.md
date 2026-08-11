@@ -41,6 +41,14 @@ This package and its `.ncurc.cjs` usage are already aligned with v21.
 If your repo already uses `.ncurc.cjs` and a compatible Node/npm toolchain, no
 config changes are required.
 
+## npm 12 hold
+
+`npm` is pinned to `minor` (stays on the 11.x `packageManager` line) rather
+than `latest`. npm 12 blocks dependency lifecycle scripts by default (opt-in
+via `allowScripts`), tightens unknown-flag handling to throw instead of warn,
+and defaults `allow-git`/`allow-remote` to `none`. Any of these can silently
+change `npm install`/`npm ci` behavior in CI. Revisit once verified.
+
 ### Downstream checklist
 
 - If your repo has `.ncurc.js` with `module.exports`, rename it to `.ncurc.cjs`
