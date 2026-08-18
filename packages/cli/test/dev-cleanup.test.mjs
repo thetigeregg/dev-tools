@@ -8,6 +8,7 @@ import {
   isSquashMerged,
   isBranchContentMerged,
   computeContentMergedBranches,
+  getSquashOrRebaseMergedBranches,
 } from '../src/dev-cleanup.mjs';
 
 test('trimTrailingPathSeparators preserves Windows drive roots', () => {
@@ -58,6 +59,8 @@ test('listLocalBranches trims and filters for-each-ref output', () => {
 test('isBranchContentMerged detects a rebase-merged branch without running the squash check', () => {
   const gitRunner = makeFakeGit([
     (args) =>
+      matchArgs(args, ['merge-base', 'origin/main', 'feat/rebased']) ? 'base000\n' : undefined,
+    (args) =>
       matchArgs(args, ['cherry', 'origin/main', 'feat/rebased']) ? '-abc123\n-def456\n' : undefined,
   ]);
 
@@ -65,12 +68,13 @@ test('isBranchContentMerged detects a rebase-merged branch without running the s
     isBranchContentMerged({ branch: 'feat/rebased', baseRef: 'origin/main', gitRunner }),
     true
   );
-  assert.ok(!gitRunner.calls.some((call) => call.args[0] === 'merge-base'));
   assert.ok(!gitRunner.calls.some((call) => call.args[0] === 'commit-tree'));
 });
 
 test('isBranchContentMerged treats zero unique commits as merged without a squash check', () => {
   const gitRunner = makeFakeGit([
+    (args) =>
+      matchArgs(args, ['merge-base', 'origin/main', 'feat/noop']) ? 'base000\n' : undefined,
     (args) => (matchArgs(args, ['cherry', 'origin/main', 'feat/noop']) ? '' : undefined),
   ]);
 
@@ -78,7 +82,22 @@ test('isBranchContentMerged treats zero unique commits as merged without a squas
     isBranchContentMerged({ branch: 'feat/noop', baseRef: 'origin/main', gitRunner }),
     true
   );
-  assert.equal(gitRunner.calls.length, 1);
+  assert.equal(gitRunner.calls.length, 2);
+});
+
+test('isBranchContentMerged returns false for a branch with no common ancestor', () => {
+  const gitRunner = makeFakeGit([
+    (args) =>
+      matchArgs(args, ['merge-base', 'origin/main', 'feat/unrelated'])
+        ? new Error('fatal: no merge base')
+        : undefined,
+  ]);
+
+  assert.equal(
+    isBranchContentMerged({ branch: 'feat/unrelated', baseRef: 'origin/main', gitRunner }),
+    false
+  );
+  assert.ok(!gitRunner.calls.some((call) => call.args[0] === 'cherry'));
 });
 
 test('isBranchContentMerged detects a squash-merged branch via the synthetic commit', () => {
@@ -155,6 +174,8 @@ test('isSquashMerged fails open when commit-tree fails', () => {
 test('computeContentMergedBranches filters candidates down to the merged ones', () => {
   const gitRunner = makeFakeGit([
     (args) =>
+      matchArgs(args, ['merge-base', 'origin/main', 'feat/rebased']) ? 'base000\n' : undefined,
+    (args) =>
       matchArgs(args, ['cherry', 'origin/main', 'feat/rebased']) ? '-abc123\n' : undefined,
     (args) =>
       matchArgs(args, ['cherry', 'origin/main', 'feat/squashed']) ? '+aaa111\n' : undefined,
@@ -181,4 +202,36 @@ test('computeContentMergedBranches filters candidates down to the merged ones', 
   });
 
   assert.deepEqual(result, ['feat/rebased', 'feat/squashed']);
+});
+
+test('getSquashOrRebaseMergedBranches skips content-merge detection when disabled', () => {
+  const gitRunner = makeFakeGit([]);
+
+  const result = getSquashOrRebaseMergedBranches({
+    candidates: ['feat/rebased'],
+    baseRef: 'origin/main',
+    gitRunner,
+    detectSquashRebase: false,
+  });
+
+  assert.deepEqual(result, []);
+  assert.equal(gitRunner.calls.length, 0);
+});
+
+test('getSquashOrRebaseMergedBranches delegates to computeContentMergedBranches by default', () => {
+  const gitRunner = makeFakeGit([
+    (args) =>
+      matchArgs(args, ['merge-base', 'origin/main', 'feat/rebased']) ? 'base000\n' : undefined,
+    (args) =>
+      matchArgs(args, ['cherry', 'origin/main', 'feat/rebased']) ? '-abc123\n' : undefined,
+  ]);
+
+  const result = getSquashOrRebaseMergedBranches({
+    candidates: ['feat/rebased'],
+    baseRef: 'origin/main',
+    gitRunner,
+    detectSquashRebase: true,
+  });
+
+  assert.deepEqual(result, ['feat/rebased']);
 });

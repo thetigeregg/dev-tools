@@ -90,6 +90,10 @@ function runGit(args, options = {}) {
       ...execOptions,
     });
   } catch (error) {
+    if (!exitOnError) {
+      throw error;
+    }
+
     const commandString = ['git', ...args].join(' ');
     console.error(`Command failed: ${commandString}`);
 
@@ -99,10 +103,6 @@ function runGit(args, options = {}) {
       } catch {
         // Ignore stderr write failures.
       }
-    }
-
-    if (!exitOnError) {
-      throw error;
     }
 
     let exitCode = 1;
@@ -525,6 +525,22 @@ export function listLocalBranches(gitRunner = runGit) {
     .filter(Boolean);
 }
 
+function hasMergeBase({ branch, baseRef, gitRunner }) {
+  try {
+    const mergeBase = gitRunner(['merge-base', baseRef, branch], { exitOnError: false }).trim();
+    return Boolean(mergeBase);
+  } catch {
+    return false;
+  }
+}
+
+function parseCherryLines(output) {
+  return output
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
 export function isSquashMerged({ branch, baseRef, gitRunner = runGit }) {
   const identityEnv = {
     ...process.env,
@@ -561,10 +577,9 @@ export function isSquashMerged({ branch, baseRef, gitRunner = runGit }) {
   let cherryLines;
 
   try {
-    cherryLines = gitRunner(['cherry', baseRef, syntheticCommit], { exitOnError: false })
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean);
+    cherryLines = parseCherryLines(
+      gitRunner(['cherry', baseRef, syntheticCommit], { exitOnError: false })
+    );
   } catch {
     return false;
   }
@@ -580,13 +595,14 @@ export function isSquashMerged({ branch, baseRef, gitRunner = runGit }) {
 // (patch-id equivalence of the branch's total diff, via a synthetic commit) --
 // `git branch --merged` only catches true merge commits since it relies on ancestry.
 export function isBranchContentMerged({ branch, baseRef, gitRunner = runGit }) {
+  if (!hasMergeBase({ branch, baseRef, gitRunner })) {
+    return false;
+  }
+
   let cherryLines;
 
   try {
-    cherryLines = gitRunner(['cherry', baseRef, branch], { exitOnError: false })
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean);
+    cherryLines = parseCherryLines(gitRunner(['cherry', baseRef, branch], { exitOnError: false }));
   } catch {
     return false;
   }
@@ -604,6 +620,19 @@ export function isBranchContentMerged({ branch, baseRef, gitRunner = runGit }) {
 
 export function computeContentMergedBranches({ candidates, baseRef, gitRunner = runGit }) {
   return candidates.filter((branch) => isBranchContentMerged({ branch, baseRef, gitRunner }));
+}
+
+export function getSquashOrRebaseMergedBranches({
+  candidates,
+  baseRef,
+  gitRunner = runGit,
+  detectSquashRebase,
+}) {
+  if (detectSquashRebase === false) {
+    return [];
+  }
+
+  return computeContentMergedBranches({ candidates, baseRef, gitRunner });
 }
 
 export function isEntrypoint({ argv1 = process.argv[1], moduleUrl = import.meta.url } = {}) {
@@ -693,14 +722,12 @@ export async function main({ auto = false, dryRun = false, cwd = process.cwd() }
     (b) => b !== currentBranch && b !== config.baseBranch && !ancestryMergedBranches.includes(b)
   );
 
-  const squashOrRebaseMergedBranches =
-    config.worktree.detectSquashRebase === false
-      ? []
-      : computeContentMergedBranches({
-          candidates: remainingCandidates,
-          baseRef,
-          gitRunner: runGit,
-        });
+  const squashOrRebaseMergedBranches = getSquashOrRebaseMergedBranches({
+    candidates: remainingCandidates,
+    baseRef,
+    gitRunner: runGit,
+    detectSquashRebase: config.worktree.detectSquashRebase,
+  });
 
   const mergedBranches = [...ancestryMergedBranches, ...squashOrRebaseMergedBranches];
 
