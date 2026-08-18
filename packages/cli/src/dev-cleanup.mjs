@@ -525,9 +525,15 @@ export function listLocalBranches(gitRunner = runGit) {
     .filter(Boolean);
 }
 
+function toBranchRef(branch) {
+  return `refs/heads/${branch}`;
+}
+
 function hasMergeBase({ branch, baseRef, gitRunner }) {
   try {
-    const mergeBase = gitRunner(['merge-base', baseRef, branch], { exitOnError: false }).trim();
+    const mergeBase = gitRunner(['merge-base', baseRef, toBranchRef(branch)], {
+      exitOnError: false,
+    }).trim();
     return Boolean(mergeBase);
   } catch {
     return false;
@@ -555,8 +561,10 @@ export function isSquashMerged({ branch, baseRef, gitRunner = runGit }) {
   let syntheticCommit;
 
   try {
-    mergeBase = gitRunner(['merge-base', baseRef, branch], { exitOnError: false }).trim();
-    tree = gitRunner(['rev-parse', `${branch}^{tree}`], { exitOnError: false }).trim();
+    mergeBase = gitRunner(['merge-base', baseRef, toBranchRef(branch)], {
+      exitOnError: false,
+    }).trim();
+    tree = gitRunner(['rev-parse', `${toBranchRef(branch)}^{tree}`], { exitOnError: false }).trim();
 
     if (!mergeBase || !tree) {
       return false;
@@ -602,7 +610,9 @@ export function isBranchContentMerged({ branch, baseRef, gitRunner = runGit }) {
   let cherryLines;
 
   try {
-    cherryLines = parseCherryLines(gitRunner(['cherry', baseRef, branch], { exitOnError: false }));
+    cherryLines = parseCherryLines(
+      gitRunner(['cherry', baseRef, toBranchRef(branch)], { exitOnError: false })
+    );
   } catch {
     return false;
   }

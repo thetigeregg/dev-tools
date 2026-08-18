@@ -59,9 +59,13 @@ test('listLocalBranches trims and filters for-each-ref output', () => {
 test('isBranchContentMerged detects a rebase-merged branch without running the squash check', () => {
   const gitRunner = makeFakeGit([
     (args) =>
-      matchArgs(args, ['merge-base', 'origin/main', 'feat/rebased']) ? 'base000\n' : undefined,
+      matchArgs(args, ['merge-base', 'origin/main', 'refs/heads/feat/rebased'])
+        ? 'base000\n'
+        : undefined,
     (args) =>
-      matchArgs(args, ['cherry', 'origin/main', 'feat/rebased']) ? '-abc123\n-def456\n' : undefined,
+      matchArgs(args, ['cherry', 'origin/main', 'refs/heads/feat/rebased'])
+        ? '-abc123\n-def456\n'
+        : undefined,
   ]);
 
   assert.equal(
@@ -74,8 +78,10 @@ test('isBranchContentMerged detects a rebase-merged branch without running the s
 test('isBranchContentMerged treats zero unique commits as merged without a squash check', () => {
   const gitRunner = makeFakeGit([
     (args) =>
-      matchArgs(args, ['merge-base', 'origin/main', 'feat/noop']) ? 'base000\n' : undefined,
-    (args) => (matchArgs(args, ['cherry', 'origin/main', 'feat/noop']) ? '' : undefined),
+      matchArgs(args, ['merge-base', 'origin/main', 'refs/heads/feat/noop'])
+        ? 'base000\n'
+        : undefined,
+    (args) => (matchArgs(args, ['cherry', 'origin/main', 'refs/heads/feat/noop']) ? '' : undefined),
   ]);
 
   assert.equal(
@@ -88,7 +94,7 @@ test('isBranchContentMerged treats zero unique commits as merged without a squas
 test('isBranchContentMerged returns false for a branch with no common ancestor', () => {
   const gitRunner = makeFakeGit([
     (args) =>
-      matchArgs(args, ['merge-base', 'origin/main', 'feat/unrelated'])
+      matchArgs(args, ['merge-base', 'origin/main', 'refs/heads/feat/unrelated'])
         ? new Error('fatal: no merge base')
         : undefined,
   ]);
@@ -103,12 +109,15 @@ test('isBranchContentMerged returns false for a branch with no common ancestor',
 test('isBranchContentMerged detects a squash-merged branch via the synthetic commit', () => {
   const gitRunner = makeFakeGit([
     (args) =>
-      matchArgs(args, ['cherry', 'origin/main', 'feat/squashed'])
+      matchArgs(args, ['cherry', 'origin/main', 'refs/heads/feat/squashed'])
         ? '+aaa111\n+bbb222\n'
         : undefined,
     (args) =>
-      matchArgs(args, ['merge-base', 'origin/main', 'feat/squashed']) ? 'base111\n' : undefined,
-    (args) => (matchArgs(args, ['rev-parse', 'feat/squashed^{tree}']) ? 'treeAAA\n' : undefined),
+      matchArgs(args, ['merge-base', 'origin/main', 'refs/heads/feat/squashed'])
+        ? 'base111\n'
+        : undefined,
+    (args) =>
+      matchArgs(args, ['rev-parse', 'refs/heads/feat/squashed^{tree}']) ? 'treeAAA\n' : undefined,
     (args, options) => {
       if (!matchArgs(args, ['commit-tree', 'treeAAA', '-p', 'base111'])) return undefined;
       assert.equal(options.env.GIT_AUTHOR_NAME, 'devx-cleanup');
@@ -129,10 +138,15 @@ test('isBranchContentMerged detects a squash-merged branch via the synthetic com
 test('isBranchContentMerged returns false for a truly unmerged branch', () => {
   const gitRunner = makeFakeGit([
     (args) =>
-      matchArgs(args, ['cherry', 'origin/main', 'feat/unmerged']) ? '+aaa111\n' : undefined,
+      matchArgs(args, ['cherry', 'origin/main', 'refs/heads/feat/unmerged'])
+        ? '+aaa111\n'
+        : undefined,
     (args) =>
-      matchArgs(args, ['merge-base', 'origin/main', 'feat/unmerged']) ? 'base111\n' : undefined,
-    (args) => (matchArgs(args, ['rev-parse', 'feat/unmerged^{tree}']) ? 'treeBBB\n' : undefined),
+      matchArgs(args, ['merge-base', 'origin/main', 'refs/heads/feat/unmerged'])
+        ? 'base111\n'
+        : undefined,
+    (args) =>
+      matchArgs(args, ['rev-parse', 'refs/heads/feat/unmerged^{tree}']) ? 'treeBBB\n' : undefined,
     (args) =>
       matchArgs(args, ['commit-tree', 'treeBBB', '-p', 'base111']) ? 'synthDDD\n' : undefined,
     (args) => (matchArgs(args, ['cherry', 'origin/main', 'synthDDD']) ? '+synthDDD\n' : undefined),
@@ -147,7 +161,7 @@ test('isBranchContentMerged returns false for a truly unmerged branch', () => {
 test('isSquashMerged fails open (returns false) when merge-base cannot be found', () => {
   const gitRunner = makeFakeGit([
     (args) =>
-      matchArgs(args, ['merge-base', 'origin/main', 'feat/unrelated'])
+      matchArgs(args, ['merge-base', 'origin/main', 'refs/heads/feat/unrelated'])
         ? new Error('fatal: no merge base')
         : undefined,
   ]);
@@ -160,8 +174,10 @@ test('isSquashMerged fails open (returns false) when merge-base cannot be found'
 
 test('isSquashMerged fails open when commit-tree fails', () => {
   const gitRunner = makeFakeGit([
-    (args) => (matchArgs(args, ['merge-base', 'origin/main', 'feat/x']) ? 'base111\n' : undefined),
-    (args) => (matchArgs(args, ['rev-parse', 'feat/x^{tree}']) ? 'treeAAA\n' : undefined),
+    (args) =>
+      matchArgs(args, ['merge-base', 'origin/main', 'refs/heads/feat/x']) ? 'base111\n' : undefined,
+    (args) =>
+      matchArgs(args, ['rev-parse', 'refs/heads/feat/x^{tree}']) ? 'treeAAA\n' : undefined,
     (args) =>
       matchArgs(args, ['commit-tree', 'treeAAA', '-p', 'base111'])
         ? new Error('fatal: identity unknown')
@@ -174,22 +190,36 @@ test('isSquashMerged fails open when commit-tree fails', () => {
 test('computeContentMergedBranches filters candidates down to the merged ones', () => {
   const gitRunner = makeFakeGit([
     (args) =>
-      matchArgs(args, ['merge-base', 'origin/main', 'feat/rebased']) ? 'base000\n' : undefined,
+      matchArgs(args, ['merge-base', 'origin/main', 'refs/heads/feat/rebased'])
+        ? 'base000\n'
+        : undefined,
     (args) =>
-      matchArgs(args, ['cherry', 'origin/main', 'feat/rebased']) ? '-abc123\n' : undefined,
+      matchArgs(args, ['cherry', 'origin/main', 'refs/heads/feat/rebased'])
+        ? '-abc123\n'
+        : undefined,
     (args) =>
-      matchArgs(args, ['cherry', 'origin/main', 'feat/squashed']) ? '+aaa111\n' : undefined,
+      matchArgs(args, ['cherry', 'origin/main', 'refs/heads/feat/squashed'])
+        ? '+aaa111\n'
+        : undefined,
     (args) =>
-      matchArgs(args, ['merge-base', 'origin/main', 'feat/squashed']) ? 'base111\n' : undefined,
-    (args) => (matchArgs(args, ['rev-parse', 'feat/squashed^{tree}']) ? 'treeAAA\n' : undefined),
+      matchArgs(args, ['merge-base', 'origin/main', 'refs/heads/feat/squashed'])
+        ? 'base111\n'
+        : undefined,
+    (args) =>
+      matchArgs(args, ['rev-parse', 'refs/heads/feat/squashed^{tree}']) ? 'treeAAA\n' : undefined,
     (args) =>
       matchArgs(args, ['commit-tree', 'treeAAA', '-p', 'base111']) ? 'synthCCC\n' : undefined,
     (args) => (matchArgs(args, ['cherry', 'origin/main', 'synthCCC']) ? '-synthCCC\n' : undefined),
     (args) =>
-      matchArgs(args, ['cherry', 'origin/main', 'feat/unmerged']) ? '+xyz789\n' : undefined,
+      matchArgs(args, ['cherry', 'origin/main', 'refs/heads/feat/unmerged'])
+        ? '+xyz789\n'
+        : undefined,
     (args) =>
-      matchArgs(args, ['merge-base', 'origin/main', 'feat/unmerged']) ? 'base222\n' : undefined,
-    (args) => (matchArgs(args, ['rev-parse', 'feat/unmerged^{tree}']) ? 'treeBBB\n' : undefined),
+      matchArgs(args, ['merge-base', 'origin/main', 'refs/heads/feat/unmerged'])
+        ? 'base222\n'
+        : undefined,
+    (args) =>
+      matchArgs(args, ['rev-parse', 'refs/heads/feat/unmerged^{tree}']) ? 'treeBBB\n' : undefined,
     (args) =>
       matchArgs(args, ['commit-tree', 'treeBBB', '-p', 'base222']) ? 'synthDDD\n' : undefined,
     (args) => (matchArgs(args, ['cherry', 'origin/main', 'synthDDD']) ? '+synthDDD\n' : undefined),
@@ -221,9 +251,13 @@ test('getSquashOrRebaseMergedBranches skips content-merge detection when disable
 test('getSquashOrRebaseMergedBranches delegates to computeContentMergedBranches by default', () => {
   const gitRunner = makeFakeGit([
     (args) =>
-      matchArgs(args, ['merge-base', 'origin/main', 'feat/rebased']) ? 'base000\n' : undefined,
+      matchArgs(args, ['merge-base', 'origin/main', 'refs/heads/feat/rebased'])
+        ? 'base000\n'
+        : undefined,
     (args) =>
-      matchArgs(args, ['cherry', 'origin/main', 'feat/rebased']) ? '-abc123\n' : undefined,
+      matchArgs(args, ['cherry', 'origin/main', 'refs/heads/feat/rebased'])
+        ? '-abc123\n'
+        : undefined,
   ]);
 
   const result = getSquashOrRebaseMergedBranches({
