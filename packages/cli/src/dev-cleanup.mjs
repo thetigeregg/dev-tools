@@ -718,8 +718,10 @@ export async function main({ auto = false, dryRun = false, cwd = process.cwd() }
     .map((b) => b.replace(/^[*+]\s*/, '').trim())
     .filter((b) => b && b !== config.baseBranch && !b.startsWith('('));
 
+  const ancestryMergedBranchSet = new Set(ancestryMergedBranches);
+
   const remainingCandidates = listLocalBranches(runGit).filter(
-    (b) => b !== currentBranch && b !== config.baseBranch && !ancestryMergedBranches.includes(b)
+    (b) => b !== currentBranch && b !== config.baseBranch && !ancestryMergedBranchSet.has(b)
   );
 
   const squashOrRebaseMergedBranches = getSquashOrRebaseMergedBranches({
