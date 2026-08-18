@@ -1,10 +1,5 @@
-import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-
-function getNpmCommand() {
-  return process.platform === 'win32' ? 'npm.cmd' : 'npm';
-}
 
 function printHelp() {
   console.log('\nUsage: node tools/devx/worktree-adapter.mjs <bootstrap|help>\n');
@@ -24,12 +19,10 @@ export function isEntrypoint({ argv1 = process.argv[1], moduleUrl = import.meta.
   return pathToFileURL(path.resolve(argv1)).href === moduleUrl;
 }
 
-export async function bootstrapWorktree({ worktreePath }) {
-  console.log('\nInstalling dependencies with npm ci...\n');
-  execFileSync(getNpmCommand(), ['ci'], {
-    stdio: 'inherit',
-    cwd: worktreePath,
-  });
+export async function bootstrapWorktree({ worktreePath } = {}) {
+  console.log(
+    `\nSkipping dependency install for ${worktreePath ?? 'worktree'}: already installed by task-start.\n`
+  );
 }
 
 export async function runWorktreeDev(argv = []) {
