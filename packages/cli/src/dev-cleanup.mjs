@@ -518,6 +518,94 @@ export function removeMergedBranchesWithoutWorktrees({
   return summary;
 }
 
+export function listLocalBranches(gitRunner = runGit) {
+  return gitRunner(['for-each-ref', 'refs/heads', '--format=%(refname:short)'])
+    .split('\n')
+    .map((b) => b.trim())
+    .filter(Boolean);
+}
+
+export function isSquashMerged({ branch, baseRef, gitRunner = runGit }) {
+  const identityEnv = {
+    ...process.env,
+    GIT_AUTHOR_NAME: 'devx-cleanup',
+    GIT_AUTHOR_EMAIL: 'devx-cleanup@localhost',
+    GIT_COMMITTER_NAME: 'devx-cleanup',
+    GIT_COMMITTER_EMAIL: 'devx-cleanup@localhost',
+  };
+
+  let mergeBase;
+  let tree;
+  let syntheticCommit;
+
+  try {
+    mergeBase = gitRunner(['merge-base', baseRef, branch], { exitOnError: false }).trim();
+    tree = gitRunner(['rev-parse', `${branch}^{tree}`], { exitOnError: false }).trim();
+
+    if (!mergeBase || !tree) {
+      return false;
+    }
+
+    syntheticCommit = gitRunner(
+      ['commit-tree', tree, '-p', mergeBase, '-m', 'devx-cleanup: squash-merge check'],
+      { exitOnError: false, env: identityEnv }
+    ).trim();
+
+    if (!syntheticCommit) {
+      return false;
+    }
+  } catch {
+    return false;
+  }
+
+  let cherryLines;
+
+  try {
+    cherryLines = gitRunner(['cherry', baseRef, syntheticCommit], { exitOnError: false })
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+  } catch {
+    return false;
+  }
+
+  if (cherryLines.length === 0) {
+    return true;
+  }
+
+  return cherryLines.every((line) => line.startsWith('-'));
+}
+
+// Detects branches merged via rebase (patch-id equivalence per commit) or squash
+// (patch-id equivalence of the branch's total diff, via a synthetic commit) --
+// `git branch --merged` only catches true merge commits since it relies on ancestry.
+export function isBranchContentMerged({ branch, baseRef, gitRunner = runGit }) {
+  let cherryLines;
+
+  try {
+    cherryLines = gitRunner(['cherry', baseRef, branch], { exitOnError: false })
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+  } catch {
+    return false;
+  }
+
+  if (cherryLines.length === 0) {
+    return true;
+  }
+
+  if (cherryLines.every((line) => line.startsWith('-'))) {
+    return true;
+  }
+
+  return isSquashMerged({ branch, baseRef, gitRunner });
+}
+
+export function computeContentMergedBranches({ candidates, baseRef, gitRunner = runGit }) {
+  return candidates.filter((branch) => isBranchContentMerged({ branch, baseRef, gitRunner }));
+}
+
 export function isEntrypoint({ argv1 = process.argv[1], moduleUrl = import.meta.url } = {}) {
   if (!argv1) {
     return false;
@@ -594,10 +682,27 @@ export async function main({ auto = false, dryRun = false, cwd = process.cwd() }
 
   console.log(`\n→ Branches already merged into origin/${config.baseBranch}\n`);
 
-  const mergedBranches = runGit(['branch', '--merged', `origin/${config.baseBranch}`, '--no-color'])
+  const baseRef = `origin/${config.baseBranch}`;
+
+  const ancestryMergedBranches = runGit(['branch', '--merged', baseRef, '--no-color'])
     .split('\n')
     .map((b) => b.replace(/^[*+]\s*/, '').trim())
     .filter((b) => b && b !== config.baseBranch && !b.startsWith('('));
+
+  const remainingCandidates = listLocalBranches(runGit).filter(
+    (b) => b !== currentBranch && b !== config.baseBranch && !ancestryMergedBranches.includes(b)
+  );
+
+  const squashOrRebaseMergedBranches =
+    config.worktree.detectSquashRebase === false
+      ? []
+      : computeContentMergedBranches({
+          candidates: remainingCandidates,
+          baseRef,
+          gitRunner: runGit,
+        });
+
+  const mergedBranches = [...ancestryMergedBranches, ...squashOrRebaseMergedBranches];
 
   if (mergedBranches.length === 0) {
     console.log('None');
