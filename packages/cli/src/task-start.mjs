@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 
 import { loadDevxConfig } from './config.mjs';
 import { loadWorktreeAdapterModule } from './worktree-adapter.mjs';
+import { createWorktreeContext, ensureDependenciesInstalled } from './worktree-engine.mjs';
 
 const SAFE_BRANCH_PATTERN = /^[A-Za-z0-9._/-]+$/;
 
@@ -170,6 +171,11 @@ export async function runWorktreeBootstrap({ config, worktreePath, branch }) {
   });
 }
 
+export async function installWorktreeDependencies({ worktreePath }) {
+  const context = await createWorktreeContext({ cwd: worktreePath });
+  ensureDependenciesInstalled(context, true);
+}
+
 export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
   const config = await loadDevxConfig({ cwd });
 
@@ -300,6 +306,19 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
       stdio: 'inherit',
       cwd: config.repoRoot,
     });
+
+    console.log('\nInstalling dependencies in worktree...\n');
+
+    try {
+      await installWorktreeDependencies({ worktreePath });
+    } catch (error) {
+      console.error('\nDependency installation failed.');
+      console.error(
+        `Run the install command manually inside ${worktreePath} (e.g. "npm ci", or the command configured via worktree.bootstrap.installScript) and retry.\n`
+      );
+      const code = typeof error.status === 'number' ? error.status : 1;
+      process.exit(code);
+    }
 
     console.log('\nBootstrapping worktree environment...\n');
 
