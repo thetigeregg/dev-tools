@@ -313,6 +313,7 @@ export async function runTaskStartCli(name, { cwd = process.cwd() } = {}) {
       await installWorktreeDependencies({ worktreePath });
     } catch (error) {
       console.error('\nDependency installation failed.');
+      console.error(error.message);
       console.error(
         `Run the install command manually inside ${worktreePath} (e.g. "npm ci", or the command configured via worktree.bootstrap.installScript) and retry.\n`
       );

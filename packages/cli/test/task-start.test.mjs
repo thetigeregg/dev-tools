@@ -204,7 +204,7 @@ function seedAndCloneRepo(tempRoot) {
   runCommand('git', ['commit', '-m', 'chore: seed repo'], { cwd: seedPath });
   runCommand('git', ['push', '-u', 'origin', 'main'], { cwd: seedPath });
 
-  runCommand('git', ['clone', remotePath, repoPath]);
+  runCommand('git', ['clone', '--branch', 'main', remotePath, repoPath]);
   configureGitRepo(repoPath);
 
   return { remotePath, repoPath };

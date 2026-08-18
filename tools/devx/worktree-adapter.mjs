@@ -19,8 +19,10 @@ export function isEntrypoint({ argv1 = process.argv[1], moduleUrl = import.meta.
   return pathToFileURL(path.resolve(argv1)).href === moduleUrl;
 }
 
-export async function bootstrapWorktree() {
-  // no-op: dependency install is handled by task-start.mjs before this runs
+export async function bootstrapWorktree({ worktreePath } = {}) {
+  console.log(
+    `\nSkipping dependency install for ${worktreePath ?? 'worktree'}: already installed by task-start.\n`
+  );
 }
 
 export async function runWorktreeDev(argv = []) {
