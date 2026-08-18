@@ -1,5 +1,11 @@
 # @thetigeregg/commitlint-config
 
+## 2.0.1
+
+### Patch Changes
+
+- 6256af0: Bump @commitlint/config-conventional to ^21.2.2
+
 ## 2.0.0
 
 ### Major Changes
