@@ -45,13 +45,13 @@ jobs:
 
       - name: Create release PR or publish packages
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
           # A custom token is required so release PR updates can trigger PR workflows.
           github-token: ${{ secrets.CHANGESETS_GITHUB_TOKEN }}
-          commit: "chore(release): version packages"
-          version: npm run version-packages
+          commit-message: "chore(release): version packages"
+          version-script: npm run version-packages
 
       - name: Publish packages to npm
-        if: ${{ steps.changesets.outputs.hasChangesets == 'false' }}
+        if: ${{ steps.changesets.outputs.has-changesets == 'false' }}
         run: npm run release
