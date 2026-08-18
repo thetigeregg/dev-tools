@@ -22,6 +22,24 @@ devx repo sync [--dry-run]
 devx repo sync-templates [--dry-run]
 ```
 
+## Worktree Cleanup
+
+`devx worktree cleanup` detects merged branches three ways so squash and rebase merges (not just merge commits) are recognized:
+
+- ancestry (`git branch --merged`) for merge-commit merges
+- patch-id equivalence (`git cherry`) for rebase merges
+- a synthetic commit compared via `git cherry` for squash merges
+
+Set `worktree.detectSquashRebase: false` in `devx.config.mjs` to skip the rebase/squash checks and fall back to ancestry-only detection (useful if `git cherry` is slow on a large, long-diverged base branch):
+
+```js
+export default {
+  worktree: {
+    detectSquashRebase: false,
+  },
+};
+```
+
 ## PR prompts
 
 `devx pr prep` and `devx pr feedback` write generated Markdown prompts under `prompts/` by default (`prompts/pr-prep-prompt.md` and `prompts/pr-feedback-prompt.md`). The CLI creates `prompts/` when needed. Override paths with `pr.prepOutputFile` and `pr.feedbackOutputFile` in `devx.config.mjs` (paths are resolved relative to the repository root). Ignore `prompts/` in `.gitignore` if you do not want those files tracked.
