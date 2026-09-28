@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.2",
-    "@commitlint/cli": "^21.2.2",
+    "@commitlint/cli": "^21.2.3",
     "@thetigeregg/commitlint-config": "workspace:*",
     "@thetigeregg/dev-cli": "workspace:*",
     "@thetigeregg/lint-staged-config": "workspace:*",
