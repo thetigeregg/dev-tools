@@ -24,7 +24,7 @@ This tooling is IDE-agnostic. Cursor and Claude Code are the primary supported a
 
 `devx repo bootstrap` seeds both `.cursor/rules/` and `CLAUDE.md` so whichever agent you use, the shared rules are in place.
 
-`devx pr prep` and `devx pr feedback` generate prompt files under `prompts/` that work with any agent — open the file and paste it in, or `@` it in Cursor. In Claude Code, use `/pr-prep` and `/pr-feedback <PR_NUMBER>` (custom commands seeded by bootstrap).
+`devx pr prep` and `devx pr feedback` generate prompt files under `prompts/` that work with any agent — open the file and paste it in, or `@` it in Cursor. In Claude Code, use `/pr-prep` and `/pr-feedback <PR_NUMBER>` (custom commands seeded by bootstrap). Both commands finish by committing and pushing. `/pr-prep` then opens the PR (or links the existing open one). `/pr-feedback` resolves the review threads its pushed fixes address, using the `[thread: <id>]` markers in the generated prompt.
 
 #### Configuring the editor opened by `devx task start`
 
