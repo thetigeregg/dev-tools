@@ -6,9 +6,13 @@ import path from 'node:path';
 
 import {
   analyzeChecks,
+  buildCurrentStatus,
+  buildInlineReviewTasks,
   collectDiscussionReviewItems,
   extractSnippet,
+  formatInlineReviewTasks,
   isCopilotReviewAuthor,
+  normalizeStatusChecks,
   parseArgs,
   resolveFeedbackPromptOutputFile,
   writePromptOutputFile,
@@ -254,4 +258,115 @@ test('analyzeChecks keeps unknown-status checks pending', () => {
     analysis.pending.map((check) => [check.name, check.status]),
     [['mystery', 'UNKNOWN']]
   );
+});
+
+test('analyzeChecks normalizes lowercase check-run status and conclusion', () => {
+  const analysis = analyzeChecks([
+    { name: 'build', status: 'completed', conclusion: 'success' },
+    { name: 'docs', status: 'completed', conclusion: 'skipped' },
+    { name: 'lint', status: 'completed', conclusion: 'failure' },
+  ]);
+
+  assert.deepEqual(
+    analysis.successes.map((check) => check.name),
+    ['build']
+  );
+  assert.deepEqual(
+    analysis.skipped.map((check) => check.name),
+    ['docs']
+  );
+  assert.deepEqual(
+    analysis.ciFailures.map((check) => check.name),
+    ['lint']
+  );
+});
+
+const emptyStatusData = (checks) => ({
+  checks: {
+    ciFailures: [],
+    coverageFailures: [],
+    pending: [],
+    successes: [],
+    skipped: [],
+    ...checks,
+  },
+  coverage: { tasks: [] },
+  review: { inline: [], general: [] },
+});
+
+test('buildCurrentStatus notes skipped checks next to the CI status', () => {
+  const status = buildCurrentStatus(
+    emptyStatusData({ skipped: [{ name: 'claude' }, { name: 'CodeQL' }] })
+  );
+  assert.match(status, /^CI: PASS \(2 skipped or neutral checks\)$/m);
+
+  const single = buildCurrentStatus(emptyStatusData({ skipped: [{ name: 'claude' }] }));
+  assert.match(single, /^CI: PASS \(1 skipped or neutral check\)$/m);
+});
+
+test('buildCurrentStatus omits the skipped note when nothing was skipped', () => {
+  assert.match(buildCurrentStatus(emptyStatusData({})), /^CI: PASS$/m);
+  assert.match(
+    buildCurrentStatus({
+      ...emptyStatusData({}),
+      checks: { ...emptyStatusData({}).checks, skipped: undefined },
+    }),
+    /^CI: PASS$/m
+  );
+});
+
+test('buildInlineReviewTasks carries review thread ids', () => {
+  const tasks = buildInlineReviewTasks([
+    {
+      id: 'PRRT_one',
+      isResolved: false,
+      isOutdated: false,
+      path: 'src/a.ts',
+      line: 7,
+      comments: { nodes: [{ author: { login: 'claude' }, body: 'Fix this.', diffHunk: '@@' }] },
+    },
+    {
+      id: 'PRRT_two',
+      isResolved: false,
+      isOutdated: false,
+      path: 'src/a.ts',
+      line: 7,
+      comments: { nodes: [{ author: { login: 'claude' }, body: 'Fix this.', diffHunk: '@@' }] },
+    },
+    {
+      id: 'PRRT_done',
+      isResolved: true,
+      path: 'src/a.ts',
+      line: 9,
+      comments: { nodes: [{ author: { login: 'claude' }, body: 'Done.', diffHunk: '@@' }] },
+    },
+  ]);
+
+  assert.deepEqual(
+    tasks.map((task) => task.threadId),
+    ['PRRT_one', 'PRRT_two']
+  );
+});
+
+test('formatInlineReviewTasks prints thread ids when present', () => {
+  const grouped = new Map([
+    [
+      'src/a.ts',
+      [
+        { threadId: 'PRRT_one', author: 'claude', line: 7, body: 'Fix this.', diff: '' },
+        { threadId: null, author: 'octocat', line: null, body: 'Nit.', diff: '@@ -1 +1 @@' },
+      ],
+    ],
+  ]);
+
+  const md = formatInlineReviewTasks(grouped);
+  assert.match(md, /^1\. claude \(line 7\) \[thread: PRRT_one\]$/m);
+  assert.match(md, /^2\. octocat$/m);
+  assert.match(md, /```diff\n@@ -1 \+1 @@\n```/);
+});
+
+test('normalizeStatusChecks accepts a lone commit status context', () => {
+  const check = { context: 'codecov/patch', state: 'FAILURE' };
+  assert.deepEqual(normalizeStatusChecks(check), [check]);
+  assert.deepEqual(normalizeStatusChecks({ unrelated: true }), []);
 });
