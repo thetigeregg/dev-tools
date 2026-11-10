@@ -151,7 +151,7 @@ test('writePromptOutputFile creates parent directories and writes UTF-8 content'
   assert.equal(readFileSync(outputFile, 'utf8'), 'hello\n');
 });
 
-test('analyzeChecks treats completed non-success conclusions as failures', () => {
+test('analyzeChecks treats completed blocking conclusions as failures', () => {
   const analysis = analyzeChecks([
     {
       name: 'CI',
@@ -161,7 +161,7 @@ test('analyzeChecks treats completed non-success conclusions as failures', () =>
     {
       name: 'Coverage Report',
       status: 'COMPLETED',
-      conclusion: 'NEUTRAL',
+      conclusion: 'FAILURE',
     },
     {
       name: 'Docs',
@@ -190,5 +190,68 @@ test('analyzeChecks treats completed non-success conclusions as failures', () =>
   assert.deepEqual(
     analysis.pending.map((check) => check.name),
     ['Preview']
+  );
+  assert.deepEqual(analysis.skipped, []);
+});
+
+test('analyzeChecks treats skipped and neutral check runs as non-blocking', () => {
+  const analysis = analyzeChecks([
+    { name: 'claude', status: 'COMPLETED', conclusion: 'SKIPPED', workflowName: 'Claude Code' },
+    { name: 'CodeQL', status: 'COMPLETED', conclusion: 'NEUTRAL' },
+    { name: 'Coverage Report', status: 'COMPLETED', conclusion: 'NEUTRAL' },
+  ]);
+
+  assert.deepEqual(analysis.ciFailures, []);
+  assert.deepEqual(analysis.coverageFailures, []);
+  assert.deepEqual(analysis.pending, []);
+  assert.deepEqual(
+    analysis.skipped.map((check) => [check.name, check.conclusion]),
+    [
+      ['claude', 'SKIPPED'],
+      ['CodeQL', 'NEUTRAL'],
+      ['Coverage Report', 'NEUTRAL'],
+    ]
+  );
+});
+
+test('analyzeChecks maps commit status contexts by state', () => {
+  const analysis = analyzeChecks([
+    {
+      context: 'codecov/patch',
+      state: 'SUCCESS',
+      targetUrl: 'https://app.codecov.io/patch',
+      status: null,
+      conclusion: null,
+    },
+    { context: 'codecov/project', state: 'FAILURE' },
+    { context: 'deploy/preview', state: 'ERROR' },
+    { context: 'ci/legacy', state: 'PENDING' },
+    { context: 'ci/required', state: 'EXPECTED' },
+  ]);
+
+  assert.deepEqual(
+    analysis.successes.map((check) => [check.name, check.detailsUrl]),
+    [['codecov/patch', 'https://app.codecov.io/patch']]
+  );
+  assert.deepEqual(
+    analysis.coverageFailures.map((check) => check.name),
+    ['codecov/project']
+  );
+  assert.deepEqual(
+    analysis.ciFailures.map((check) => [check.name, check.conclusion]),
+    [['deploy/preview', 'ERROR']]
+  );
+  assert.deepEqual(
+    analysis.pending.map((check) => check.name),
+    ['ci/legacy', 'ci/required']
+  );
+});
+
+test('analyzeChecks keeps unknown-status checks pending', () => {
+  const analysis = analyzeChecks([{ name: 'mystery' }]);
+
+  assert.deepEqual(
+    analysis.pending.map((check) => [check.name, check.status]),
+    [['mystery', 'UNKNOWN']]
   );
 });

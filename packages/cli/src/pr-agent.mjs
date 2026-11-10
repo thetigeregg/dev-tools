@@ -157,18 +157,35 @@ function getPRData(prNumber, debug) {
   };
 }
 
+// Check-run conclusions that GitHub treats as non-blocking for merges.
+const NON_BLOCKING_CONCLUSIONS = new Set(['NEUTRAL', 'SKIPPED']);
+
+// Commit status contexts (e.g. codecov/patch) report a `state` instead of
+// check-run `status`/`conclusion`; map them onto the check-run shape.
+function normalizeCheckOutcome(check) {
+  if (!check.status && check.state) {
+    const state = String(check.state).toUpperCase();
+    if (state === 'PENDING' || state === 'EXPECTED') {
+      return { status: 'PENDING', conclusion: null };
+    }
+    return { status: 'COMPLETED', conclusion: state };
+  }
+
+  return { status: check.status || 'UNKNOWN', conclusion: check.conclusion || null };
+}
+
 export function analyzeChecks(checks) {
   const ciFailures = [];
   const coverageFailures = [];
   const pending = [];
   const successes = [];
+  const skipped = [];
 
   for (const check of checks) {
     const normalized = {
       name: check.name || check.context || 'Unnamed check',
-      status: check.status || 'UNKNOWN',
-      conclusion: check.conclusion || null,
-      detailsUrl: check.detailsUrl || check.url || null,
+      ...normalizeCheckOutcome(check),
+      detailsUrl: check.detailsUrl || check.targetUrl || check.url || null,
       workflowName: check.workflowName || null,
     };
 
@@ -182,6 +199,11 @@ export function analyzeChecks(checks) {
       continue;
     }
 
+    if (NON_BLOCKING_CONCLUSIONS.has(normalized.conclusion)) {
+      skipped.push(normalized);
+      continue;
+    }
+
     if (/codecov|coverage/i.test(normalized.name)) {
       coverageFailures.push(normalized);
     } else {
@@ -189,7 +211,7 @@ export function analyzeChecks(checks) {
     }
   }
 
-  return { ciFailures, coverageFailures, pending, successes };
+  return { ciFailures, coverageFailures, pending, successes, skipped };
 }
 
 function isIgnoredAutomationAuthor(author) {
