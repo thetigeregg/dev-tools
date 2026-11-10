@@ -55,7 +55,7 @@ When code changes were made and the task is complete:
 - Always include a suggested Conventional Commit message in the final response.
 - Follow the format from the Commits section above: `type(scope): description`.
 - If no code changes were made, do not include a commit message.
-- Do not run `git commit` unless the user explicitly asks.
+- Do not run `git commit` unless the user explicitly asks. Running `/pr-prep` or `/pr-feedback` counts as asking: those commands commit and push as their final step.
 
 Before suggesting a commit message, complete the Workflow verification steps first.
 

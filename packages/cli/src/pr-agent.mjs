@@ -101,7 +101,7 @@ function runGh(args, debug, { allowFailure = false } = {}) {
   }
 }
 
-function normalizeStatusChecks(statusCheckRollup) {
+export function normalizeStatusChecks(statusCheckRollup) {
   if (Array.isArray(statusCheckRollup)) return statusCheckRollup.filter(Boolean);
   if (!statusCheckRollup || typeof statusCheckRollup !== 'object') return [];
 
@@ -119,7 +119,11 @@ function normalizeStatusChecks(statusCheckRollup) {
     }
   }
 
-  if ('status' in statusCheckRollup || 'conclusion' in statusCheckRollup) {
+  if (
+    'status' in statusCheckRollup ||
+    'conclusion' in statusCheckRollup ||
+    'state' in statusCheckRollup
+  ) {
     return [statusCheckRollup];
   }
 
@@ -157,18 +161,38 @@ function getPRData(prNumber, debug) {
   };
 }
 
+// Check-run conclusions that GitHub treats as non-blocking for merges.
+const NON_BLOCKING_CONCLUSIONS = new Set(['NEUTRAL', 'SKIPPED']);
+
+// Commit status contexts (e.g. codecov/patch) report a `state` instead of
+// check-run `status`/`conclusion`; map them onto the check-run shape.
+function normalizeCheckOutcome(check) {
+  if (!check.status && check.state) {
+    const state = String(check.state).toUpperCase();
+    if (state === 'PENDING' || state === 'EXPECTED') {
+      return { status: 'PENDING', conclusion: null };
+    }
+    return { status: 'COMPLETED', conclusion: state };
+  }
+
+  return {
+    status: check.status ? String(check.status).toUpperCase() : 'UNKNOWN',
+    conclusion: check.conclusion ? String(check.conclusion).toUpperCase() : null,
+  };
+}
+
 export function analyzeChecks(checks) {
   const ciFailures = [];
   const coverageFailures = [];
   const pending = [];
   const successes = [];
+  const skipped = [];
 
   for (const check of checks) {
     const normalized = {
       name: check.name || check.context || 'Unnamed check',
-      status: check.status || 'UNKNOWN',
-      conclusion: check.conclusion || null,
-      detailsUrl: check.detailsUrl || check.url || null,
+      ...normalizeCheckOutcome(check),
+      detailsUrl: check.detailsUrl || check.targetUrl || check.url || null,
       workflowName: check.workflowName || null,
     };
 
@@ -182,6 +206,11 @@ export function analyzeChecks(checks) {
       continue;
     }
 
+    if (NON_BLOCKING_CONCLUSIONS.has(normalized.conclusion)) {
+      skipped.push(normalized);
+      continue;
+    }
+
     if (/codecov|coverage/i.test(normalized.name)) {
       coverageFailures.push(normalized);
     } else {
@@ -189,7 +218,7 @@ export function analyzeChecks(checks) {
     }
   }
 
-  return { ciFailures, coverageFailures, pending, successes };
+  return { ciFailures, coverageFailures, pending, successes, skipped };
 }
 
 function isIgnoredAutomationAuthor(author) {
@@ -325,6 +354,7 @@ query($owner:String!, $repo:String!, $pr:Int!, $cursor:String) {
       reviewThreads(first:50, after:$cursor) {
         pageInfo { hasNextPage endCursor }
         nodes {
+          id
           isResolved
           isOutdated
           path
@@ -380,7 +410,7 @@ query($owner:String!, $repo:String!, $pr:Int!, $cursor:String) {
   return { threads, warnings };
 }
 
-function buildInlineReviewTasks(threads, { copilotOnly = false } = {}) {
+export function buildInlineReviewTasks(threads, { copilotOnly = false } = {}) {
   const tasks = [];
 
   for (const thread of threads) {
@@ -399,6 +429,7 @@ function buildInlineReviewTasks(threads, { copilotOnly = false } = {}) {
     if (!reviewerComment) continue;
 
     tasks.push({
+      threadId: thread.id || null,
       file: thread.path || null,
       line: thread.line ?? thread.originalLine ?? null,
       author: reviewerComment.author?.login || 'reviewer',
@@ -409,7 +440,8 @@ function buildInlineReviewTasks(threads, { copilotOnly = false } = {}) {
 
   return uniqueBy(
     tasks,
-    (item) => `${item.author}|${item.file}|${item.line}|${item.body}|${item.diff}`
+    (item) =>
+      `${item.threadId ?? ''}|${item.author}|${item.file}|${item.line}|${item.body}|${item.diff}`
   );
 }
 
@@ -742,13 +774,33 @@ function bulletList(items) {
   return items.map((item) => `• ${item}`).join('\n');
 }
 
-function buildCurrentStatus(data) {
+export function formatInlineReviewTasks(grouped) {
+  let md = '# Inline Review Tasks\n';
+  for (const [file, tasks] of grouped.entries()) {
+    md += `\n## ${file}\n`;
+    tasks.forEach((task, index) => {
+      md += `\n${index + 1}. ${task.author}`;
+      if (task.line != null) md += ` (line ${task.line})`;
+      if (task.threadId) md += ` [thread: ${task.threadId}]`;
+      md += `\n${task.body}\n`;
+      if (task.diff) md += `\n\`\`\`diff\n${task.diff}\n\`\`\`\n`;
+    });
+  }
+  return md.trim();
+}
+
+export function buildCurrentStatus(data) {
   const ciStatus =
     data.checks.ciFailures.length > 0
       ? `FAIL (${data.checks.ciFailures.length} failing check${data.checks.ciFailures.length === 1 ? '' : 's'})`
       : data.checks.pending.length > 0
         ? `PENDING (${data.checks.pending.length} running or queued check${data.checks.pending.length === 1 ? '' : 's'})`
         : 'PASS';
+  const skippedCount = data.checks.skipped?.length ?? 0;
+  const ciStatusWithSkipped =
+    skippedCount > 0
+      ? `${ciStatus} (${skippedCount} skipped or neutral check${skippedCount === 1 ? '' : 's'})`
+      : ciStatus;
 
   const coverageStatus =
     data.checks.coverageFailures.length > 0
@@ -779,7 +831,7 @@ function buildCurrentStatus(data) {
   return [
     '# Current Status',
     '',
-    `CI: ${ciStatus}`,
+    `CI: ${ciStatusWithSkipped}`,
     `Coverage: ${coverageStatus}`,
     `Review feedback: ${reviewStatus}`,
     '',
@@ -862,17 +914,7 @@ function buildPrompt(data, config) {
 
   if (data.review.inline.length) {
     const grouped = data.review.inlineByFile;
-    let md = '# Inline Review Tasks\n';
-    for (const [file, tasks] of grouped.entries()) {
-      md += `\n## ${file}\n`;
-      tasks.forEach((task, index) => {
-        md += `\n${index + 1}. ${task.author}`;
-        if (task.line != null) md += ` (line ${task.line})`;
-        md += `\n${task.body}\n`;
-        if (task.diff) md += `\n\`\`\`diff\n${task.diff}\n\`\`\`\n`;
-      });
-    }
-    sections.push(md.trim());
+    sections.push(formatInlineReviewTasks(grouped));
   }
 
   if (data.review.general.length) {
