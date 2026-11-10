@@ -1,5 +1,23 @@
 # @thetigeregg/dev-cli
 
+## 5.1.0
+
+### Minor Changes
+
+- 277cfb0: Extend the seeded Claude Code `/pr-feedback` command to ship its fixes. It commits with the suggested Conventional Commit message, then pushes and sets the upstream if needed. After the push, it resolves only the review threads the pushed fixes fully address, using `gh api graphql`. It then links to the PR and reports which threads it resolved and which it left open.
+- 277cfb0: `devx pr feedback` now includes each inline review task's thread ID in the generated prompt, as `[thread: <id>]`. The seeded `/pr-feedback` command uses these IDs to resolve fixed threads directly. It no longer re-queries the threads or matches them by path and line, which breaks once a push makes a thread outdated. The CI status line now shows how many checks were skipped or neutral. Check-run status and conclusion are matched case-insensitively.
+
+  The seeded `/pr-prep` command now opens the PR against `baseBranch` when `pr.baseRef` is unset. It only reuses an existing PR if that PR is open. The seeded `/pr-feedback` command passes only the PR number to its `gh` calls, so extra flags no longer break them. The `CLAUDE.md` template notes that running either command counts as asking to commit.
+
+- 277cfb0: Extend the seeded Claude Code `/pr-prep` command to ship the branch after prep. It commits with the suggested Conventional Commit message, pushes and sets the upstream if needed, and creates the PR with `gh` using the generated title and body. It then links to the PR. If the branch already has an open PR, the command links to it instead of creating a duplicate.
+
+### Patch Changes
+
+- 277cfb0: Fix `devx pr feedback` reporting passing PRs as failing CI:
+
+  - Skipped and neutral check runs no longer count as CI or coverage failures. GitHub doesn't treat them as merge-blocking either. They are now returned in a new `skipped` bucket from `analyzeChecks`.
+  - Commit status contexts such as `codecov/patch` are now classified by their `state`. Before this fix they always appeared as pending, even after they passed.
+
 ## 5.0.2
 
 ### Patch Changes
